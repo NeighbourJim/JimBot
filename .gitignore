@@ -1,3 +1,7 @@
+# Bot Specific files
+config.json
+dbs/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
