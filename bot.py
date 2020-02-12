@@ -14,7 +14,22 @@ client = commands.Bot(
     command_prefix = current_settings["settings"]["prefix"], 
     owner_id = current_settings["settings"]["owner"])
 
-#region Extension Loaders
+#region ---------------- Event Listeners ----------------
+@commands.Cog.listener()
+async def on_ready(self):        
+    print('Logged in as {}'.format(self.client.user))
+    print('Connected to {} server(s).'.format(len(self.client.guilds)))
+
+@commands.Cog.listener()
+async def on_command_error(self, ctx, error):
+    if(type(error) != discord.ext.commands.errors.CommandNotFound):
+        print(f'**ERROR:** ``{error}``')
+        ctx.send(f'**ERROR:** ``{error}``')
+    elif type(error) == discord.ext.commands.errors.CommandOnCooldown:
+        ctx.send(f'**ERROR:** ``{error}``')
+#endregion
+
+#region ---------------- Extension Loaders ----------------
 # Loads extensions
 @client.command()
 async def load(ctx, extension):

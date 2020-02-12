@@ -1,4 +1,4 @@
 import re
 
 def CommandStrip(message):
-    return re.sub(r'\?\w*', '', message)
+    return re.sub(r'^(\?\w*)', '', message)
