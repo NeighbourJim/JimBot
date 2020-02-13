@@ -1,5 +1,6 @@
 import discord
 import asyncio
+import random
 from discord.ext import commands
 from discord.ext.commands import BucketType
 from googletrans import Translator
@@ -11,7 +12,7 @@ from bot import current_settings
 
 
 # This cog is for Google Translate commands as well as Bad Translate. 
-# Made a separate cog to Google.py just to keep things a little cleaner.
+# Made this a separate cog to Google.py just to keep things a little cleaner.
 
 class Translate(commands.Cog):
 
@@ -28,7 +29,7 @@ class Translate(commands.Cog):
         
 
     @commands.command(aliases=["tr"])    
-    @commands.cooldown(rate=1, per=2, type=BucketType.channel)
+    @commands.cooldown(rate=1, per=10, type=BucketType.channel)
     @commands.guild_only()
     async def translate(self, ctx):
         try:
@@ -49,6 +50,31 @@ class Translate(commands.Cog):
         except Exception as ex:
             print(ex)
             await self.client.close()
+
+    @commands.command(aliases=["btr"])    
+    @commands.cooldown(rate=1, per=30, type=BucketType.channel)
+    @commands.guild_only()
+    async def bad_translate(self,ctx):
+        try:
+            message_to_translate = Helper.CommandStrip(ctx.message.content)
+            current_message = message_to_translate
+            for i in range(0, 10):
+                random_lang = random.choice(bad_trans_languages)
+                task = asyncio.create_task(self.GetTranslation(message=current_message, target_lang=random_lang))
+                await task
+                current_message = task.result()
+                if current_message == 'invalid destination language':
+                    i -= 1
+            task = asyncio.create_task(self.GetTranslation(current_message))
+            await task
+            await ctx.send(f'{ctx.message.author.mention}: {task.result()}')
+        except Exception as ex:
+            print(ex)
+            await self.client.close()
+
+        
+
+
 
 
 
