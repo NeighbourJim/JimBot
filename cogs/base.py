@@ -92,9 +92,6 @@ class Base(commands.Cog):
         else:
             await ctx.send(f'{ctx.message.author.mention}: You only gave one option.')
 
-    # DICE COMMAND
-    # Rolls a die of the specified type a specified number of times.
-    # Usage: [prefix]dice 2d10
     @commands.command(aliases=["Dice"], help="Rolls a die of specified size a specified numer of times.\nUsage: !dice 2d20")
     @commands.cooldown(rate=1, per=1, type=BucketType.channel)
     @commands.guild_only()
@@ -115,6 +112,75 @@ class Base(commands.Cog):
                 await ctx.send(f'{ctx.message.author.mention}: Invalid dice. Correct usage eg: ``!dice 2d20``')
         else:
             await ctx.send(f'{ctx.message.author.mention}: Invalid dice. Correct usage eg: ``!dice 2d20``')
+
+    @commands.command(aliases=["ru", "RU", "Ru"], help="Gives up to 10 random ONLINE users on the server.")    
+    @commands.cooldown(rate=1, per=2, type=BucketType.channel)
+    @commands.guild_only()
+    async def randuser(self, ctx):
+        await ctx.trigger_typing()
+        selected_members = []
+        response = ''
+        members = ctx.guild.members
+        try:
+            amount = int(Helper.CommandStrip(ctx.message.content))
+        except:
+            amount = 1
+        for i in range(0,1000): 
+            r_member = random.choice(members)
+            if r_member.status != discord.Status.offline and r_member not in selected_members:                 
+                selected_members.append(r_member)
+            if len(selected_members) == amount:
+                break
+        for member in selected_members:
+            if member.display_name == member.name:
+                name = f'{member.display_name}'
+            else:
+                name = f'{member.display_name} ({member.name})'
+            response += f'{name}\n'
+        await ctx.send(f'{ctx.message.author.mention}: {response}')
+
+    @commands.command(aliases=["rua", "RUA", "Rua"], help="Gives up to 10 random users on the server, both online and offline.")    
+    @commands.cooldown(rate=1, per=5, type=BucketType.channel)
+    @commands.guild_only()
+    async def randuserall(self, ctx):
+        await ctx.trigger_typing()
+        selected_members = []
+        response = ''
+        members = ctx.guild.members
+        try:
+            amount = int(Helper.CommandStrip(ctx.message.content))
+        except:
+            amount = 1
+        for i in range(0,1000): 
+            r_member = random.choice(members)
+            if r_member not in selected_members:                 
+                selected_members.append(r_member)
+            if len(selected_members) == amount:
+                break
+        for member in selected_members:
+            if member.display_name == member.name:
+                name = f'{member.display_name}'
+            else:
+                name = f'{member.display_name} ({member.name})'
+            response += f'{name}\n'
+        await ctx.send(f'{ctx.message.author.mention}: {response}')
+
+    @commands.command(help="Print some info about the bot.")    
+    @commands.cooldown(rate=1, per=2, type=BucketType.channel)
+    @commands.guild_only()
+    async def info(self, ctx):
+        fields = [
+            {"name": "Development Info", "value": "I am a bot created by NeighbourJim#4976.\nI am written in Python 3.8, using Discord.py.", "inline": False},
+            {"name": "Servers", "value": f'I am currently in {len(self.client.guilds)} server(s).', "inline": False},
+            {"name": "GitHub Repo", "value": "https://github.com/NeighbourJim/JimBot", "inline": False}
+            ]
+        embed_dict = {
+                    "author": {"name": f'I am {self.client.user.display_name}!'}, 
+                    "fields": fields,
+                    "thumbnail": {"url": f'{self.client.user.avatar_url}'}
+                    }
+        info_embed = discord.Embed.from_dict(embed_dict)
+        await ctx.send(embed=info_embed)
 
 def setup(client):
     client.add_cog(Base(client))

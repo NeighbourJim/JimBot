@@ -8,6 +8,37 @@ class Admin(commands.Cog):
     def __init__(self, client):
         self.client = client
         
+    #region ---------------- Extension Loaders ----------------
+    # Loads extensions
+    @commands.command(help="Loads a command module.", hidden=True)
+    @commands.has_guild_permissions(administrator=True)
+    @commands.guild_only()
+    async def load(self, ctx, extension):
+        self.client.load_extension(f'cogs.{extension}')
+        print(f'Loaded extension {extension}')
+        await self.ctx.send(f'Loaded extension {extension}')
+
+    # Unload extensions - Obviously!
+    @commands.command(help="Unloads a command module.", hidden=True)
+    @commands.has_guild_permissions(administrator=True)
+    @commands.guild_only()
+    async def unload(self, ctx, extension):
+        self.client.unload_extension(f'cogs.{extension}')
+        print(f'Unloaded extension {extension}')
+        await self.ctx.send(f'Unloaded extension {extension}')
+
+    # Reload a cog - Useful for working on cogs without having to restart the bot constantly
+    @commands.command(help="Reloads a command module.", hidden=True)
+    @commands.has_guild_permissions(administrator=True)
+    @commands.guild_only()
+    async def reload(self, ctx, extension):
+        self.client.unload_extension(f'cogs.{extension}')
+        self.client.load_extension(f'cogs.{extension}')
+        print(f'Reloaded extension {extension}')
+        await ctx.send(f'Reloaded extension {extension}')
+    
+    #endregion
+    
     @commands.command(aliases=["q"], help="Causes the bot to shut down. Owner command only.")
     @commands.is_owner()
     async def quit(self, ctx):

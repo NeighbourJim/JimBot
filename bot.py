@@ -30,39 +30,6 @@ async def on_error(ctx, error):
     print(error)
 #endregion
 
-
-
-#region ---------------- Extension Loaders ----------------
-# Loads extensions
-@client.command(help="Loads a command module.", hidden=True)
-@commands.has_guild_permissions(administrator=True)
-@commands.guild_only()
-async def load(ctx, extension):
-    client.load_extension(f'cogs.{extension}')
-    print(f'Loaded extension {extension}')
-    await ctx.send(f'Loaded extension {extension}')
-
-# Unload extensions - Obviously!
-@client.command(help="Unloads a command module.", hidden=True)
-@commands.has_guild_permissions(administrator=True)
-@commands.guild_only()
-async def unload(ctx, extension):
-    client.unload_extension(f'cogs.{extension}')
-    print(f'Unloaded extension {extension}')
-    await ctx.send(f'Unloaded extension {extension}')
-
-# Reload a cog - Useful for working on cogs without having to restart the bot constantly
-@client.command(help="Reloads a command module.", hidden=True)
-@commands.has_guild_permissions(administrator=True)
-@commands.guild_only()
-async def reload(ctx, extension):
-    client.unload_extension(f'cogs.{extension}')
-    client.load_extension(f'cogs.{extension}')
-    print(f'Reloaded extension {extension}')
-    await ctx.send(f'Reloaded extension {extension}')
-    
-#endregion
-
 # Load the Cog files from ./cogs
 for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
