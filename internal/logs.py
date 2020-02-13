@@ -6,7 +6,7 @@ from datetime import date
 class Logger():
     def __init__(self, logLevel):
         self.__loglevel = logLevel
-        self.__path = './logs'
+        self.__path = './logs/'
         self.__filename = '{0}discord-{1}.log'.format(self.__path, date.today())
 
     def CreateLogDirectory(self):

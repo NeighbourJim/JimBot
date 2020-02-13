@@ -77,7 +77,8 @@ class Base(commands.Cog):
             digits_regex = re.compile('(\d)(\1){1,}$')
             if str(number)[-1] == str(number)[-2]:
                 digits_emoji = Helper.FindEmoji(ctx, "checkEm")
-                response += f'<:{digits_emoji.name}:{digits_emoji.id}>'
+                if digits_emoji != None:
+                    response += f'<:{digits_emoji.name}:{digits_emoji.id}>'
             await ctx.send(response)
             
         
