@@ -32,6 +32,7 @@ class Translate(commands.Cog):
     @commands.cooldown(rate=1, per=10, type=BucketType.channel)
     @commands.guild_only()
     async def translate(self, ctx):
+        await ctx.trigger_typing()
         try:
             split_message = Helper.CommandStrip(ctx.message.content).split('lang:')
             message_to_translate = split_message[0]
@@ -55,6 +56,7 @@ class Translate(commands.Cog):
     @commands.cooldown(rate=1, per=30, type=BucketType.channel)
     @commands.guild_only()
     async def bad_translate(self,ctx):
+        await ctx.trigger_typing()
         try:
             message_to_translate = Helper.CommandStrip(ctx.message.content)
             current_message = message_to_translate

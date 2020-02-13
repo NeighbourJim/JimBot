@@ -36,14 +36,30 @@ class Google(commands.Cog):
         else:
             return None
 
-    @commands.command(aliases=["g", "gs", "G", "Gs"])    
+    async def GetSafeSearchResult(self, message):
+        query = Helper.CommandStrip(message)
+        results = self.cse_service.cse().list(q=query, cx=current_settings["keys"]["cse"], safe="active").execute()
+        if "items" in results:
+            final_results = []
+            i = 0
+            for item in results["items"]:
+                if(i < 3):
+                    final_results.append(item)
+                    i += 1
+                else:
+                    break
+            return final_results
+        else:
+            return None
+
+    @commands.command(aliases=["g", "gs", "G", "Gs", "google"])    
     @commands.cooldown(rate=1, per=5, type=BucketType.channel)
     @commands.guild_only()
     async def Google(self,ctx):
         if ctx.message.channel.is_nsfw():
-            return None
-        else:
             task = asyncio.create_task(self.GetSearchResult(ctx.message.content))
+        else:
+            task = asyncio.create_task(self.GetSafeSearchResult(ctx.message.content))
         await task
         if(task.result() != None):
             fields = [  {"name": task.result()[0]['title'], "value": task.result()[0]['link'], "inline": False }, 
