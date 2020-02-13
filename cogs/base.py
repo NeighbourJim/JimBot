@@ -80,8 +80,17 @@ class Base(commands.Cog):
                 if digits_emoji != None:
                     response += f'<:{digits_emoji.name}:{digits_emoji.id}>'
             await ctx.send(response)
-            
-        
+
+    @commands.command(aliases=["Pick", "p"])
+    @commands.cooldown(rate=1, per=1, type=BucketType.channel)
+    @commands.guild_only()
+    async def pick(self, ctx):
+        split_message = Helper.CommandStrip(ctx.message.content).split(',')
+        if len(split_message) > 1:
+            result = random.choice(split_message)
+            await ctx.send(f'{ctx.message.author.mention}: {result}')
+        else:
+            await ctx.send(f'{ctx.message.author.mention}: You only gave one option.')
 
 
 def setup(client):

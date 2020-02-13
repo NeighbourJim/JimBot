@@ -24,6 +24,10 @@ async def on_ready():
 async def on_command_error(ctx, error):
     if type(error) == discord.ext.commands.errors.CommandOnCooldown:
         await ctx.send(content=f'{ctx.message.author.mention}: **ERROR:** ``{error}``', delete_after=5.0)
+
+@client.event
+async def on_error(ctx, error):
+    print(error)
 #endregion
 
 

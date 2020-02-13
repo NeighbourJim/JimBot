@@ -65,13 +65,11 @@ class Google(commands.Cog):
             if(task.result() != None):
                 fields = []
                 for item in task.result():
-                    fields.append({"name": item['title'], "value": item['link'], "inline": False })
-                                    
+                    fields.append({"name": item['title'], "value": item['link'], "inline": False })        
                 result_dict = {
                     "author": {"name": "Search Results for '{}'".format(Helper.CommandStrip(ctx.message.content))}, 
                     "footer": {"text": "Searched for by {}".format(ctx.message.author)}, 
                     "fields": fields,
-                    "colour": discord.Colour.red(),
                     "thumbnail": {"url": "https://cdn.discordapp.com/attachments/144073497939935232/677385165462568970/500px-Google_G_Logo.svg.png"}
                     }
                 result_embed = discord.Embed.from_dict(result_dict)
