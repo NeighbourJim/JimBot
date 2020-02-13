@@ -56,26 +56,31 @@ class Google(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=BucketType.channel)
     @commands.guild_only()
     async def Google(self,ctx):
-        if ctx.message.channel.is_nsfw():
-            task = asyncio.create_task(self.GetSearchResult(ctx.message.content))
-        else:
-            task = asyncio.create_task(self.GetSafeSearchResult(ctx.message.content))
-        await task
-        if(task.result() != None):
-            fields = [  {"name": task.result()[0]['title'], "value": task.result()[0]['link'], "inline": False }, 
-                        {"name": task.result()[1]['title'], "value": task.result()[1]['link'], "inline": False }, 
-                        {"name": task.result()[2]['title'], "value": task.result()[2]['link'], "inline": False }, ]
-            result_dict = {
-                "author": {"name": "Search Results for '{}'".format(Helper.CommandStrip(ctx.message.content))}, 
-                "footer": {"text": "Searched for by {}".format(ctx.message.author)}, 
-                "fields": fields,
-                "colour": discord.colour.Colour.blurple(),
-                "thumbnail": {"url": "https://cdn.discordapp.com/attachments/144073497939935232/677385165462568970/500px-Google_G_Logo.svg.png"}
-                }
-            result_embed = discord.Embed.from_dict(result_dict)
-            await ctx.send(embed=result_embed)
-        else:
-            await ctx.send(f'{ctx.message.author.mention}: No results found for that query.')
+        try:
+            if ctx.message.channel.is_nsfw():
+                task = asyncio.create_task(self.GetSearchResult(ctx.message.content))
+            else:
+                task = asyncio.create_task(self.GetSafeSearchResult(ctx.message.content))
+            await task
+            if(task.result() != None):
+                fields = []
+                for item in task.result():
+                    fields.append({"name": item['title'], "value": item['link'], "inline": False })
+                                    
+                result_dict = {
+                    "author": {"name": "Search Results for '{}'".format(Helper.CommandStrip(ctx.message.content))}, 
+                    "footer": {"text": "Searched for by {}".format(ctx.message.author)}, 
+                    "fields": fields,
+                    "colour": discord.Colour.red(),
+                    "thumbnail": {"url": "https://cdn.discordapp.com/attachments/144073497939935232/677385165462568970/500px-Google_G_Logo.svg.png"}
+                    }
+                result_embed = discord.Embed.from_dict(result_dict)
+                await ctx.send(embed=result_embed)
+            else:
+                await ctx.send(f'{ctx.message.author.mention}: No results found for that query.')
+        except Exception as ex:
+            print(ex)
+            await self.client.close()
 
             
             
