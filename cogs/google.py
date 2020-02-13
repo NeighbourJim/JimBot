@@ -52,10 +52,10 @@ class Google(commands.Cog):
         else:
             return None
 
-    @commands.command(aliases=["g", "gs", "G", "Gs", "google"])    
+    @commands.command(aliases=["g", "gs", "G", "Gs", "Google"], help="Searches Google and returns up to the first 3 results.\nUsage: !google funny dog.")    
     @commands.cooldown(rate=1, per=5, type=BucketType.channel)
     @commands.guild_only()
-    async def Google(self,ctx):
+    async def google(self,ctx):
         try:
             if ctx.message.channel.is_nsfw():
                 task = asyncio.create_task(self.GetSearchResult(ctx.message.content))
@@ -101,10 +101,10 @@ class Google(commands.Cog):
         else:
             return None
 
-    @commands.command(aliases=["i", "gi", "I", "GI", "image", "IMAGE"])    
+    @commands.command(aliases=["i", "gi", "I", "GI", "Image", "IMAGE"], help="Searches Google for an image from a query.\nGives a random result from the front page. Safe-Search is enabled for SFW channels, and disabled for NSFW ones.\nUsage: !image funny dog\n")    
     @commands.cooldown(rate=1, per=5, type=BucketType.channel)
     @commands.guild_only()
-    async def ImageSearch(self, ctx):
+    async def image(self, ctx):
         if ctx.message.channel.is_nsfw():
             task = asyncio.create_task(self.GetImageResult(ctx.message.content))
         else:
@@ -132,10 +132,10 @@ class Google(commands.Cog):
         else:
             return None
 
-    @commands.command(aliases=["yt", "YT"])
+    @commands.command(aliases=["yt", "YT", "Youtube", "YouTube"], help="Searches Youtube for a query and returns the first video result.\nUsage: !yt funny dog.")
     @commands.cooldown(rate=1, per=5, type=BucketType.channel)
     @commands.guild_only()
-    async def Youtube(self, ctx):
+    async def youtube(self, ctx):
         task = asyncio.create_task(self.GetYoutubeVideo(ctx.message.content))
         await task
         if task.result() != None:

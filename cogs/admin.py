@@ -8,13 +8,13 @@ class Admin(commands.Cog):
     def __init__(self, client):
         self.client = client
         
-    @commands.command(aliases=["q"])
+    @commands.command(aliases=["q"], help="Causes the bot to shut down. Owner command only.")
     @commands.is_owner()
     async def quit(self, ctx):
         await ctx.send("Bot shutting down...")
         await self.client.close()
 
-    @commands.command(help="Deletes a specified number of messages from the channel.")
+    @commands.command(help="Deletes a specified number of messages from the channel.\nCan be used to target only one specific user.\nUsage: !purge 5 / !purge @user 5")
     @commands.cooldown(rate=1, per=10, type=BucketType.channel)
     @commands.has_permissions(manage_messages=True)
     @commands.guild_only()

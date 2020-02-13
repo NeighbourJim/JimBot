@@ -6,7 +6,7 @@ from discord.ext.commands import BucketType
 from googletrans import Translator
 
 # Internal Imports
-from internal.trans_languages import language_dictionary, bad_trans_languages
+from internal.data.trans_languages import language_dictionary, bad_trans_languages
 from internal.helpers import Helper
 from bot import current_settings
 
@@ -28,7 +28,7 @@ class Translate(commands.Cog):
             return None
         
 
-    @commands.command(aliases=["tr"])    
+    @commands.command(aliases=["tr"], help="Translates a message into another language.\nThe language can be specified with lang:code, otherwise will default to translating into English.\nUsage: !translate Hola")    
     @commands.cooldown(rate=1, per=10, type=BucketType.channel)
     @commands.guild_only()
     async def translate(self, ctx):
@@ -52,10 +52,10 @@ class Translate(commands.Cog):
             print(ex)
             await self.client.close()
 
-    @commands.command(aliases=["btr"])    
+    @commands.command(aliases=["btr"], help="Translates a message into many other languages in succession.\nUsage: !BadTranslate funny dog")    
     @commands.cooldown(rate=1, per=30, type=BucketType.channel)
     @commands.guild_only()
-    async def bad_translate(self,ctx):
+    async def badtranslate(self,ctx):
         await ctx.trigger_typing()
         try:
             message_to_translate = Helper.CommandStrip(ctx.message.content)

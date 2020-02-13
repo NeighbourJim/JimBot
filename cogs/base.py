@@ -11,16 +11,16 @@ class Base(commands.Cog):
     def __init__(self, client):
         self.client = client    
 
-    @commands.command()    
+    @commands.command(help="Ping!")    
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
     @commands.guild_only()
     async def ping(self, ctx):
         await ctx.send('Pong!')
 
-    @commands.command(aliases=["8ball", "8b"])
+    @commands.command(aliases=["8ball", "8b"], help="Roll the Magic 8-Ball!\nUsage: !magic8ball question?")
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
     @commands.guild_only()
-    async def _8ball(self, ctx):
+    async def magic8ball(self, ctx):
         answers = [
 					'Signs point to yes.',
 					'Yes.',
@@ -50,7 +50,7 @@ class Base(commands.Cog):
         else:
             await ctx.send(f'{ctx.message.author.mention}: What are you asking?')
 
-    @commands.command(aliases=["r", "R"])
+    @commands.command(aliases=["r", "R"], help="Rolls a random number between 2 other numbers.\nIf provided with 1 number, will roll between 0 and that number.\nIf provided with 2 separated by a comma, will take the first as the min and the second as the max.\nUsage: !roll 100 / !roll 10,20.")
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
     @commands.guild_only()
     async def roll(self, ctx):
@@ -81,7 +81,7 @@ class Base(commands.Cog):
                     response += f'<:{digits_emoji.name}:{digits_emoji.id}>'
             await ctx.send(response)
 
-    @commands.command(aliases=["Pick", "p"])
+    @commands.command(aliases=["Pick", "p"], help="Selects a random item out of provided choices.\nUsage: !pick cat,dog.")
     @commands.cooldown(rate=1, per=1, type=BucketType.channel)
     @commands.guild_only()
     async def pick(self, ctx):
@@ -92,6 +92,29 @@ class Base(commands.Cog):
         else:
             await ctx.send(f'{ctx.message.author.mention}: You only gave one option.')
 
+    # DICE COMMAND
+    # Rolls a die of the specified type a specified number of times.
+    # Usage: [prefix]dice 2d10
+    @commands.command(aliases=["Dice"], help="Rolls a die of specified size a specified numer of times.\nUsage: !dice 2d20")
+    @commands.cooldown(rate=1, per=1, type=BucketType.channel)
+    @commands.guild_only()
+    async def dice(self, ctx):
+        split_message = Helper.CommandStrip(ctx.message.content).lower().split('d')
+        if len(split_message) > 1:
+            try:
+                dice_amount = int(split_message[0])
+                dice_size = int(split_message[1])
+                rolls = []
+                if dice_amount > 0 and dice_size > 0:
+                    for i in range(dice_amount):
+                        rolls.append(random.randint(1, dice_size))
+                    await ctx.send(f'{ctx.message.author.mention}: Your rolls: **{rolls}**.\n**Total:** {sum(rolls)}.')
+                else:
+                    await ctx.send(f'{ctx.message.author.mention}: Invalid dice. Correct usage eg: ``!dice 2d20``')
+            except:
+                await ctx.send(f'{ctx.message.author.mention}: Invalid dice. Correct usage eg: ``!dice 2d20``')
+        else:
+            await ctx.send(f'{ctx.message.author.mention}: Invalid dice. Correct usage eg: ``!dice 2d20``')
 
 def setup(client):
     client.add_cog(Base(client))
