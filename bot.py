@@ -15,19 +15,18 @@ client = commands.Bot(
     owner_id = current_settings["settings"]["owner"])
 
 #region ---------------- Event Listeners ----------------
-@commands.Cog.listener()
-async def on_ready(self):        
-    print('Logged in as {}'.format(self.client.user))
-    print('Connected to {} server(s).'.format(len(self.client.guilds)))
+@client.event
+async def on_ready():        
+    print('Logged in as {}'.format(client.user))
+    print('Connected to {} server(s).'.format(len(client.guilds)))
 
-@commands.Cog.listener()
-async def on_command_error(self, ctx, error):
-    if(type(error) != discord.ext.commands.errors.CommandNotFound):
-        print(f'**ERROR:** ``{error}``')
-        ctx.send(f'**ERROR:** ``{error}``')
-    elif type(error) == discord.ext.commands.errors.CommandOnCooldown:
-        ctx.send(f'**ERROR:** ``{error}``')
+@client.event
+async def on_command_error(ctx, error):
+    if type(error) == discord.ext.commands.errors.CommandOnCooldown:
+        await ctx.send(content=f'**ERROR:** ``{error}``', delete_after=5.0)
 #endregion
+
+
 
 #region ---------------- Extension Loaders ----------------
 # Loads extensions
@@ -50,6 +49,7 @@ async def reload(ctx, extension):
     client.unload_extension(f'cogs.{extension}')
     client.load_extension(f'cogs.{extension}')
     print(f'Reloaded extension {extension}')
+    await ctx.send(f'Reloaded extension {extension}')
     
 #endregion
 
