@@ -8,7 +8,7 @@ class Admin(commands.Cog):
     def __init__(self, client):
         self.client = client
         
-    @commands.command()
+    @commands.command(aliases=["q"])
     @commands.is_owner()
     async def quit(self, ctx):
         await ctx.send("Bot shutting down...")
