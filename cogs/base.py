@@ -16,7 +16,7 @@ class Base(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
     @commands.guild_only()
     async def ping(self, ctx):
-        await ctx.send('Pong!')
+        await ctx.send(':sparkles:')
 
     @commands.command(aliases=["8ball", "8b"], help="Roll the Magic 8-Ball!\nUsage: !magic8ball question?")
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
@@ -128,7 +128,7 @@ class Base(commands.Cog):
             amount = 1
         for i in range(0,1000): 
             r_member = random.choice(members)
-            if r_member.status != discord.Status.offline and r_member not in selected_members:                 
+            if r_member.status != discord.Status.offline and r_member not in selected_members and r_member.bot == False:                 
                 selected_members.append(r_member)
             if len(selected_members) == amount:
                 break
@@ -154,7 +154,7 @@ class Base(commands.Cog):
             amount = 1
         for i in range(0,1000): 
             r_member = random.choice(members)
-            if r_member not in selected_members:                 
+            if r_member not in selected_members and r_member.bot == False:                 
                 selected_members.append(r_member)
             if len(selected_members) == amount:
                 break

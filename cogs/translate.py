@@ -84,7 +84,7 @@ class Translate(commands.Cog):
             logger.LogPrint(f'BTR: BadTranslate complete.', logging.DEBUG)
         except Exception as ex:
             logger.LogPrint("BAD TRANSLATE ERROR", logging.CRITICAL, ex)
-            await self.client.close()
+            await ctx.send(f'ERROR: {ex}.\nThis usually means Google didnt respond properly. Trying to find a way to prevent it!')
 
 def setup(client):
     client.add_cog(Translate(client))

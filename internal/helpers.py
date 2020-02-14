@@ -50,7 +50,6 @@ class Helpers():
         return re.sub(r'{}'.format(regex), '', f'{message}').lstrip()
 
     def FindEmoji(self, context, name_to_find):
-        print("hello")
         try:
             emoji_list = context.guild.emojis
             for emoji in emoji_list:
