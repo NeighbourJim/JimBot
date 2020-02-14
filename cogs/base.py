@@ -5,6 +5,7 @@ from discord.ext import commands
 from discord.ext.commands import BucketType
 
 from internal.helpers import Helper
+from internal.data.adjectives import adjectives
 
 class Base(commands.Cog):
 
@@ -60,14 +61,14 @@ class Base(commands.Cog):
         max = None
         if len(split_message) > 1:            
             try:
-                min = int(split_message[0])
-                max = int(split_message[1])
+                min = int(Helper.FuzzyNumberSearch(split_message[0]))
+                max = int(Helper.FuzzyNumberSearch(split_message[1]))
             except:
                 await ctx.send(f'{ctx.message.author.mention}: One of your numbers wasn\'t a number.')
         else:
             try:
                 min = 0
-                max = int(split_message[0])
+                max = int(Helper.FuzzyNumberSearch(split_message[0]))
             except Exception as ex:
                 print(ex)
                 await ctx.send(f'{ctx.message.author.mention}: That\'s not a number.')
@@ -99,8 +100,8 @@ class Base(commands.Cog):
         split_message = Helper.CommandStrip(ctx.message.content).lower().split('d')
         if len(split_message) > 1:
             try:
-                dice_amount = int(split_message[0])
-                dice_size = int(split_message[1])
+                dice_amount = int(Helper.FuzzyNumberSearch(split_message[0]))
+                dice_size = int(Helper.FuzzyNumberSearch(split_message[1]))
                 rolls = []
                 if dice_amount > 0 and dice_size > 0:
                     for i in range(dice_amount):
@@ -122,7 +123,7 @@ class Base(commands.Cog):
         response = ''
         members = ctx.guild.members
         try:
-            amount = int(Helper.CommandStrip(ctx.message.content))
+            amount = int(Helper.FuzzyNumberSearch(Helper.CommandStrip(ctx.message.content)))
         except:
             amount = 1
         for i in range(0,1000): 
@@ -148,7 +149,7 @@ class Base(commands.Cog):
         response = ''
         members = ctx.guild.members
         try:
-            amount = int(Helper.CommandStrip(ctx.message.content))
+            amount = int(Helper.FuzzyNumberSearch(Helper.CommandStrip(ctx.message.content)))
         except:
             amount = 1
         for i in range(0,1000): 
@@ -181,6 +182,47 @@ class Base(commands.Cog):
                     }
         info_embed = discord.Embed.from_dict(embed_dict)
         await ctx.send(embed=info_embed)
+
+    @commands.command(help="Randomly describe whaver you put in.", aliases=["a", "A"])
+    @commands.cooldown(rate=1, per=2, type=BucketType.channel)
+    @commands.guild_only()
+    async def adjective(self, ctx):
+        adjs = []
+        response = ''
+        split_message = Helper.CommandStrip(ctx.message.content).split(' ')
+        amount = Helper.FuzzyNumberSearch(split_message[0])
+        if amount == None:
+            amount = 2
+        else:
+            split_message = split_message[1:]
+        if len(split_message) == 0:
+            split_message.append(ctx.message.author.display_name)
+        elif split_message[0] == '':
+            split_message.append(ctx.message.author.display_name)
+        if amount > 0:
+            if amount > 5:
+                amount = 5
+            for i in range(0,amount):
+                selected_adj = random.choice(adjectives)
+                if selected_adj in adjs:
+                    selected_adj = random.choice(adjectives)
+                    i -= 1
+                    continue
+                adjs.append(selected_adj)
+            for i in range(len(adjs)):
+                response += f'{adjs[i]}'
+                if amount != 1:
+                    if i == (len(adjs)-2):
+                        response += ' and '
+                    else:
+                        response += ', '
+            response = f'{response[:-2]} '
+            response = response.capitalize()
+            for word in split_message:
+                response += f'{word} '
+        else:
+            response = f'{ctx.message.author.mention}: Invalid number of adjectives requested.'        
+        await ctx.send(response)
 
 def setup(client):
     client.add_cog(Base(client))

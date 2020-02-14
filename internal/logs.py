@@ -31,19 +31,24 @@ class Logger():
 
     def LogPrint(self, message, level=logging.INFO, err=None):
         if level == logging.CRITICAL:
-            print(f'{message}:{err}')
+            if level >= self.__loglevel:
+                print(f'{message}:{err}')
             self.logger.critical(message,exc_info=err)
         if level == logging.ERROR:
-            print(f'{message}:{err}')
+            if level >= self.__loglevel:
+                print(f'{message}:{err}')
             self.logger.error(message,exc_info=err)
         if level == logging.WARNING:
-            print(f'{message}:{err}')
+            if level >= self.__loglevel:
+                print(f'{message}:{err}')
             self.logger.warning(message,exc_info=err)
         if level == logging.INFO:
-            print(f'{message}:{err}')
+            if level >= self.__loglevel:
+                print(f'{message}:{err}')
             self.logger.info(message,exc_info=err)
         if level == logging.DEBUG:
-            print(f'{message}:{err}')
+            if level >= self.__loglevel:
+                print(f'{message}:{err}')
             self.logger.debug(message,exc_info=err)
             
 logger = Logger(logging.INFO)
