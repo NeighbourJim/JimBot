@@ -7,7 +7,8 @@ class Logger():
     def __init__(self, logLevel):
         self.__loglevel = logLevel
         self.__path = './logs/'
-        self.__filename = '{0}discord-{1}.log'.format(self.__path, date.today())
+        self.__filename = f'{self.__path}discord-{logLevel}-{date.today()}.log'
+        self.logger = None
 
     def CreateLogDirectory(self):
         try:
@@ -20,12 +21,29 @@ class Logger():
 
     def StartLogging(self):
         if self.CreateLogDirectory():
-            logger = logging.getLogger('discord')
-            logger.setLevel(self.__loglevel)
+            self.logger = logging.getLogger('discord')
+            self.logger.setLevel(self.__loglevel)
             handler = logging.FileHandler(filename=self.__filename, encoding='utf-8', mode='a')
             handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-            logger.addHandler(handler)
+            self.logger.addHandler(handler)
         else:
             print("ERROR: Failed to create logs folder.")
+
+    def LogPrint(self, message, level=logging.INFO, err=None):
+        if level == logging.CRITICAL:
+            print(f'{message}:{err}')
+            self.logger.critical(message,exc_info=err)
+        if level == logging.ERROR:
+            print(f'{message}:{err}')
+            self.logger.error(message,exc_info=err)
+        if level == logging.WARNING:
+            print(f'{message}:{err}')
+            self.logger.warning(message,exc_info=err)
+        if level == logging.INFO:
+            print(f'{message}:{err}')
+            self.logger.info(message,exc_info=err)
+        if level == logging.DEBUG:
+            print(f'{message}:{err}')
+            self.logger.debug(message,exc_info=err)
             
-logger = Logger(logging.DEBUG)
+logger = Logger(logging.INFO)

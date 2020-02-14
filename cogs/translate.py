@@ -1,12 +1,14 @@
 import discord
 import asyncio
 import random
+import logging
 from discord.ext import commands
 from discord.ext.commands import BucketType
 from googletrans import Translator
 
 # Internal Imports
-from internal.data.trans_languages import language_dictionary, bad_trans_languages
+from internal.logs import logger
+from internal.data.trans_languages import language_dictionary, bad_trans_languages, bad_trans_languages_old
 from internal.helpers import Helper
 from bot import current_settings
 
@@ -49,36 +51,40 @@ class Translate(commands.Cog):
             else:
                 await ctx.send(f'{ctx.message.author.mention}: Translation failed, for some reason.')
         except Exception as ex:
-            print(ex)
+            logger.LogPrint("TRANSLATE ERROR", logging.ERROR, ex)
             await self.client.close()
 
     @commands.command(aliases=["btr"], help="Translates a message into many other languages in succession.\nUsage: !BadTranslate funny dog")    
-    @commands.cooldown(rate=1, per=30, type=BucketType.channel)
+    @commands.cooldown(rate=1, per=10, type=BucketType.channel)
     @commands.guild_only()
     async def badtranslate(self,ctx):
+        random_lang = None
         await ctx.trigger_typing()
         try:
             message_to_translate = Helper.CommandStrip(ctx.message.content)
+            message_to_translate = Helper.EmojiConvert(message_to_translate)
             current_message = message_to_translate
-            for i in range(0, 10):
-                random_lang = random.choice(bad_trans_languages)
+            logger.LogPrint(f'BTR: Beginning BadTranslate.', logging.DEBUG)
+            for i in range(0, 15):
+                previous_lang = random_lang
+                if i % 2 == 0 and i != 0 and True == False:
+                    random_lang = 'en'
+                else:
+                    while previous_lang == random_lang:
+                        random_lang = random.choice(bad_trans_languages_old)
+                logger.LogPrint(f'BTR: Translating to {random_lang}.', logging.DEBUG)
+                logger.LogPrint(f'BTR: Pre:{current_message}', logging.DEBUG)
                 task = asyncio.create_task(self.GetTranslation(message=current_message, target_lang=random_lang))
                 await task
                 current_message = task.result()
-                if current_message == 'invalid destination language':
-                    i -= 1
+                logger.LogPrint(f'BTR: Post:{current_message}', logging.DEBUG)
             task = asyncio.create_task(self.GetTranslation(current_message))
             await task
             await ctx.send(f'{ctx.message.author.mention}: {task.result()}')
+            logger.LogPrint(f'BTR: BadTranslate complete.', logging.DEBUG)
         except Exception as ex:
-            print(ex)
+            logger.LogPrint("BAD TRANSLATE ERROR", logging.CRITICAL, ex)
             await self.client.close()
-
-        
-
-
-
-
 
 def setup(client):
     client.add_cog(Translate(client))

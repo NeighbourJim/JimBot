@@ -108,7 +108,9 @@ language_dictionary = {
 'zu': 'Zulu'
 }
 
-bad_trans_languages = ['af', 
+bad_trans_languages = ["ar","bg","ca","hr","cs","da","nl","et","fi","fr","de","el","iw","hu","id","it","lv","lt","ms","mt","no","pl","pt","ro","ru","sr","sk","sl","es","sv","th","tr","uk","vi"]
+
+bad_trans_languages_old = ['af', 
 'ar', 
 'bn', 
 'zh-cn', 
@@ -131,7 +133,6 @@ bad_trans_languages = ['af',
 'mn', 
 'no', 
 'pt', 
-'ma', 
 'ru', 
 'sm', 
 'st', 
@@ -146,3 +147,7 @@ bad_trans_languages = ['af',
 'ur', 
 'yi', 
 'zu']
+
+for i in bad_trans_languages:
+    if i not in language_dictionary:
+        print(i)
