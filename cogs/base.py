@@ -1,11 +1,13 @@
 import discord
 import random
+import logging
 import re
 from discord.ext import commands
 from discord.ext.commands import BucketType
 
 from internal.helpers import Helper
-from internal.data.adjectives import adjectives
+from internal.logs import logger
+
 
 class Base(commands.Cog):
 
@@ -72,15 +74,20 @@ class Base(commands.Cog):
             except Exception as ex:
                 print(ex)
                 await ctx.send(f'{ctx.message.author.mention}: That\'s not a number.')
-        if min != None and max != None:
-            number = random.randint(min, max)
-            response = f'{ctx.message.author.mention}: Your number between {min} and {max} was: **{number}**.'
-            digits_regex = re.compile('(\d)(\1){1,}$')
-            if str(number)[-1] == str(number)[-2]:
-                digits_emoji = Helper.FindEmoji(ctx, "checkEm")
-                if digits_emoji != None:
-                    response += f'<:{digits_emoji.name}:{digits_emoji.id}>'
-            await ctx.send(response)
+        try:
+            if min != None and max != None:
+                number = random.randint(min, max)
+                response = f'{ctx.message.author.mention}: Your number between {min} and {max} was: **{number}**.'
+                if len(str(number)) > 2:
+                    if str(number)[-1] == str(number)[-2]:
+                        digits_emoji = Helper.FindEmoji(ctx, "checkEm")
+                        if digits_emoji != None:
+                            response += f'<:{digits_emoji.name}:{digits_emoji.id}>'
+                if number == 7:
+                    response += ' :zap:'
+                await ctx.send(response)
+        except:
+            logger.LogPrint(f'ROLL command failed. - {ex}', logging.ERROR)
 
     @commands.command(aliases=["Pick", "p"], help="Selects a random item out of provided choices.\nUsage: !pick cat,dog.")
     @commands.cooldown(rate=1, per=1, type=BucketType.channel)
@@ -182,47 +189,6 @@ class Base(commands.Cog):
                     }
         info_embed = discord.Embed.from_dict(embed_dict)
         await ctx.send(embed=info_embed)
-
-    @commands.command(help="Randomly describe whaver you put in.", aliases=["a", "A"])
-    @commands.cooldown(rate=1, per=2, type=BucketType.channel)
-    @commands.guild_only()
-    async def adjective(self, ctx):
-        adjs = []
-        response = ''
-        split_message = Helper.CommandStrip(ctx.message.content).split(' ')
-        amount = Helper.FuzzyNumberSearch(split_message[0])
-        if amount == None:
-            amount = 2
-        else:
-            split_message = split_message[1:]
-        if len(split_message) == 0:
-            split_message.append(ctx.message.author.display_name)
-        elif split_message[0] == '':
-            split_message.append(ctx.message.author.display_name)
-        if amount > 0:
-            if amount > 5:
-                amount = 5
-            for i in range(0,amount):
-                selected_adj = random.choice(adjectives)
-                if selected_adj in adjs:
-                    selected_adj = random.choice(adjectives)
-                    i -= 1
-                    continue
-                adjs.append(selected_adj)
-            for i in range(len(adjs)):
-                response += f'{adjs[i]}'
-                if amount != 1:
-                    if i == (len(adjs)-2):
-                        response += ' and '
-                    else:
-                        response += ', '
-            response = f'{response[:-2]} '
-            response = response.capitalize()
-            for word in split_message:
-                response += f'{word} '
-        else:
-            response = f'{ctx.message.author.mention}: Invalid number of adjectives requested.'        
-        await ctx.send(response)
 
 def setup(client):
     client.add_cog(Base(client))

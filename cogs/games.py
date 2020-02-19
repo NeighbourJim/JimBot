@@ -7,6 +7,7 @@ from discord.ext.commands import BucketType
 
 from internal.logs import logger
 from internal.helpers import Helper
+from internal.data.adjectives import adjectives
 
 class Games(commands.Cog):
 
@@ -47,7 +48,49 @@ class Games(commands.Cog):
         except Exception as ex:
             logger.LogPrint(ex, logging.ERROR)
 
-
+    @commands.command(help="Randomly describe whaver you put in.", aliases=["a", "A"])
+    @commands.cooldown(rate=1, per=2, type=BucketType.channel)
+    @commands.guild_only()
+    async def adjective(self, ctx):
+        adjs = []
+        response = ''
+        split_message = Helper.CommandStrip(ctx.message.content).split(' ')
+        amount = Helper.FuzzyNumberSearch(split_message[0])
+        if amount == None:
+            amount = 2
+        else:
+            split_message = split_message[1:]
+        if len(split_message) == 0:
+            split_message.append(ctx.message.author.display_name)
+        elif split_message[0] == '':
+            split_message = [f"{ctx.message.author.display_name}"]
+        if amount > 0:
+            if amount > 5:
+                amount = 5
+            for i in range(0,amount):
+                selected_adj = random.choice(adjectives)
+                if selected_adj in adjs:
+                    selected_adj = random.choice(adjectives)
+                    i -= 1
+                    continue
+                adjs.append(selected_adj)
+            for i in range(len(adjs)):
+                response += f'{adjs[i]}'
+                if amount != 1:
+                    if i == (len(adjs)-2):
+                        response += ' and '
+                    else:
+                        response += ', '
+            if amount != 1:
+                response = f'{response[:-2]} '
+            else:
+                response = f'{response} '
+            response = response.capitalize()
+            for word in split_message:
+                response += f'{word} '
+        else:
+            response = f'{ctx.message.author.mention}: Invalid number of adjectives requested.'        
+        await ctx.send(f'{ctx.message.author.mention}: ``{response}``')
 
 
 def setup(client):

@@ -105,15 +105,19 @@ class Google(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=BucketType.channel)
     @commands.guild_only()
     async def image(self, ctx):
-        if ctx.message.channel.is_nsfw():
-            task = asyncio.create_task(self.GetImageResult(ctx.message.content))
-        else:
-            task = asyncio.create_task(self.GetSafeImageResult(ctx.message.content))
-        await task
-        if(task.result() != None):
-            await ctx.send(f'{ctx.message.author.mention}: **{task.result()["title"]}**\n{task.result()["link"]}')
-        else:
-            await ctx.send(f'{ctx.message.author.mention}: No results found for that query. Note that Safe Search is on if the channel is not marked as NSFW!')
+        try:
+            if ctx.message.channel.is_nsfw():
+                task = asyncio.create_task(self.GetImageResult(ctx.message.content))
+            else:
+                task = asyncio.create_task(self.GetSafeImageResult(ctx.message.content))
+            await task
+            if(task.result() != None):
+                await ctx.send(f'{ctx.message.author.mention}: **{task.result()["title"]}**\n{task.result()["link"]}')
+            else:
+                await ctx.send(f'{ctx.message.author.mention}: No results found for that query. Note that Safe Search is on if the channel is not marked as NSFW!')
+        except:
+            logger.LogPrint("IMAGE ERROR", logging.CRITICAL, ex)
+            await ctx.send(f'ERROR: {ex}.')
     #endregion
 
     #region --------------- Youtube Search ---------------
@@ -136,12 +140,16 @@ class Google(commands.Cog):
     @commands.cooldown(rate=1, per=5, type=BucketType.channel)
     @commands.guild_only()
     async def youtube(self, ctx):
-        task = asyncio.create_task(self.GetYoutubeVideo(ctx.message.content))
-        await task
-        if task.result() != None:
-            await ctx.send(f'{ctx.message.author.mention}: http://youtu.be/{task.result()["id"]["videoId"]}')
-        else:
-            await ctx.send(f'{ctx.message.author.mention}: No results found.')
+        try:
+            task = asyncio.create_task(self.GetYoutubeVideo(ctx.message.content))
+            await task
+            if task.result() != None:
+                await ctx.send(f'{ctx.message.author.mention}: http://youtu.be/{task.result()["id"]["videoId"]}')
+            else:
+                await ctx.send(f'{ctx.message.author.mention}: No results found.')
+        except:
+            logger.LogPrint("YOUTUBE ERROR", logging.CRITICAL, ex)
+            await ctx.send(f'ERROR: {ex}.')
     #endregion
 
 def setup(client):
