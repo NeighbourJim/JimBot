@@ -47,19 +47,23 @@ class Memes(commands.Cog):
             message = Helper.CommandStrip(ctx.message.content)
             values_to_find = []
             if len(message) > 0:
-                split_message = message.split(',')
-                for name in split_message:
-                    member = ctx.guild.get_member_named(name)
-                    if member is not None:
-                        t = ("author_id", f'<@{member.id}>')
-                    else:
-                        t = ("author_username", name)
+                if Helper.FuzzyNumberSearch(message):
+                    t = ("m_id", Helper.FuzzyNumberSearch(message))
                     values_to_find.append(t)
+                else:
+                    split_message = message.split(',')
+                    for name in split_message:
+                        member = ctx.guild.get_member_named(name)
+                        if member is not None:
+                            t = ("author_id", f'<@{member.id}>')
+                        else:
+                            t = ("author_username", name)
+                        values_to_find.append(t)
             if len(values_to_find) != 0:
                 meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_meme_all", values_to_find, WhereType.OR)
             else:
                 meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_meme_all", None)
-            if meme is not None:
+            if len(meme) > 0:
                 print(f'FUCK {meme}')
                 self.last_meme_roll = meme[0][0]
                 await ctx.send(f'{ctx.message.author.mention}: **ID:{meme[0][0]}**\n {meme[0][1]}')
@@ -89,13 +93,13 @@ class Memes(commands.Cog):
                 meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_meme_all_new", values_to_find, WhereType.OR)
             else:
                 meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_meme_all_new", None)
-            if meme is not None:
+            if len(meme) > 0:
                 print(f'FUCK {meme}')
                 self.last_meme_roll = meme[0][0]
                 await ctx.send(f'{ctx.message.author.mention}: **ID:{meme[0][0]}**\n {meme[0][1]}')
             else:
                 self.last_meme_roll = None
-                await ctx.send((f'{ctx.message.author.mention}: No memes found.'))
+                await ctx.send((f'{ctx.message.author.mention}: No memes found that were added in the last 30 days.'))
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t execute meme command: {ex}',logging.ERROR)     
 
@@ -119,13 +123,13 @@ class Memes(commands.Cog):
                 meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_unrated_all", values_to_find, WhereType.OR)
             else:
                 meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_unrated_all", None)
-            if meme is not None:
+            if len(meme) > 0:
                 print(f'FUCK {meme}')
                 self.last_meme_roll = meme[0][0]
                 await ctx.send(f'{ctx.message.author.mention}: **ID:{meme[0][0]}**\n {meme[0][1]}')
             else:
                 self.last_meme_roll = None
-                await ctx.send((f'{ctx.message.author.mention}: No memes found.'))
+                await ctx.send((f'{ctx.message.author.mention}: No unrated memes found.'))
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t execute meme command: {ex}',logging.ERROR)     
     
