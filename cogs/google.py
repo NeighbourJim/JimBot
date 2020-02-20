@@ -1,12 +1,14 @@
 import discord
 import random
 import asyncio
+import logging
 from discord.ext import commands
 from discord.ext.commands import BucketType
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 # Internal Imports
+from internal.logs import logger
 from internal.helpers import Helper
 from bot import current_settings
 
@@ -115,7 +117,7 @@ class Google(commands.Cog):
                 await ctx.send(f'{ctx.message.author.mention}: **{task.result()["title"]}**\n{task.result()["link"]}')
             else:
                 await ctx.send(f'{ctx.message.author.mention}: No results found for that query. Note that Safe Search is on if the channel is not marked as NSFW!')
-        except:
+        except Exception as ex:
             logger.LogPrint("IMAGE ERROR", logging.CRITICAL, ex)
             await ctx.send(f'ERROR: {ex}.')
     #endregion
@@ -147,7 +149,7 @@ class Google(commands.Cog):
                 await ctx.send(f'{ctx.message.author.mention}: http://youtu.be/{task.result()["id"]["videoId"]}')
             else:
                 await ctx.send(f'{ctx.message.author.mention}: No results found.')
-        except:
+        except Exception as ex:
             logger.LogPrint("YOUTUBE ERROR", logging.CRITICAL, ex)
             await ctx.send(f'ERROR: {ex}.')
     #endregion

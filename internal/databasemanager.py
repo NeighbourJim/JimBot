@@ -140,7 +140,7 @@ class DB_Manager():
                     sql_query += f" WHERE {where_clause}"
                 self.cursor.execute(sql_query, where_values)
                 result = self.cursor.fetchmany(rows_required)
-                print(result)
+                logger.LogPrint(f'Retrieved from {db_name}: {result}', logging.DEBUG)
                 self.connection.close()
                 return result
         except Exception as ex:
@@ -152,10 +152,10 @@ class DB_Manager():
         try:
             if self.ConnectToDB(db_name):
                 self.cursor = self.connection.cursor()
-                self.cursor.execute(query)
+                result = self.cursor.execute(query).fetchone()
                 self.connection.commit()
                 self.connection.close()
-                return True
+                return result
         except Exception as ex:
             logger.LogPrint(f'Failed to execute query. DB:{db_name} - Q:{query}. - {ex}', logging.ERROR)
 
