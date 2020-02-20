@@ -7,14 +7,17 @@ from discord.ext.commands import BucketType
 from os import path
 
 from internal.logs import logger
+from internal.helpers import Helper
+from internal.enums import WhereType
 from internal.databasemanager import dbm
-from internal.data.meme_views import *
+from internal.data.meme_views import meme_views
 
 class Memes(commands.Cog):
 
     def __init__(self, client):
         self.client = client
         self.db_folder = "./internal/data/databases/"
+        self.last_meme_roll = None
 
     def CheckAndCreateDatabase(self):
         try:
@@ -30,14 +33,9 @@ class Memes(commands.Cog):
                     dbm.CreateTable(filename, "upvotes", columns)
 
                     # Create the required views
-                    dbm.ExecuteRawQuery(filename, view_b_five)
-                    dbm.ExecuteRawQuery(filename, view_b_five_ab_ten)
-                    dbm.ExecuteRawQuery(filename, view_get_meme_num)
-                    dbm.ExecuteRawQuery(filename, view_random_meme)
-                    dbm.ExecuteRawQuery(filename, view_random_new_meme)
-                    dbm.ExecuteRawQuery(filename, view_random_unrated)
-                    dbm.ExecuteRawQuery(filename, view_t_five)
-                    dbm.ExecuteRawQuery(filename, view_t_five_above_ten)
+                    for view in meme_views:
+                        dbm.ExecuteRawQuery(filename, view)
+                    
         except Exception as ex:
             logger.LogPrint(f'ERROR - Could not create table or view: {ex}',logging.ERROR)                
 
@@ -45,8 +43,32 @@ class Memes(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
     @commands.guild_only()
     async def meme(self, ctx):
-        meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_meme")
-        await ctx.send(f'{ctx.message.author.mention}: **ID:{meme[0][1]}**\n {meme[0][2]}')
+        try:
+            message = Helper.CommandStrip(ctx.message.content)
+            values_to_find = []
+            if len(message) > 0:
+                split_message = message.split(',')
+                for name in split_message:
+                    member = ctx.guild.get_member_named(name)
+                    if member is not None:
+                        t = ("author_id", f'<@{member.id}>')
+                    else:
+                        t = ("author_username", name)
+                    values_to_find.append(t)
+            if len(values_to_find) != 0:
+                meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_meme_all", values_to_find, WhereType.OR)
+            else:
+                meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_meme_all", None)
+            if meme is not None:
+                print(f'FUCK {meme}')
+                self.last_meme_roll = meme[0][0]
+                await ctx.send(f'{ctx.message.author.mention}: **ID:{meme[0][0]}**\n {meme[0][1]}')
+            else:
+                self.last_meme_roll = None
+                await ctx.send((f'{ctx.message.author.mention}: No memes found.'))
+        except Exception as ex:
+            logger.LogPrint(f'ERROR - Couldn\'t execute meme command: {ex}',logging.ERROR)             
+
 
 
     @commands.command(hidden=True)    

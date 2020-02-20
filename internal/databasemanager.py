@@ -3,6 +3,7 @@ import logging
 
 from internal.helpers import Helper
 from internal.logs import logger
+from internal.enums import WhereType
 
 class DB_Manager():
     def __init__(self):
@@ -117,9 +118,9 @@ class DB_Manager():
             logger.LogPrint(f'Failed to delete from {db_name} - {table_name}. - {ex}', logging.ERROR)
             return ex
 
-    def Retrieve(self, db_name, table_name, where = None, column_data = ["*"]):
+    def Retrieve(self, db_name, table_name, where = None, where_type=WhereType.AND, column_data = ["*"], rows_required = 1):
         try:
-            if self.ConnectToDB(db_name):
+            if self.ConnectToDB(db_name): 
                 columns = []
                 where_values = []
                 where_clause = ""
@@ -129,13 +130,17 @@ class DB_Manager():
                     columns.append(c)
                 sql_query = f"SELECT {','.join(columns)} FROM {table_name}"
                 if where != None:
-                    for w in where.items():
-                        where_clause += f"{w[0]} = ? AND "
+                    for w in where:
+                        if where_type == WhereType.AND:
+                            where_clause += f"{w[0]} = ? AND "
+                        else:
+                            where_clause += f"{w[0]} = ? OR  "
                         where_values.append(w[1])
                     where_clause = where_clause[:-4]
-                    sql_query += " WHERE {where_clause}"                
+                    sql_query += f" WHERE {where_clause}"
                 self.cursor.execute(sql_query, where_values)
-                result = self.cursor.fetchall()
+                result = self.cursor.fetchmany(rows_required)
+                print(result)
                 self.connection.close()
                 return result
         except Exception as ex:
