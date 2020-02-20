@@ -40,7 +40,7 @@ class Memes(commands.Cog):
             logger.LogPrint(f'ERROR - Could not create table or view: {ex}',logging.ERROR)                
 
     @commands.command(help="Get a meme.", aliases=["m", "M"])
-    @commands.cooldown(rate=1, per=2, type=BucketType.channel)
+    @commands.cooldown(rate=1, per=20, type=BucketType.channel)
     @commands.guild_only()
     async def meme(self, ctx):
         try:
@@ -69,8 +69,66 @@ class Memes(commands.Cog):
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t execute meme command: {ex}',logging.ERROR)             
 
+    @commands.command(help="Get a meme added within the last 30 days.", aliases=["nm", "NM", "Nm"])
+    @commands.cooldown(rate=1, per=20, type=BucketType.channel)
+    @commands.guild_only()
+    async def newmeme(self, ctx):
+        try:
+            message = Helper.CommandStrip(ctx.message.content)
+            values_to_find = []
+            if len(message) > 0:
+                split_message = message.split(',')
+                for name in split_message:
+                    member = ctx.guild.get_member_named(name)
+                    if member is not None:
+                        t = ("author_id", f'<@{member.id}>')
+                    else:
+                        t = ("author_username", name)
+                    values_to_find.append(t)
+            if len(values_to_find) != 0:
+                meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_meme_all_new", values_to_find, WhereType.OR)
+            else:
+                meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_meme_all_new", None)
+            if meme is not None:
+                print(f'FUCK {meme}')
+                self.last_meme_roll = meme[0][0]
+                await ctx.send(f'{ctx.message.author.mention}: **ID:{meme[0][0]}**\n {meme[0][1]}')
+            else:
+                self.last_meme_roll = None
+                await ctx.send((f'{ctx.message.author.mention}: No memes found.'))
+        except Exception as ex:
+            logger.LogPrint(f'ERROR - Couldn\'t execute meme command: {ex}',logging.ERROR)     
 
-
+    @commands.command(help="Get a meme that has not yet been voted on.", aliases=["ur", "UR", "Ur"])
+    @commands.cooldown(rate=1, per=20, type=BucketType.channel)
+    @commands.guild_only()
+    async def unratedmeme(self, ctx):
+        try:
+            message = Helper.CommandStrip(ctx.message.content)
+            values_to_find = []
+            if len(message) > 0:
+                split_message = message.split(',')
+                for name in split_message:
+                    member = ctx.guild.get_member_named(name)
+                    if member is not None:
+                        t = ("author_id", f'<@{member.id}>')
+                    else:
+                        t = ("author_username", name)
+                    values_to_find.append(t)
+            if len(values_to_find) != 0:
+                meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_unrated_all", values_to_find, WhereType.OR)
+            else:
+                meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_unrated_all", None)
+            if meme is not None:
+                print(f'FUCK {meme}')
+                self.last_meme_roll = meme[0][0]
+                await ctx.send(f'{ctx.message.author.mention}: **ID:{meme[0][0]}**\n {meme[0][1]}')
+            else:
+                self.last_meme_roll = None
+                await ctx.send((f'{ctx.message.author.mention}: No memes found.'))
+        except Exception as ex:
+            logger.LogPrint(f'ERROR - Couldn\'t execute meme command: {ex}',logging.ERROR)     
+    
     @commands.command(hidden=True)    
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
     @commands.guild_only()
