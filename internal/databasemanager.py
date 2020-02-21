@@ -109,8 +109,7 @@ class DB_Manager():
                     where_values.append(w[1])
                 where_clause = where_clause[:-4]
                 sql_query = f'DELETE FROM {table_name} WHERE {where_clause}'
-                self.cursor.execute(sql_query,where_values)
-                affected = self.cursor.rowcount
+                affected = self.cursor.execute(sql_query,where_values).rowcount
                 self.connection.commit()
                 self.connection.close()
                 logger.LogPrint(f'Deleted from {db_name} - {table_name}.', logging.DEBUG)
