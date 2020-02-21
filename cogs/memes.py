@@ -5,6 +5,7 @@ import logging
 from discord.ext import commands
 from discord.ext.commands import BucketType
 from os import path
+from datetime import datetime
 
 from internal.logs import logger
 from internal.helpers import Helper
@@ -116,6 +117,7 @@ class Memes(commands.Cog):
 
     @commands.command(help="Get a meme.", aliases=["m", "M"])
     @commands.cooldown(rate=1, per=20, type=BucketType.channel)
+    @commands.has_role("Bot Use")
     @commands.guild_only()
     async def meme(self, ctx):
         try:
@@ -142,15 +144,16 @@ class Memes(commands.Cog):
             if len(meme) > 0:
                 self.last_meme_roll = meme[0][0]
                 await ctx.send(f'{ctx.message.author.mention}: **ID:{meme[0][0]}**\n {meme[0][1]}')
-                await to_delete.delete()
+                await to_delete.delete(delay=3)
             else:
                 await ctx.send((f'{ctx.message.author.mention}: No memes found.'))
-                await to_delete.delete()
+                await to_delete.delete(delay=3)
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t execute meme command: {ex}',logging.ERROR)             
 
     @commands.command(help="Get a meme added within the last 30 days.", aliases=["nm", "NM", "Nm"])
     @commands.cooldown(rate=1, per=20, type=BucketType.channel)
+    @commands.has_role("Bot Use")
     @commands.guild_only()
     async def newmeme(self, ctx):
         try:
@@ -173,15 +176,16 @@ class Memes(commands.Cog):
             if len(meme) > 0:
                 self.last_meme_roll = meme[0][0]
                 await ctx.send(f'{ctx.message.author.mention}: **ID:{meme[0][0]}**\n {meme[0][1]}')
-                await to_delete.delete()
+                await to_delete.delete(delay=3)
             else:
                 await ctx.send((f'{ctx.message.author.mention}: No memes found that were added in the last 30 days.'))
-                await to_delete.delete()
+                await to_delete.delete(delay=3)
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t execute meme command: {ex}',logging.ERROR)     
 
     @commands.command(help="Get a meme that has not yet been voted on.", aliases=["ur", "UR", "Ur"])
     @commands.cooldown(rate=1, per=20, type=BucketType.channel)
+    @commands.has_role("Bot Use")
     @commands.guild_only()
     async def unratedmeme(self, ctx):
         try:
@@ -204,15 +208,16 @@ class Memes(commands.Cog):
             if len(meme) > 0:
                 self.last_meme_roll = meme[0][0]
                 await ctx.send(f'{ctx.message.author.mention}: **ID:{meme[0][0]}**\n {meme[0][1]}')
-                await to_delete.delete()
+                await to_delete.delete(delay=3)
             else:
                 await ctx.send(f'{ctx.message.author.mention}: No unrated memes found.')
-                await to_delete.delete()
+                await to_delete.delete(delay=3)
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t execute meme command: {ex}',logging.ERROR)     
 
     @commands.command(help="Rate a meme as good.", aliases=["gm", "GM", "Gm", "Godmersham"])
     @commands.cooldown(rate=1, per=1, type=BucketType.channel)
+    @commands.has_role("Bot Use")
     @commands.guild_only()
     async def goodmeme(self, ctx):
         m_id = None
@@ -233,19 +238,20 @@ class Memes(commands.Cog):
                     dbm.Insert(f'memes{ctx.guild.id}', "upvotes", d)
                     dbm.Delete(f'memes{ctx.guild.id}', "downvotes", {"m_id": m_id, "author_id": f'<@{ctx.message.author.id}>'})
                     await ctx.send(f'{ctx.message.author.mention}: :arrow_up: **{self.GetMemeScore(ctx, m_id)}**')
-                    await to_delete.delete()
+                    await to_delete.delete(delay=3)
                 else:
                     await ctx.send(f'{ctx.message.author.mention}: You already upvoted that meme.')
-                    await to_delete.delete()
+                    await to_delete.delete(delay=3)
             else:
                 await ctx.send(f'{ctx.message.author.mention}: No meme to vote on. Either you specified a meme ID that doesn\'t exist or no meme was rolled since the last bot restart.')
-                await to_delete.delete()
+                await to_delete.delete(delay=3)
 
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t execute goodmeme command: {ex}', logging.ERROR)
 
-    @commands.command(help="Rate a meme as bad.", aliases=["bm", "BM", "Bm"])
+    @commands.command(help="Rate a meme as bad.", aliases=["bm", "BM", "Bm", "Bandmaster"])
     @commands.cooldown(rate=1, per=1, type=BucketType.channel)
+    @commands.has_role("Bot Use")
     @commands.guild_only()
     async def badmeme(self, ctx):
         m_id = None
@@ -266,19 +272,20 @@ class Memes(commands.Cog):
                     dbm.Insert(f'memes{ctx.guild.id}', "downvotes", d)
                     dbm.Delete(f'memes{ctx.guild.id}', "upvotes", {"m_id": m_id, "author_id": f'<@{ctx.message.author.id}>'})
                     await ctx.send(f'{ctx.message.author.mention}: :arrow_down: **{self.GetMemeScore(ctx, m_id)}**')
-                    await to_delete.delete()
+                    await to_delete.delete(delay=3)
                 else:
                     await ctx.send(f'{ctx.message.author.mention}: You already downvoted that meme.')
-                    await to_delete.delete()
+                    await to_delete.delete(delay=3)
             else:
                 await ctx.send(f'{ctx.message.author.mention}: No meme to vote on.\nEither you specified a meme ID that doesn\'t exist or no meme was rolled since the last bot restart.')
-                await to_delete.delete()
+                await to_delete.delete(delay=3)
 
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t execute goodmeme command: {ex}', logging.ERROR)
 
     @commands.command(help="Get a meme's information.", aliases=["mi", "MI", "Mi"])
     @commands.cooldown(rate=1, per=10, type=BucketType.channel)
+    @commands.has_role("Bot Use")
     @commands.guild_only()
     async def memeinfo(self, ctx):
         m_id = None
@@ -302,18 +309,56 @@ class Memes(commands.Cog):
                 }
                 result_embed = discord.Embed.from_dict(meme_dict)
                 await ctx.send(embed=result_embed)
-                await to_delete.delete()
+                await to_delete.delete(delay=3)
             else:
-                await ctx.send(f'{ctx.message.author.mention}: No meme info to get.\nEither you specified a meme ID that doesn\'t exist or no meme was rolled since the last bot restart.')
-                await to_delete.delete()
+                await ctx.send(f'{ctx.message.author.mention}: No meme info to get.\nEither you specified a meme ID that doesn\'t exist or no meme was rolled since the last bot restart.', delete_after=10)
+                await to_delete.delete(delay=3)
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t execute memeinfo command: {ex}', logging.ERROR)
+
+    @commands.command(help="Add a meme.", aliases=["am", "AM", "Am"])
+    @commands.cooldown(rate=1, per=10, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def addmeme(self, ctx):
+        try:
+            to_delete = ctx.message
+            forbidden = ["@everyone", "@here", "puu.sh", "twimg.com", "i.4cdn.org", "4chan.org", "mixtape.moe"]
+            message = Helper.CommandStrip(ctx.message.content)
+            mentions = ctx.message.mentions
+            valid = True
+            if len(message) > 0:
+                for term in forbidden:
+                    if message.find(term) != -1:
+                        valid = False
+                if len(mentions) > 0:
+                    valid = False
+                if valid:
+                    existing = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', [("meme", message)])
+                    if len(existing) == 0:
+                        today = datetime.today().strftime('%Y-%m-%d')
+                        d = {"meme": message, "score": 0, "author_username": ctx.message.author.name, "author_nickname": ctx.message.author.nick, "author_id": f'<@{ctx.message.author.id}>', "date_added": today}
+                        dbm.Insert(f'memes{ctx.guild.id}', 'memes', d)
+                        nm = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', [("meme", message)], where_type=WhereType.AND, column_data=["m_id"])
+                        await ctx.send(f'{ctx.message.author.mention}: Meme added. (ID:{nm[0][0]})', delete_after=5)
+                    else:
+                        await ctx.send(f'{ctx.message.author.mention}: That\'s already a meme, you dip.', delete_after=10)
+                else:
+                    await ctx.send(f'{ctx.message.author.mention}: That meme contains a forbidden term. Memes cannot highlight people or contain links that expire quickly.', delete_after=10)
+            else:
+                await ctx.send(f'{ctx.message.author.mention}: Can\'t add a blank meme.', delete_after=10)
+            await to_delete.delete(delay=3)
+        except Exception as ex:
+            logger.LogPrint(f'ERROR - Couldn\'t add meme: {ex}', logging.ERROR)
+
+    
     
     @commands.command(hidden=True)    
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
+    @commands.has_role("Bot Use")
     @commands.guild_only()
     async def TESTDB(self, ctx):
-        print()
+        print("howdy")
         
 
 

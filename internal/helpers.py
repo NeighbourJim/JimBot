@@ -47,7 +47,7 @@ class Helpers():
 
     def CommandStrip(self, message):
         regex = r'^(\{}\w*)'.format(configmanager.cm.GetConfig()["settings"]["prefix"])
-        return re.sub(r'{}'.format(regex), '', f'{message}').lstrip()
+        return re.sub(r'{}'.format(regex), '', f'{message}').strip()
 
     def FindEmoji(self, context, name_to_find):
         try:
@@ -79,6 +79,10 @@ class Helpers():
 
         return int(num_str)
 
+    def CheckIfMemberHasRole(self, member, role_name):
+        for role in member.roles:
+            if role.name == role_name:
+                return True
 
 Helper = Helpers()
 

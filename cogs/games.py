@@ -18,6 +18,7 @@ class Games(commands.Cog):
     # It will basically only run for the server I'm building the bot for.
     @commands.command(aliases=["tb", "TB", "Tb"])
     @commands.cooldown(rate=1, per=10, type=BucketType.channel)
+    @commands.has_role("Bot Use")
     @commands.guild_only()
     async def trollbox(self, ctx):
         fftrolled = Helper.FindEmoji(ctx, "fftrolled")
@@ -50,6 +51,7 @@ class Games(commands.Cog):
 
     @commands.command(help="Randomly describe whaver you put in.", aliases=["a", "A"])
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
+    @commands.has_role("Bot Use")
     @commands.guild_only()
     async def adjective(self, ctx):
         adjs = []
@@ -57,7 +59,7 @@ class Games(commands.Cog):
         split_message = Helper.CommandStrip(ctx.message.content).split(' ')
         amount = Helper.FuzzyNumberSearch(split_message[0])
         if amount == None:
-            amount = 2
+            amount = 1
         else:
             split_message = split_message[1:]
         if len(split_message) == 0:
@@ -88,6 +90,7 @@ class Games(commands.Cog):
             response = response.capitalize()
             for word in split_message:
                 response += f'{word} '
+            response = f'{response.strip()}.'
         else:
             response = f'{ctx.message.author.mention}: Invalid number of adjectives requested.'        
         await ctx.send(f'{ctx.message.author.mention}: ``{response}``')

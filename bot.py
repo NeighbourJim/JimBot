@@ -25,9 +25,11 @@ async def on_ready():
 
 @client.event
 async def on_command_error(ctx, error):
-    if type(error) == discord.ext.commands.errors.CommandOnCooldown:
-        await ctx.message.delete()
-        await ctx.send(content=f'{ctx.message.author.mention}: **ERROR:** ``{error}``', delete_after=6.0)
+    to_delete = ctx.message
+    await ctx.send(content=f'{ctx.message.author.mention}: **ERROR:** ``{error}``', delete_after=6.0)
+    await to_delete.delete()
+    if type(error) != discord.ext.commands.errors.CommandOnCooldown and type(error) != discord.ext.commands.errors.MissingRole:
+        logger.LogPrint(f'!!!ERROR!!!: CMD:{ctx.command.name} ERR:{error}', logging.ERROR)
 
 @client.event
 async def on_command(ctx):

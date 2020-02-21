@@ -16,6 +16,7 @@ class Base(commands.Cog):
 
     @commands.command(help="Ping!")    
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
+    @commands.has_role("Bot Use")
     @commands.guild_only()
     async def ping(self, ctx):
         await ctx.send(':sparkles:')

@@ -104,7 +104,8 @@ class Google(commands.Cog):
             return None
 
     @commands.command(aliases=["i", "gi", "I", "GI", "Image", "IMAGE"], help="Searches Google for an image from a query.\nGives a random result from the front page. Safe-Search is enabled for SFW channels, and disabled for NSFW ones.\nUsage: !image funny dog\n")    
-    @commands.cooldown(rate=1, per=5, type=BucketType.channel)
+    @commands.cooldown(rate=1, per=15, type=BucketType.channel)
+    @commands.has_role("Bot Use")
     @commands.guild_only()
     async def image(self, ctx):
         try:
@@ -139,7 +140,8 @@ class Google(commands.Cog):
             return None
 
     @commands.command(aliases=["yt", "YT", "Youtube", "YouTube"], help="Searches Youtube for a query and returns the first video result.\nUsage: !yt funny dog.")
-    @commands.cooldown(rate=1, per=5, type=BucketType.channel)
+    @commands.cooldown(rate=1, per=15, type=BucketType.channel)
+    @commands.has_role("Bot Use")
     @commands.guild_only()
     async def youtube(self, ctx):
         try:
