@@ -23,6 +23,7 @@ class Base(commands.Cog):
 
     @commands.command(aliases=["8ball", "8b"], help="Roll the Magic 8-Ball!\nUsage: !magic8ball question?")
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
+    @commands.has_role("Bot Use")
     @commands.guild_only()
     async def magic8ball(self, ctx):
         answers = [
@@ -56,6 +57,7 @@ class Base(commands.Cog):
 
     @commands.command(aliases=["r", "R"], help="Rolls a random number between 2 other numbers.\nIf provided with 1 number, will roll between 0 and that number.\nIf provided with 2 separated by a comma, will take the first as the min and the second as the max.\nUsage: !roll 100 / !roll 10,20.")
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
+    @commands.has_role("Bot Use")
     @commands.guild_only()
     async def roll(self, ctx):
         split_message = Helper.CommandStrip(ctx.message.content).split(',')
@@ -92,6 +94,7 @@ class Base(commands.Cog):
 
     @commands.command(aliases=["Pick", "p"], help="Selects a random item out of provided choices.\nUsage: !pick cat,dog.")
     @commands.cooldown(rate=1, per=1, type=BucketType.channel)
+    @commands.has_role("Bot Use")
     @commands.guild_only()
     async def pick(self, ctx):
         split_message = Helper.CommandStrip(ctx.message.content).split(',')
@@ -103,6 +106,7 @@ class Base(commands.Cog):
 
     @commands.command(aliases=["Dice"], help="Rolls a die of specified size a specified numer of times.\nUsage: !dice 2d20")
     @commands.cooldown(rate=1, per=1, type=BucketType.channel)
+    @commands.has_role("Bot Use")
     @commands.guild_only()
     async def dice(self, ctx):
         split_message = Helper.CommandStrip(ctx.message.content).lower().split('d')
@@ -124,6 +128,7 @@ class Base(commands.Cog):
 
     @commands.command(aliases=["ru", "RU", "Ru"], help="Gives up to 10 random ONLINE users on the server.")    
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
+    @commands.has_role("Bot Use")
     @commands.guild_only()
     async def randuser(self, ctx):
         await ctx.trigger_typing()
@@ -150,6 +155,7 @@ class Base(commands.Cog):
 
     @commands.command(aliases=["rua", "RUA", "Rua"], help="Gives up to 10 random users on the server, both online and offline.")    
     @commands.cooldown(rate=1, per=5, type=BucketType.channel)
+    @commands.has_role("Bot Use")
     @commands.guild_only()
     async def randuserall(self, ctx):
         await ctx.trigger_typing()
@@ -176,6 +182,7 @@ class Base(commands.Cog):
 
     @commands.command(help="Print some info about the bot.")    
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
+    @commands.has_role("Bot Use")
     @commands.guild_only()
     async def info(self, ctx):
         fields = [

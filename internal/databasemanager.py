@@ -110,10 +110,11 @@ class DB_Manager():
                 where_clause = where_clause[:-4]
                 sql_query = f'DELETE FROM {table_name} WHERE {where_clause}'
                 self.cursor.execute(sql_query,where_values)
+                affected = self.cursor.rowcount
                 self.connection.commit()
                 self.connection.close()
                 logger.LogPrint(f'Deleted from {db_name} - {table_name}.', logging.DEBUG)
-                return True 
+                return affected 
         except Exception as ex:
             logger.LogPrint(f'Failed to delete from {db_name} - {table_name}. - {ex}', logging.ERROR)
             return ex

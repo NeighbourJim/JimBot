@@ -56,6 +56,7 @@ class Google(commands.Cog):
 
     @commands.command(aliases=["g", "gs", "G", "Gs", "Google"], help="Searches Google and returns up to the first 3 results.\nUsage: !google funny dog.")    
     @commands.cooldown(rate=1, per=5, type=BucketType.channel)
+    @commands.has_role("Bot Use")
     @commands.guild_only()
     async def google(self,ctx):
         try:

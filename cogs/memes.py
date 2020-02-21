@@ -351,7 +351,24 @@ class Memes(commands.Cog):
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t add meme: {ex}', logging.ERROR)
 
-    
+    @commands.command(help="Add a meme.", aliases=["dm", "DM", "Dm"])
+    @commands.cooldown(rate=1, per=10, type=BucketType.channel)
+    @commands.has_guild_permissions(administrator=True)
+    @commands.guild_only()
+    async def deletememe(self, ctx):
+        try:
+            m_id = int(Helper.FuzzyNumberSearch(Helper.CommandStrip(ctx.message.content)))
+            if m_id != None:
+                where = {"m_id": m_id}
+                affected = dbm.Delete(f'memes{ctx.guild.id}', 'memes', where)
+                if affected == 1:
+                    dbm.Delete(f'memes{ctx.guild.id}', 'upvotes', where)
+                    dbm.Delete(f'memes{ctx.guild.id}', 'downvotes', where)
+                    await ctx.send(f'{ctx.message.author.mention}: Meme #{m_id} deleted.', delete_after=6)
+                else:
+                    await ctx.send(f'{ctx.message.author.mention}: Couldn\'t delete Meme #{m_id}.\nProbably because there is no meme with that ID.', delete_after=6)
+        except Exception as ex:
+            logger.LogPrint(f'ERROR - Couldn\'t delete meme: {ex}', logging.ERROR)
     
     @commands.command(hidden=True)    
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
