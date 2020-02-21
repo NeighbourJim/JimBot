@@ -60,6 +60,15 @@ class Memes(commands.Cog):
         except Exception as ex:
             logger.LogPrint(f'ERROR - Could not get meme downvote count: {ex}',logging.ERROR) 
 
+    def GetVoters(self, ctx, m_id):
+        try:
+            w = [("m_id", m_id)]
+            ups = dbm.Retrieve(f'memes{ctx.guild.id}', 'upvotes', w, WhereType.AND, ["author_id", "author_username"], 10000)
+            downs = dbm.Retrieve(f'memes{ctx.guild.id}', 'downvotes', w, WhereType.AND, ["author_id", "author_username"], 10000)
+            return {"ups": ups, "downs": downs}
+        except Exception as ex:
+            logger.LogPrint(f'ERROR: Could not get meme votes. - {ex}', logging.ERROR)
+
     def GetGradeSmallServer(self, score):
         if score >= 10:
             return "https://i.imgur.com/UfxLyJd.png"
@@ -310,6 +319,87 @@ class Memes(commands.Cog):
             await to_delete.delete(delay=3)
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t execute memeinfo command: {ex}', logging.ERROR)
+
+    @commands.command(help="Show who voted on a meme.", aliases=["v", "V", "Voters"])
+    @commands.cooldown(rate=1, per=20, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def voters(self, ctx):
+        try:
+            upvoters = []
+            upvoter_message = ""
+            downvoters = []
+            downvoter_message = ""
+            to_delete = ctx.message
+            message = Helper.CommandStrip(ctx.message.content)
+            m_id = self.last_meme_roll
+            if len(message) > 0 and Helper.FuzzyNumberSearch(message) is not None:
+                m_id = int(Helper.FuzzyNumberSearch(message))
+            if m_id != None:
+                voter_dict = self.GetVoters(ctx, m_id)
+                for up in voter_dict["ups"]:
+                    member_id = int(Helper.FuzzyNumberSearch(up[0]))
+                    member = ctx.guild.get_member(member_id)
+                    if member != None:
+                        if member.display_name == member.name:
+                            upvoters.append(member.display_name)
+                        else:
+                            upvoters.append(f'{member.display_name} ({member.name})')
+                    else:
+                        upvoters.append(up[1])
+                for down in voter_dict["downs"]:
+                    member_id = int(Helper.FuzzyNumberSearch(down[0]))
+                    member = ctx.guild.get_member(member_id)
+                    if member != None:
+                        if member.display_name == member.name:
+                            downvoters.append(member.display_name)
+                        else:
+                            downvoters.append(f'{member.display_name} ({member.name})')
+                    else:
+                        upvoters.append(down[1])
+                if len(upvoters) > 0:
+                    i = 0
+                    for member in upvoters:
+                        if i != 3:
+                            if member != None:
+                                upvoter_message += f'{member}, '
+                            else:
+                                upvoter_message += f'Unknown User, '
+                            i += 1
+                        else:
+                            if member != None:
+                                upvoter_message += f'{member},\n'
+                            else:
+                                upvoter_message += f'``Unknown User``,\n'
+                            i = 0                        
+                    upvoter_message = upvoter_message[:-2]                    
+                else:
+                    upvoter_message = "None."
+                if len(downvoters) > 0:
+                    i = 0
+                    for member in downvoters:
+                        if i != 3:
+                            if member != None:
+                                downvoter_message += f'{member}, '
+                            else:
+                                downvoter_message += f'Unknown User, '
+                            i += 1
+                        else:
+                            if member != None:
+                                downvoter_message += f'{member},\n'
+                            else:
+                                downvoter_message += f'Unknown User,\n'
+                            i = 0                        
+                    downvoter_message = downvoter_message[:-2]                      
+                else:
+                    downvoter_message = "None."
+                final_message = f'**Voters for Meme #{m_id}:**\n**Upvotes:** {upvoter_message}\n**Downvotes:** {downvoter_message}'
+                await ctx.send(f'{ctx.message.author.mention}: {final_message}')
+            else:
+                await ctx.send(f'{ctx.message.author.mention}: No meme info to get.\nEither you specified a meme ID that doesn\'t exist or no meme was rolled since the last bot restart.', delete_after=10)
+            await to_delete.delete(delay=3)
+        except Exception as ex:
+            logger.LogPrint(f'ERROR - Couldn\'t get meme voters: {ex}', logging.ERROR)
 
     @commands.command(help="Add a meme.", aliases=["am", "AM", "Am"])
     @commands.cooldown(rate=1, per=10, type=BucketType.channel)
