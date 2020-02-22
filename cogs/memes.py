@@ -19,6 +19,7 @@ class Memes(commands.Cog):
         self.client = client
         self.db_folder = "./internal/data/databases/"
         self.last_meme_roll = None
+        self.CheckAndCreateDatabase()
 
     def CheckAndCreateDatabase(self):
         try:
@@ -155,7 +156,7 @@ class Memes(commands.Cog):
                 await ctx.send(f'{ctx.message.author.mention}: **ID:{meme[0][0]}**\n {meme[0][1]}')
             else:
                 await ctx.send((f'{ctx.message.author.mention}: No memes found.'))
-            await to_delete.delete(delay=3)
+            await to_delete.delete(delay=6)
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t execute meme command: {ex}',logging.ERROR)             
 
@@ -341,30 +342,24 @@ class Memes(commands.Cog):
                     member_id = int(Helper.FuzzyNumberSearch(up[0]))
                     member = ctx.guild.get_member(member_id)
                     if member != None:
-                        if member.display_name == member.name:
-                            upvoters.append(member.display_name)
-                        else:
-                            upvoters.append(f'{member.display_name} ({member.name})')
+                        upvoters.append(member.name)
                     else:
                         upvoters.append(up[1])
                 for down in voter_dict["downs"]:
                     member_id = int(Helper.FuzzyNumberSearch(down[0]))
                     member = ctx.guild.get_member(member_id)
                     if member != None:
-                        if member.display_name == member.name:
-                            downvoters.append(member.display_name)
-                        else:
-                            downvoters.append(f'{member.display_name} ({member.name})')
+                        downvoters.append(member.name)
                     else:
                         upvoters.append(down[1])
                 if len(upvoters) > 0:
                     i = 0
                     for member in upvoters:
-                        if i != 3:
+                        if i != 4:
                             if member != None:
                                 upvoter_message += f'{member}, '
                             else:
-                                upvoter_message += f'Unknown User, '
+                                upvoter_message += f'``Unknown User``, '
                             i += 1
                         else:
                             if member != None:
@@ -378,17 +373,17 @@ class Memes(commands.Cog):
                 if len(downvoters) > 0:
                     i = 0
                     for member in downvoters:
-                        if i != 3:
+                        if i != 4:
                             if member != None:
                                 downvoter_message += f'{member}, '
                             else:
-                                downvoter_message += f'Unknown User, '
+                                downvoter_message += f'``Unknown User``, '
                             i += 1
                         else:
                             if member != None:
                                 downvoter_message += f'{member},\n'
                             else:
-                                downvoter_message += f'Unknown User,\n'
+                                downvoter_message += f'``Unknown User``,\n'
                             i = 0                        
                     downvoter_message = downvoter_message[:-2]                      
                 else:

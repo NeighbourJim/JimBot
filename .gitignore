@@ -1,7 +1,7 @@
 # Bot Specific files
 config.json
-dbs/
 *.db
+*.bat
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

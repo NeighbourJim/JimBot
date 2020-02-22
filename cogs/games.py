@@ -79,8 +79,10 @@ class Games(commands.Cog):
             for i in range(len(adjs)):
                 response += f'{adjs[i]}'
                 if amount != 1:
-                    if i == (len(adjs)-2):
+                    if amount == 2 and i == (len(adjs)-2):
                         response += ' and '
+                    elif i == (len(adjs)-2):
+                        response += ', and '
                     else:
                         response += ', '
             if amount != 1:

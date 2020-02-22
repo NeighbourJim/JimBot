@@ -51,4 +51,4 @@ class Logger():
                 print(f'{message}:{err}')
             self.logger.debug(message,exc_info=err)
             
-logger = Logger(logging.DEBUG)
+logger = Logger(logging.INFO)
