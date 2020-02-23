@@ -9,7 +9,7 @@ from datetime import datetime
 
 from internal.logs import logger
 from internal.helpers import Helper
-from internal.enums import WhereType
+from internal.enums import WhereType, CompareType
 from internal.databasemanager import dbm
 from internal.data.meme_views import meme_views
 
@@ -148,7 +148,7 @@ class Memes(commands.Cog):
                             t = ("author_username", name)
                         values_to_find.append(t)
             if len(values_to_find) != 0:
-                meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_meme_all", values_to_find, WhereType.OR)
+                meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_meme_all", values_to_find, WhereType.OR, ["*"], 1, CompareType.LIKE)
             else:
                 meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_meme_all", None)
             if len(meme) > 0:

@@ -3,7 +3,7 @@ import logging
 
 from internal.helpers import Helper
 from internal.logs import logger
-from internal.enums import WhereType
+from internal.enums import WhereType, CompareType
 
 class DB_Manager():
     def __init__(self):
@@ -118,7 +118,7 @@ class DB_Manager():
             logger.LogPrint(f'Failed to delete from {db_name} - {table_name}. - {ex}', logging.ERROR)
             return ex
 
-    def Retrieve(self, db_name, table_name, where = None, where_type=WhereType.AND, column_data = ["*"], rows_required = 1):
+    def Retrieve(self, db_name, table_name, where = None, where_type=WhereType.AND, column_data = ["*"], rows_required = 1, compare_type = CompareType.EQUALS):
         try:
             if self.ConnectToDB(db_name): 
                 columns = []
@@ -132,9 +132,15 @@ class DB_Manager():
                 if where != None:
                     for w in where:
                         if where_type == WhereType.AND:
-                            where_clause += f"{w[0]} = ? AND "
+                            if compare_type == CompareType.EQUALS:
+                                where_clause += f"{w[0]} = ? AND "
+                            else:
+                                where_clause += f"{w[0]} LIKE ? AND "
                         else:
-                            where_clause += f"{w[0]} = ? OR  "
+                            if compare_type == CompareType.EQUALS:
+                                where_clause += f"{w[0]} = ? OR  "
+                            else:
+                                where_clause += f"{w[0]} LIKE ? OR  "
                         where_values.append(w[1])
                     where_clause = where_clause[:-4]
                     sql_query += f" WHERE {where_clause}"
