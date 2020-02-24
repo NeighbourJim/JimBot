@@ -6,6 +6,7 @@ from discord.ext import commands
 
 
 #region Internal Imports
+from internal.helpers import Helper
 from internal.logs import logger
 import internal.configmanager as configmanager
 #endregion

@@ -2,6 +2,7 @@
 config.json
 *.db
 *.bat
+stand.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

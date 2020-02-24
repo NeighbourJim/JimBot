@@ -39,7 +39,7 @@ class Tags(commands.Cog):
             where = ("tag_name", Helper.CommandStrip(ctx.message.content))
             tag = dbm.Retrieve(f"tags{ctx.guild.id}", "tags", [where])
             if len(tag) > 0:
-                await ctx.send(f'{ctx.message.author.mention}: {tag[0][1]}')
+                await ctx.send(f'{ctx.message.author.mention}: Tag - {Helper.CommandStrip(ctx.message.content)}\n{tag[0][1]}')
             else:
                 await ctx.send(f'{ctx.message.author.mention}: No tag with that name.', delete_after=3)
             await to_delete.delete(delay=6)

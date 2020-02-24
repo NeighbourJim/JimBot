@@ -1,5 +1,6 @@
 import io
 import sqlite3
+import random
 import discord
 import logging
 from discord.ext import commands
@@ -21,6 +22,7 @@ class Memes(commands.Cog):
         self.last_meme_roll = None
         self.CheckAndCreateDatabase()
 
+#region Non-Command Methods - General Helper Methods specific to this cog
     def CheckAndCreateDatabase(self):
         try:
             guilds = self.client.guilds
@@ -123,7 +125,8 @@ class Memes(commands.Cog):
             return self.GetGradeLargeServer(score)
         else:
             return self.GetGradeSmallServer(score)
-        
+
+#endregion
 
     @commands.command(help="Get a meme.", aliases=["m", "M"])
     @commands.cooldown(rate=1, per=20, type=BucketType.channel)

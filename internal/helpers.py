@@ -1,6 +1,7 @@
 # General use helper methods used throughout various commands
 import discord
 import re
+import requests
 import logging
 import emoji
 
@@ -83,6 +84,19 @@ class Helpers():
         for role in member.roles:
             if role.name == role_name:
                 return True
+
+    def GetWebPage(self, url, params=None):
+        try:
+            if params:
+                result = requests.get(url, params)
+            else:
+                result = requests.get(url)
+            if result.status_code == 200:
+                return result
+            else:
+                return None
+        except Exception as ex:
+            print(ex)
 
 Helper = Helpers()
 
