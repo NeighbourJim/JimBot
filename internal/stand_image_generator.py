@@ -1,19 +1,12 @@
 import sys
 from PIL import Image, ImageDraw, ImageFont
 
-# TEXT COORDS
-# POWER: 185,45
-# SPEED: 300,115
-# RANGE: 300,250
-# DURABILITY: 185,315
-# PRECISION: 70,250
-# POTENTIAL: 70,115
-
-# POLYGON COORDS
-
 class StandImageGenerator():
 
     def __init__(self):
+        # Co-ordinates on the image for where text markers should be placed
+        # Because they are hard-coded they will only work for the specific image provided, but since this class is so specific it should be fine
+
         self.text_coords = {    
             "power": (185,45),    
             "speed": (300,115),    
@@ -22,6 +15,8 @@ class StandImageGenerator():
             "precision": (70,250),    
             "potential": (70,115)
             }
+
+        # The coordinates for drawing the graph polygon - Each stat has a coordinate for every rating.
         self.polygon_coords = {
             "power": {"∞": (198,80), "S": (198,95), "A":(198,111), "B":(198,130), "C":(198,150), "D":(198,170), "E":(198,185)},
             "speed": {"∞":(303,140),"S":(290,150), "A":(280,155), "B":(260,166), "C":(245,175), "D":(230,185), "E":(215,190)},
@@ -33,15 +28,21 @@ class StandImageGenerator():
 
     def GenerateImage(self, stats_dict, colour):
         try:
+            # Initialise all the images
+            # Base is the on-disk image that provides the graph axes
+            # Font is the font for the text
+            # Txt is the text itself
+            # Poly is for the actual rating graphs
             base = Image.open('./internal/data/images/statsbg.png').convert('RGBA')
             background = Image.new('RGBA', base.size, (255,255,255,255))
             font = ImageFont.truetype("arial.ttf", 40)
             txt = Image.new('RGBA', base.size, (0,0,0,0))
             poly = Image.new('RGBA', base.size)
-    
+
             bg = ImageDraw.Draw(background)
             bg.rectangle([(0,0), background.size], fill=(251,251,250,255))
             d = ImageDraw.Draw(txt)
+            # Write each of the stat labels according to their values
             d.text(self.text_coords["power"], stats_dict["power"], font=font, fill=(0,0,0,255))
             d.text(self.text_coords["speed"], stats_dict["speed"], font=font, fill=(0,0,0,255))
             d.text(self.text_coords["range"], stats_dict["range"], font=font, fill=(0,0,0,255))
@@ -50,8 +51,18 @@ class StandImageGenerator():
             d.text(self.text_coords["potential"], stats_dict["potential"], font=font, fill=(0,0,0,255))
     
             p = ImageDraw.Draw(poly)
-            p.polygon([self.polygon_coords["power"][stats_dict["power"]],self.polygon_coords["speed"][stats_dict["speed"]],self.polygon_coords["range"][stats_dict["range"]],self.polygon_coords["durability"][stats_dict["durability"]],self.polygon_coords["precision"][stats_dict["precision"]],self.polygon_coords["potential"][stats_dict["potential"]]], fill=colour, outline=(0,0,0,255))
-    
+            # Draw a polygon using the coordinates for each stat - Split over a few lines for readability
+            p.polygon([self.polygon_coords["power"][stats_dict["power"]],
+            self.polygon_coords["speed"][stats_dict["speed"]],
+            self.polygon_coords["range"][stats_dict["range"]],
+            self.polygon_coords["durability"][stats_dict["durability"]],
+            self.polygon_coords["precision"][stats_dict["precision"]],
+            self.polygon_coords["potential"][stats_dict["potential"]]], fill=colour, outline=(0,0,0,255))
+
+            # Composite the output image - The order is important
+            # First the background, then the polygon on top of it
+            # Then the graph axes, and then the text
+            # The text should be drawn last in the case of an 'Infinite' rating stat, which breaks the bounds of the axes
             out = Image.alpha_composite(background, poly)
             out = Image.alpha_composite(out,base)
             out = Image.alpha_composite(out,txt)

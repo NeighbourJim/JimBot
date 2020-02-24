@@ -189,25 +189,22 @@ class Games(commands.Cog):
                 page_tree = html.fromstring(power_data.text)
                 desc = page_tree.xpath('//meta[@name="description"]/@content')
                 stats_dict = {"power": stats[0],"speed": stats[1],"range": stats[2],"durability": stats[3],"precision": stats[4],"potential": stats[5]}
-                if ctx.message.author.colour == discord.Colour.default():
-                    user_colour = (255,0,0,200)
-                else:
-                    r = ctx.message.author.colour.r
-                    g = ctx.message.author.colour.g
-                    b = ctx.message.author.colour.b
-                    if r > 230:
-                        r = r-30
-                    elif r < 50:
-                        r = r+50
-                    if g > 230:
-                        g = g-30
-                    elif g < 50:
-                        g = g+50
-                    if b > 230:
-                        b = b-30
-                    elif b < 50:
-                        b = b+50
-                    user_colour = (r,g,b,200)
+                r = ctx.message.author.colour.r
+                g = ctx.message.author.colour.g
+                b = ctx.message.author.colour.b
+                if r > 230:
+                    r = r-30
+                elif r < 50:
+                    r = r+50
+                if g > 230:
+                    g = g-30
+                elif g < 50:
+                    g = g+50
+                if b > 230:
+                    b = b-30
+                elif b < 50:
+                    b = b+50
+                user_colour = (r,g,b,200)
                 if stand_gen.GenerateImage(stats_dict,user_colour) == True:
                     image_file = discord.File('./internal/data/images/stand.png', filename='stand.png')
                     stand_embed = discord.Embed()
