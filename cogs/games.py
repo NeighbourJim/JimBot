@@ -141,16 +141,10 @@ class Games(commands.Cog):
                 power = random_power.json()["query"]["random"][0]
                 name = power["title"]
                 encoded_url = f'https://powerlisting.fandom.com/wiki/{urllib.parse.quote(name)}'
-                params = {
-                    "action": "parse",
-                    "page": name,
-                    "section": 2,
-                    "format": "json"
-                }
-                power_data = Helper.GetWebPage(api_url, params)
+                power_data = Helper.GetWebPage(encoded_url)
                 if power_data:
-                    page_tree = html.fromstring(power_data.json()["parse"]["text"]["*"])
-                    desc = page_tree.xpath("//p//text()")
+                    page_tree = html.fromstring(power_data.text)
+                    desc = page_tree.xpath('//meta[@name="description"]/@content')
                     if len(desc) > 0:
                         response = f'{ctx.message.author.mention}: **Power:** {name}\n**Description:** {desc[0].strip()}\n<{encoded_url}>'
                     else:
@@ -196,13 +190,28 @@ class Games(commands.Cog):
                 desc = page_tree.xpath('//meta[@name="description"]/@content')
                 stats_dict = {"power": stats[0],"speed": stats[1],"range": stats[2],"durability": stats[3],"precision": stats[4],"potential": stats[5]}
                 if ctx.message.author.colour == discord.Colour.default():
-                    user_colour = (255,0,0,255)
+                    user_colour = (255,0,0,200)
                 else:
-                    user_colour = (ctx.message.author.colour.r,ctx.message.author.colour.g,ctx.message.author.colour.b,255)
+                    r = ctx.message.author.colour.r
+                    g = ctx.message.author.colour.g
+                    b = ctx.message.author.colour.b
+                    if r > 230:
+                        r = r-30
+                    elif r < 50:
+                        r = r+50
+                    if g > 230:
+                        g = g-30
+                    elif g < 50:
+                        g = g+50
+                    if b > 230:
+                        b = b-30
+                    elif b < 50:
+                        b = b+50
+                    user_colour = (r,g,b,200)
                 if stand_gen.GenerateImage(stats_dict,user_colour) == True:
                     image_file = discord.File('./internal/data/images/stand.png', filename='stand.png')
                     stand_embed = discord.Embed()
-                    if len(ctx.guild.members) > 200:
+                    if len(ctx.guild.members) > 75:
                         stand_embed.set_thumbnail(url="attachment://stand.png")
                     else:
                         stand_embed.set_image(url="attachment://stand.png")

@@ -23,12 +23,12 @@ class StandImageGenerator():
             "potential": (70,115)
             }
         self.polygon_coords = {
-            "power": {"∞": (198,70), "S": (198,95), "A":(198,111), "B":(198,130), "C":(198,150), "D":(198,170), "E":(198,185)},
-            "speed": {"∞":(330,125),"S":(290,150), "A":(280,155), "B":(260,166), "C":(245,175), "D":(230,185), "E":(215,190)},
-            "range": {"∞":(330,277),"S":(290,260), "A":(280,250), "B":(260,240), "C":(245,230), "D":(230,220), "E":(215,210)},
-            "durability": {"∞":(198,350),"S":(198,310), "A":(198,295), "B":(198,275), "C":(198,255), "D":(198,240), "E":(198,220)},
-            "precision": {"∞":(69,275),"S":(105,255), "A":(119,248), "B":(135,238), "C":(150,229), "D":(167,220), "E":(180,210)},
-            "potential": {"∞":(69,125),"S":(105,148), "A":(119,156), "B":(135,165), "C":(150,175), "D":(167,185), "E":(180,193)}
+            "power": {"∞": (198,80), "S": (198,95), "A":(198,111), "B":(198,130), "C":(198,150), "D":(198,170), "E":(198,185)},
+            "speed": {"∞":(303,140),"S":(290,150), "A":(280,155), "B":(260,166), "C":(245,175), "D":(230,185), "E":(215,190)},
+            "range": {"∞":(303,264),"S":(290,260), "A":(280,250), "B":(260,240), "C":(245,230), "D":(230,220), "E":(215,210)},
+            "durability": {"∞":(198,327),"S":(198,310), "A":(198,295), "B":(198,275), "C":(198,255), "D":(198,240), "E":(198,220)},
+            "precision": {"∞":(89,265),"S":(105,255), "A":(119,248), "B":(135,238), "C":(150,229), "D":(167,220), "E":(180,210)},
+            "potential": {"∞":(89,138),"S":(105,148), "A":(119,156), "B":(135,165), "C":(150,175), "D":(167,185), "E":(180,193)}
         }
 
     def GenerateImage(self, stats_dict, colour):
@@ -52,9 +52,9 @@ class StandImageGenerator():
             p = ImageDraw.Draw(poly)
             p.polygon([self.polygon_coords["power"][stats_dict["power"]],self.polygon_coords["speed"][stats_dict["speed"]],self.polygon_coords["range"][stats_dict["range"]],self.polygon_coords["durability"][stats_dict["durability"]],self.polygon_coords["precision"][stats_dict["precision"]],self.polygon_coords["potential"][stats_dict["potential"]]], fill=colour, outline=(0,0,0,255))
     
-            out = Image.alpha_composite(background, txt)
-            out = Image.alpha_composite(out,poly)
+            out = Image.alpha_composite(background, poly)
             out = Image.alpha_composite(out,base)
+            out = Image.alpha_composite(out,txt)
     
             out.save('./internal/data/images/stand.png')
             return True
