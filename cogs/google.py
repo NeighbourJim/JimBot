@@ -116,9 +116,14 @@ class Google(commands.Cog):
                 task = asyncio.create_task(self.GetSafeImageResult(ctx.message.content))
             await task
             if(task.result() != None):
-                await ctx.send(f'{ctx.message.author.mention}: **{task.result()["title"]}**\n{task.result()["link"]}')
+                image_embed = discord.Embed()
+                image_embed.title = task.result()["title"]
+                image_embed.description = task.result()["link"]
+                image_embed.set_image(url=task.result()["link"])
+                image_embed.set_footer(text=f'Requested by {ctx.message.author.display_name}')
+                await ctx.send(embed=image_embed)
             else:
-                await ctx.send(f'{ctx.message.author.mention}: No results found for that query. Note that Safe Search is on if the channel is not marked as NSFW!')
+                await ctx.send(f'{ctx.message.author.mention}: No results found for that query. Note that Safe Search is on if the channel is not marked as NSFW!', delete_after=10)
         except Exception as ex:
             logger.LogPrint("IMAGE ERROR", logging.CRITICAL, ex)
             await ctx.send(f'ERROR: {ex}.')

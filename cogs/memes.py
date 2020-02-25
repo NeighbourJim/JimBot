@@ -462,7 +462,7 @@ class Memes(commands.Cog):
                 if affected == 1:
                     dbm.Delete(f'memes{ctx.guild.id}', 'upvotes', where)
                     dbm.Delete(f'memes{ctx.guild.id}', 'downvotes', where)
-                    await ctx.send(f'{ctx.message.author.mention}: Meme #{m_id} deleted.', delete_after=6)
+                    await ctx.send(f'{ctx.message.author.mention}: Meme #{m_id} deleted.')
                 else:
                     await ctx.send(f'{ctx.message.author.mention}: Couldn\'t delete Meme #{m_id}.\nProbably because there is no meme with that ID.', delete_after=6)
             else:
