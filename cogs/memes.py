@@ -19,7 +19,7 @@ class Memes(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.db_folder = "./internal/data/databases/"
-        self.last_meme_roll = None
+        self.last_meme_roll = {}
         self.CheckAndCreateDatabase()
 
 #region Non-Command Methods - General Helper Methods specific to this cog
@@ -155,7 +155,7 @@ class Memes(commands.Cog):
             else:
                 meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_meme_all", None)
             if len(meme) > 0:
-                self.last_meme_roll = meme[0][0]
+                self.last_meme_roll[f"{ctx.guild.id}"] = meme[0][0]
                 await ctx.send(f'{ctx.message.author.mention}: **ID:{meme[0][0]}**\n {meme[0][1]}')
             else:
                 await ctx.send((f'{ctx.message.author.mention}: No memes found.'))
@@ -186,7 +186,7 @@ class Memes(commands.Cog):
             else:
                 meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_meme_all_new", None)
             if len(meme) > 0:
-                self.last_meme_roll = meme[0][0]
+                self.last_meme_roll[f"{ctx.guild.id}"] = meme[0][0]
                 await ctx.send(f'{ctx.message.author.mention}: **ID:{meme[0][0]}**\n {meme[0][1]}')
                 await to_delete.delete(delay=3)
             else:
@@ -218,7 +218,7 @@ class Memes(commands.Cog):
             else:
                 meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_unrated_all", None)
             if len(meme) > 0:
-                self.last_meme_roll = meme[0][0]
+                self.last_meme_roll[f"{ctx.guild.id}"] = meme[0][0]
                 await ctx.send(f'{ctx.message.author.mention}: **ID:{meme[0][0]}**\n {meme[0][1]}')
                 await to_delete.delete(delay=3)
             else:
@@ -237,7 +237,10 @@ class Memes(commands.Cog):
         try:
             to_delete = ctx.message
             message = Helper.CommandStrip(ctx.message.content)
-            m_id = self.last_meme_roll
+            if f"{ctx.guild.id}" in self.last_meme_roll:
+                m_id = self.last_meme_roll[f"{ctx.guild.id}"]
+            else:
+                m_id = None
             if len(message) > 0 and Helper.FuzzyNumberSearch(message) is not None:
                 m_id = int(Helper.FuzzyNumberSearch(message))
             t = ("m_id", m_id)
@@ -271,7 +274,10 @@ class Memes(commands.Cog):
         try:
             to_delete = ctx.message
             message = Helper.CommandStrip(ctx.message.content)
-            m_id = self.last_meme_roll
+            if f"{ctx.guild.id}" in self.last_meme_roll:
+                m_id = self.last_meme_roll[f"{ctx.guild.id}"]
+            else:
+                m_id = None
             if len(message) > 0 and Helper.FuzzyNumberSearch(message) is not None:
                 m_id = int(Helper.FuzzyNumberSearch(message))
             t = ("m_id", m_id)
@@ -302,7 +308,10 @@ class Memes(commands.Cog):
         try:
             to_delete = ctx.message
             message = Helper.CommandStrip(ctx.message.content)
-            m_id = self.last_meme_roll
+            if f"{ctx.guild.id}" in self.last_meme_roll:
+                m_id = self.last_meme_roll[f"{ctx.guild.id}"]
+            else:
+                m_id = None
             if len(message) > 0 and Helper.FuzzyNumberSearch(message) is not None:
                 m_id = int(Helper.FuzzyNumberSearch(message))
             t = ("m_id", m_id)
@@ -336,7 +345,10 @@ class Memes(commands.Cog):
             downvoter_message = ""
             to_delete = ctx.message
             message = Helper.CommandStrip(ctx.message.content)
-            m_id = self.last_meme_roll
+            if f"{ctx.guild.id}" in self.last_meme_roll:
+                m_id = self.last_meme_roll[f"{ctx.guild.id}"]
+            else:
+                m_id = None
             if len(message) > 0 and Helper.FuzzyNumberSearch(message) is not None:
                 m_id = int(Helper.FuzzyNumberSearch(message))
             if m_id != None:
@@ -481,12 +493,61 @@ class Memes(commands.Cog):
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t delete meme: {ex}', logging.ERROR)
 
-    @commands.command(hidden=True)    
-    @commands.cooldown(rate=1, per=2, type=BucketType.channel)
+    @commands.command(help="Get the best meme either overall or for a specific user.", aliases=["best", "Best"])
+    @commands.cooldown(rate=1, per=20, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
-    async def TESTDB(self, ctx):
-        print("howdy")
+    async def bestmeme(self, ctx):
+        try:
+            name = Helper.CommandStrip(ctx.message.content)
+            where = None
+            if len(name) > 0:
+                where = [("author_username", name)]
+
+            meme = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', where=where, compare_type=CompareType.LIKE, order_by=("score", "desc"))
+            if len(meme) > 0:
+                self.last_meme_roll[f"{ctx.guild.id}"] = meme[0][0]
+                if len(name) > 0:
+                    response = f'Best Meme by **{meme[0][3]}** is **#{meme[0][0]}** with Score **{meme[0][2]}**\n{meme[0][1]}\n'
+                else:    
+                    response = f'Best Meme is **#{meme[0][0]}** by **{meme[0][3]}** with Score **{meme[0][2]}**\n{meme[0][1]}\n'
+                await ctx.send(f'{ctx.message.author.mention}: {response}')
+            else:
+                if len(name) > 0:
+                    await ctx.send(f'{ctx.message.author.mention}: No memes found for user {name}.')
+                else:
+                    await ctx.send(f'{ctx.message.author.mention}: No memes found.')
+        except Exception as ex:
+            logger.LogPrint(f'ERROR - Couldn\'t get best meme: {ex}', logging.ERROR)
+
+    @commands.command(help="Get the worst meme either overall or for a specific user.", aliases=["worst", "Worst"])
+    @commands.cooldown(rate=1, per=20, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def worstmeme(self, ctx):
+        try:
+            name = Helper.CommandStrip(ctx.message.content)
+            where = None
+            if len(name) > 0:
+                where = [("author_username", name)]
+
+            meme = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', where=where, compare_type=CompareType.LIKE, order_by=("score", "asc"))
+            if len(meme) > 0:
+                self.last_meme_roll[f"{ctx.guild.id}"] = meme[0][0]
+                if len(name) > 0:
+                    response = f'Worst Meme by **{meme[0][3]}** is **#{meme[0][0]}** with Score **{meme[0][2]}**\n{meme[0][1]}\n'
+                else:    
+                    response = f'Worst Meme is **#{meme[0][0]}** by **{meme[0][3]}** with Score **{meme[0][2]}**\n{meme[0][1]}\n'
+                await ctx.send(f'{ctx.message.author.mention}: {response}')
+            else:
+                if len(name) > 0:
+                    await ctx.send(f'{ctx.message.author.mention}: No memes found for user {name}.')
+                else:
+                    await ctx.send(f'{ctx.message.author.mention}: No memes found.')
+        except Exception as ex:
+            logger.LogPrint(f'ERROR - Couldn\'t get worst meme: {ex}', logging.ERROR)
+
+        
         
 
 

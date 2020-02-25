@@ -26,9 +26,9 @@ class Games(commands.Cog):
                 stats.append("∞")
             elif rand >= 950:
                 stats.append("S")
-            elif rand >= 800:
+            elif rand >= 750:
                 stats.append("A")
-            elif rand >= 600:
+            elif rand >= 500:
                 stats.append("B")
             elif rand >= 350:
                 stats.append("C")
@@ -208,7 +208,7 @@ class Games(commands.Cog):
                 if stand_gen.GenerateImage(stats_dict,user_colour) == True:
                     image_file = discord.File('./internal/data/images/stand.png', filename='stand.png')
                     stand_embed = discord.Embed()
-                    if len(ctx.guild.members) > 75:
+                    if len(ctx.guild.members) > 200:
                         stand_embed.set_thumbnail(url="attachment://stand.png")
                     else:
                         stand_embed.set_image(url="attachment://stand.png")

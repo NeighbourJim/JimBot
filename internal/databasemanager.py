@@ -118,7 +118,7 @@ class DB_Manager():
             logger.LogPrint(f'Failed to delete from {db_name} - {table_name}. - {ex}', logging.ERROR)
             return ex
 
-    def Retrieve(self, db_name, table_name, where = None, where_type=WhereType.AND, column_data = ["*"], rows_required = 1, compare_type = CompareType.EQUALS):
+    def Retrieve(self, db_name, table_name, where = None, where_type=WhereType.AND, column_data = ["*"], rows_required = 1, compare_type = CompareType.EQUALS, order_by=None):
         try:
             if self.ConnectToDB(db_name): 
                 columns = []
@@ -144,6 +144,8 @@ class DB_Manager():
                         where_values.append(w[1])
                     where_clause = where_clause[:-4]
                     sql_query += f" WHERE {where_clause}"
+                if order_by != None:
+                    sql_query += f" ORDER BY {order_by[0]} {order_by[1]}"
                 self.cursor.execute(sql_query, where_values)
                 result = self.cursor.fetchmany(rows_required)
                 logger.LogPrint(f'Retrieved from {db_name}: {result}', logging.DEBUG)
