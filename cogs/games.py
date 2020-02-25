@@ -30,7 +30,7 @@ class Games(commands.Cog):
                 stats.append("A")
             elif rand >= 500:
                 stats.append("B")
-            elif rand >= 350:
+            elif rand >= 300:
                 stats.append("C")
             elif rand >= 100:
                 stats.append("D")
@@ -182,8 +182,10 @@ class Games(commands.Cog):
             music = random_music.json()["query"]["random"][0]
             music_name = music["title"].split(',')[0]
             music_name = music_name.split('List of ')[0]
+            music_name = music_name.split('(')[0]
             music_name = music_name.split(':')[0]
-
+            if music_name == "Lyrics":
+                music_name = music["title"].split(':')[1]
             power_data = Helper.GetWebPage(pow_url)
             if power_data:
                 page_tree = html.fromstring(power_data.text)

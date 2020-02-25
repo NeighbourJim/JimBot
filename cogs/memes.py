@@ -252,6 +252,7 @@ class Memes(commands.Cog):
                     d = {"m_id": m_id, "author_id": f'<@{ctx.message.author.id}>', "author_username": ctx.message.author.name}
                     dbm.Insert(f'memes{ctx.guild.id}', "upvotes", d)
                     dbm.Delete(f'memes{ctx.guild.id}', "downvotes", {"m_id": m_id, "author_id": f'<@{ctx.message.author.id}>'})
+                    dbm.Update(f'memes{ctx.guild.id}', 'memes', {"score": self.GetMemeScore(ctx, m_id)}, {"m_id": m_id})
                     await ctx.send(f'{ctx.message.author.mention}: :arrow_up: **{self.GetMemeScore(ctx, m_id)}**')
                     await to_delete.delete(delay=3)
                 else:
@@ -289,6 +290,7 @@ class Memes(commands.Cog):
                     d = {"m_id": m_id, "author_id": f'<@{ctx.message.author.id}>', "author_username": ctx.message.author.name}
                     dbm.Insert(f'memes{ctx.guild.id}', "downvotes", d)
                     dbm.Delete(f'memes{ctx.guild.id}', "upvotes", {"m_id": m_id, "author_id": f'<@{ctx.message.author.id}>'})
+                    dbm.Update(f'memes{ctx.guild.id}', 'memes', {"score": self.GetMemeScore(ctx, m_id)}, {"m_id": m_id})
                     await ctx.send(f'{ctx.message.author.mention}: :arrow_down: **{self.GetMemeScore(ctx, m_id)}**')
                 else:
                     await ctx.send(f'{ctx.message.author.mention}: You already downvoted that meme.')
