@@ -2,6 +2,7 @@
 config.json
 *.db
 *.bat
+.vscode/
 stand.png
 
 # Byte-compiled / optimized / DLL files

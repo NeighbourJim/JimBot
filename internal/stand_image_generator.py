@@ -67,7 +67,7 @@ class StandImageGenerator():
             out = Image.alpha_composite(out,base)
             out = Image.alpha_composite(out,txt)
 
-            out.thumbnail((200,200), Image.ANTIALIAS)
+            out.thumbnail(base.size, Image.ANTIALIAS)
             out.save('./internal/data/images/stand.png')
             return True
         except Exception as ex:

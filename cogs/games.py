@@ -69,7 +69,7 @@ class Games(commands.Cog):
                 task_four = asyncio.create_task(task_one.result().edit(content=message_four))
                 await task_four
             else:
-                await ctx.send(f'{ctx.message.author.mention}: Could not find the required emoji.')
+                await ctx.send(f'{ctx.message.author.mention}: Could not find the required emoji.', delete_after=6)
         except Exception as ex:
             logger.LogPrint(ex, logging.ERROR)
 
@@ -118,6 +118,7 @@ class Games(commands.Cog):
                 response += f'{word} '
             response = f'{response.strip()}.'
         else:
+            ctx.command.reset_cooldown(ctx)
             response = f'{ctx.message.author.mention}: Invalid number of adjectives requested.'        
         await ctx.send(f'{ctx.message.author.mention}: ``{response}``')
 
@@ -158,7 +159,7 @@ class Games(commands.Cog):
             logger.LogPrint(ex, logging.ERROR)
 
     @commands.command(aliases=["Stand"])
-    @commands.cooldown(rate=1, per=10, type=BucketType.channel)
+    @commands.cooldown(rate=1, per=15, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def stand(self, ctx):
@@ -183,7 +184,15 @@ class Games(commands.Cog):
             music_name = music["title"].split(',')[0]
             music_name = music_name.split('List of ')[0]
             music_name = music_name.split('(')[0]
-            music_name = music_name.split(':')[0]
+            if len(music_name.split(':')) > 1:
+                print(music_name.split(':'))
+                r = random.randint(0,10)
+                if r >= 3:
+                    music_name = music_name.split(':')[1]
+                else:
+                    music_name = music_name.split(':')[0]
+            else:
+                music_name = music_name.split(':')[0]
             if music_name == "Lyrics":
                 music_name = music["title"].split(':')[1]
             power_data = Helper.GetWebPage(pow_url)

@@ -5,6 +5,7 @@ from discord.ext import commands
 from discord.ext.commands import BucketType
 
 from internal.logs import logger
+from internal.helpers import Helper
 
 
 class Admin(commands.Cog):
@@ -60,8 +61,11 @@ class Admin(commands.Cog):
             return message.author == mentions[0]
         try:            
             # Get the amount by using regex to strip all mentions out 
-            amount = int(re.sub(r'<.*>', '', ctx.message.content[6:].strip()))
-            if amount > 0 and amount < 50:
+            msg = Helper.CommandStrip(ctx.message.clean_content)
+            print(msg)
+            amount = Helper.FuzzyNumberSearch(msg)
+            print(amount)
+            if amount > 0 and amount <= 50:
                 if len(mentions) == 0:
                     deleted = await ctx.channel.purge(limit=amount)
                     await ctx.send(f'{ctx.message.author.mention}: Deleted {len(deleted)} messages.')                    
@@ -72,7 +76,8 @@ class Admin(commands.Cog):
                     await ctx.send(f'{ctx.message.author.mention}: Can only delete messages from 1 user at a time.')
             else:
                     await ctx.send(f'{ctx.message.author.mention}: Can only delete between 1 and 50 messages.')
-        except:
+        except Exception as ex:
+            logger.LogPrint(f'ERROR - {ctx.command}:{ex}',logging.ERROR)  
             await ctx.send(f'{ctx.message.author.mention}: You didn\'t enter a number of messages.')      
 
 

@@ -41,8 +41,9 @@ class Tags(commands.Cog):
             if len(tag) > 0:
                 await ctx.send(f'{ctx.message.author.mention}: Tag - {Helper.CommandStrip(ctx.message.content)}\n{tag[0][1]}')
             else:
-                await ctx.send(f'{ctx.message.author.mention}: No tag with that name.', delete_after=3)
-            await to_delete.delete(delay=6)
+                ctx.command.reset_cooldown(ctx)
+                await ctx.send(f'{ctx.message.author.mention}: No tag with that name.', delete_after=6)
+            await to_delete.delete(delay=3)
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t execute tag command: {ex}',logging.ERROR)
 
@@ -64,6 +65,7 @@ class Tags(commands.Cog):
                     if dbm.Insert(f"tags{ctx.guild.id}", "tags", new_tag):
                         await ctx.send(f'{ctx.message.author.mention}: Tag created.', delete_after=5)
                 else:
+                    ctx.command.reset_cooldown(ctx)
                     await ctx.send(f'{ctx.message.author.mention}: That tag already exists.', delete_after=5)
             await to_delete.delete(delay=5)
         except Exception as ex:
@@ -78,15 +80,18 @@ class Tags(commands.Cog):
             to_delete = ctx.message
             tag_name = Helper.CommandStrip(ctx.message.content)
             where = ("tag_name", tag_name)
+            where_dict = {"tag_name": tag_name}
             existing = dbm.Retrieve(f"tags{ctx.guild.id}", "tags", [where])
             if len(existing) > 0:
                 user_is_admin = ctx.message.author.permissions_in(ctx.message.channel).administrator
                 if user_is_admin or ctx.message.author.id == existing[0][2]:
-                    if dbm.Delete(f"tags{ctx.guild.id}", "tags", [where]):
+                    if dbm.Delete(f"tags{ctx.guild.id}", "tags", where_dict) > 0:
                         await ctx.send(f'{ctx.message.author.mention}: Tag deleted.', delete_after=5)
                 else:
+                    ctx.command.reset_cooldown(ctx)
                     await ctx.send(f'{ctx.message.author.mention}: You do not have permissions to delete that tag.\nYou must either be an Administrator or the original tag creator.', delete_after=5)
             else:
+                ctx.command.reset_cooldown(ctx)
                 await ctx.send(f'{ctx.message.author.mention}: That tag does not exist.', delete_after=5)
             await to_delete.delete(delay=5)
         except Exception as ex:

@@ -89,18 +89,44 @@ class Google(commands.Cog):
 
     #region --------------- Image Search ---------------
     async def GetImageResult(self, message):
+        forbidden = ["fbsbx.com", "i.kym-cdn.com"]
         query = Helper.CommandStrip(message)
         results = self.cse_service.cse().list(q=query, cx=current_settings["keys"]["cse"], searchType="image").execute()
         if "items" in results:
-            return random.choice(list(results["items"]))
+            for i in range(0,100):
+                result = random.choice(list(results["items"]))
+                valid = True
+                for term in forbidden:
+                    if result["link"].find(term) > -1:
+                        print("poopoo")
+                        valid = False
+                if valid:
+                    break
+            if valid:
+                return result
+            else:
+                return None
         else:
             return None
 
     async def GetSafeImageResult(self, message):
         query = Helper.CommandStrip(message)
+        forbidden = ["fbsbx.com", "i.kym-cdn.com"]
         results = self.cse_service.cse().list(q=query, cx=current_settings["keys"]["cse"], searchType="image", safe="active").execute()
         if "items" in results:
-            return random.choice(list(results["items"]))
+            for i in range(0,100):
+                result = random.choice(list(results["items"]))
+                valid = True
+                for term in forbidden:
+                    if result["link"].find(term) > -1:
+                        print("poopoo")
+                        valid = False
+                if valid:
+                    break
+            if valid:
+                return result
+            else:
+                return None
         else:
             return None
 
@@ -110,6 +136,7 @@ class Google(commands.Cog):
     @commands.guild_only()
     async def image(self, ctx):
         try:
+            to_delete = ctx.message
             if ctx.message.channel.is_nsfw():
                 task = asyncio.create_task(self.GetImageResult(ctx.message.content))
             else:
@@ -120,10 +147,11 @@ class Google(commands.Cog):
                 image_embed.title = task.result()["title"]
                 image_embed.description = task.result()["link"]
                 image_embed.set_image(url=task.result()["link"])
-                image_embed.set_footer(text=f'Requested by {ctx.message.author.display_name}')
+                image_embed.set_footer(text=f'{ctx.message.author} searched for \'{Helper.CommandStrip(ctx.message.content)}\'')
                 await ctx.send(embed=image_embed)
             else:
                 await ctx.send(f'{ctx.message.author.mention}: No results found for that query. Note that Safe Search is on if the channel is not marked as NSFW!', delete_after=10)
+            await to_delete.delete(delay=2)
         except Exception as ex:
             logger.LogPrint("IMAGE ERROR", logging.CRITICAL, ex)
             await ctx.send(f'ERROR: {ex}.')
@@ -132,7 +160,7 @@ class Google(commands.Cog):
     #region --------------- Youtube Search ---------------
     async def GetYoutubeVideo(self, message):
         query = Helper.CommandStrip(message)
-        results = self.yt_service.search().list(q=query, part='id,snippet', maxResults=10).execute()
+        results = self.yt_service.search().list(q=query, part='id,snippet', maxResults=2).execute()
         videos = []
         if "items" in results:
             for item in results.get('items', []):
@@ -159,7 +187,11 @@ class Google(commands.Cog):
                 await ctx.send(f'{ctx.message.author.mention}: No results found.')
         except Exception as ex:
             logger.LogPrint("YOUTUBE ERROR", logging.CRITICAL, ex)
-            await ctx.send(f'ERROR: {ex}.')
+            if str(ex).find('Daily Limit Exceeded'):
+                await ctx.send(f'ERROR: Daily Search Limit Exceeded. The limit resets at midnight Pacific Time.')
+            else:
+                await ctx.send(f'ERROR: {ex}.')
+            
     #endregion
 
 def setup(client):

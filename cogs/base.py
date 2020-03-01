@@ -136,9 +136,11 @@ class Base(commands.Cog):
         response = ''
         members = ctx.guild.members
         try:
-            amount = int(Helper.FuzzyNumberSearch(Helper.CommandStrip(ctx.message.content)))
+            amount = int(Helper.FuzzyNumberSearch(Helper.CommandStrip(ctx.message.content).split(' ')[0]))
         except:
             amount = 1
+        if amount > 10:
+            amount = 10
         for i in range(0,1000): 
             r_member = random.choice(members)
             if r_member.status != discord.Status.offline and r_member not in selected_members and r_member.bot == False:                 

@@ -71,7 +71,6 @@ class Helpers():
         sep = match.group("sep")
         if sep:
             num_str = num_str.replace(sep, "")     # remove thousands separators
-
         if match.group("decimal_part"):
             point = match.group("point")
             if point != ".":
