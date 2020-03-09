@@ -150,7 +150,7 @@ class Google(commands.Cog):
                 image_embed.set_footer(text=f'{ctx.message.author} searched for \'{Helper.CommandStrip(ctx.message.content)}\'')
                 await ctx.send(embed=image_embed)
             else:
-                await ctx.send(f'{ctx.message.author.mention}: No results found for that query. Note that Safe Search is on if the channel is not marked as NSFW!', delete_after=10)
+                await ctx.send(f'{ctx.message.author.mention}: No results found for \'{Helper.CommandStrip(ctx.message.content)}\'. Note that Safe Search is on if the channel is not marked as NSFW!', delete_after=10)
             await to_delete.delete(delay=2)
         except Exception as ex:
             logger.LogPrint("IMAGE ERROR", logging.CRITICAL, ex)
@@ -159,8 +159,8 @@ class Google(commands.Cog):
 
     #region --------------- Youtube Search ---------------
     async def GetYoutubeVideo(self, message):
-        query = Helper.CommandStrip(message)
-        results = self.yt_service.search().list(q=query, part='id,snippet', maxResults=2).execute()
+        query = Helper.CommandStrip(message) # removes the command invocation from the message ie '!yt funny dog' becomes 'funny dog'
+        results = self.yt_service.search().list(q=query, part='id,snippet', type="video", maxResults=1).execute()
         videos = []
         if "items" in results:
             for item in results.get('items', []):
@@ -186,7 +186,7 @@ class Google(commands.Cog):
             else:
                 await ctx.send(f'{ctx.message.author.mention}: No results found.')
         except Exception as ex:
-            logger.LogPrint("YOUTUBE ERROR", logging.CRITICAL, ex)
+            logger.LogPrint(f"ERROR: {ctx.command} - {ex}", logging.CRITICAL, ex)
             if str(ex).find('Daily Limit Exceeded'):
                 await ctx.send(f'ERROR: Daily Search Limit Exceeded. The limit resets at midnight Pacific Time.')
             else:

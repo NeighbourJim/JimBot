@@ -4,6 +4,7 @@ config.json
 *.bat
 .vscode/
 stand.png
+memelist.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

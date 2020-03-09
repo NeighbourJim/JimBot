@@ -55,7 +55,7 @@ class Tags(commands.Cog):
         try:
             to_delete = ctx.message
             split_message = Helper.CommandStrip(ctx.message.content).split(' ')
-            if len(split_message) > 1:
+            if len(split_message) > 1 and len(split_message) < 400:
                 tag_name = split_message[0]
                 tag_content = ' '.join(split_message[1:])
                 where = ("tag_name", tag_name)
@@ -63,10 +63,12 @@ class Tags(commands.Cog):
                 if len(existing) == 0:
                     new_tag = {"tag_name": tag_name, "tag_content": tag_content, "author_id": ctx.message.author.id}
                     if dbm.Insert(f"tags{ctx.guild.id}", "tags", new_tag):
-                        await ctx.send(f'{ctx.message.author.mention}: Tag created.', delete_after=5)
+                        await ctx.send(f'{ctx.message.author.mention}: Created tag \'{tag_name}\'.')
                 else:
                     ctx.command.reset_cooldown(ctx)
                     await ctx.send(f'{ctx.message.author.mention}: That tag already exists.', delete_after=5)
+            else:
+                await ctx.send(f'{ctx.message.author.mention}: Tag too long or too short.')
             await to_delete.delete(delay=5)
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t create tag: {ex}',logging.ERROR)

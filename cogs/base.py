@@ -81,7 +81,7 @@ class Base(commands.Cog):
             if min != None and max != None:
                 number = random.randint(min, max)
                 response = f'{ctx.message.author.mention}: Your number between {min} and {max} was: **{number}**.'
-                if len(str(number)) > 2:
+                if len(str(number)) >= 2:
                     if str(number)[-1] == str(number)[-2]:
                         digits_emoji = Helper.FindEmoji(ctx, "checkEm")
                         if digits_emoji != None:
