@@ -119,7 +119,7 @@ class Games(commands.Cog):
             response = f'{response.strip()}.'
         else:
             ctx.command.reset_cooldown(ctx)
-            response = f'{ctx.message.author.mention}: Invalid number of adjectives requested.'        
+            response = f'Invalid number of adjectives requested.'        
         await ctx.send(f'{ctx.message.author.mention}: ``{response}``')
 
     @commands.command(aliases=["Power"])
@@ -159,7 +159,7 @@ class Games(commands.Cog):
             logger.LogPrint(ex, logging.ERROR)
 
     @commands.command(aliases=["Stand"])
-    @commands.cooldown(rate=1, per=15, type=BucketType.channel)
+    @commands.cooldown(rate=1, per=7, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def stand(self, ctx):
@@ -219,7 +219,7 @@ class Games(commands.Cog):
                 if stand_gen.GenerateImage(stats_dict,user_colour) == True:
                     image_file = discord.File('./internal/data/images/stand.png', filename='stand.png')
                     stand_embed = discord.Embed()
-                    if len(ctx.guild.members) > 200:
+                    if len(ctx.guild.members) > 75:
                         stand_embed.set_thumbnail(url="attachment://stand.png")
                     else:
                         stand_embed.set_image(url="attachment://stand.png")
@@ -229,7 +229,12 @@ class Games(commands.Cog):
                         stand_embed.description = f"It has the ability: **[{pow_name}]({pow_url})**\n{'.'.join(desc[0].split('.')[0:2])}"
                     else:
                         stand_embed.description = f"It has the ability: **[{pow_name}]({pow_url})**"
-                    await ctx.send(file=image_file, embed=stand_embed)
+                    sent = await ctx.send(file=image_file, embed=stand_embed)
+                    if len(ctx.guild.members) <= 75:
+                        await asyncio.sleep(7)
+                        stand_embed.set_thumbnail(url="attachment://stand.png")
+                        stand_embed.set_image(url='')
+                        await sent.edit(embed=stand_embed)
                 else:
                     response = f"Couldn't generate Stand."
                     await ctx.send(response)
