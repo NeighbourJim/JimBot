@@ -1,0 +1,10 @@
+discord.py
+sqlite3
+googletrans
+PIL
+lxml
+asyncio
+json
+urllib
+requests
+emoji
