@@ -20,7 +20,6 @@ class Translate(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-        self.btr_char_limit = 400
         self.translator = Translator()
 
     async def GetTranslation(self, message, target_lang='en'):
@@ -61,36 +60,33 @@ class Translate(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def badtranslate(self,ctx):
-        random_lang = None        
-        message_to_translate = Helper.CommandStrip(ctx.message.content)
-        message_to_translate = Helper.EmojiConvert(message_to_translate)
-        if len(message_to_translate) <= self.btr_char_limit:
-            await ctx.trigger_typing()
-            try:
-                current_message = message_to_translate
-                logger.LogPrint(f'BTR: Beginning BadTranslate.', logging.DEBUG)
-                for i in range(0, 15):
-                    previous_lang = random_lang
-                    if i % 2 == 0 and i != 0 and True == False:
-                        random_lang = 'en'
-                    else:
-                        while previous_lang == random_lang:
-                            random_lang = random.choice(bad_trans_languages_old)
-                    logger.LogPrint(f'BTR: Translating to {random_lang}.', logging.DEBUG)
-                    logger.LogPrint(f'BTR: Pre:{current_message}', logging.DEBUG)
-                    task = asyncio.create_task(self.GetTranslation(message=current_message, target_lang=random_lang))
-                    await task
-                    current_message = task.result()
-                    logger.LogPrint(f'BTR: Post:{current_message}', logging.DEBUG)
-                task = asyncio.create_task(self.GetTranslation(current_message))
+        random_lang = None
+        await ctx.trigger_typing()
+        try:
+            message_to_translate = Helper.CommandStrip(ctx.message.content)
+            message_to_translate = Helper.EmojiConvert(message_to_translate)
+            current_message = message_to_translate
+            logger.LogPrint(f'BTR: Beginning BadTranslate.', logging.DEBUG)
+            for i in range(0, 15):
+                previous_lang = random_lang
+                if i % 2 == 0 and i != 0 and True == False:
+                    random_lang = 'en'
+                else:
+                    while previous_lang == random_lang:
+                        random_lang = random.choice(bad_trans_languages_old)
+                logger.LogPrint(f'BTR: Translating to {random_lang}.', logging.DEBUG)
+                logger.LogPrint(f'BTR: Pre:{current_message}', logging.DEBUG)
+                task = asyncio.create_task(self.GetTranslation(message=current_message, target_lang=random_lang))
                 await task
-                await ctx.send(f'{ctx.message.author.mention}: {task.result()}')
-                logger.LogPrint(f'BTR: BadTranslate complete.', logging.DEBUG)
-            except Exception as ex:
-                logger.LogPrint("BAD TRANSLATE ERROR", logging.CRITICAL, ex)
-                await ctx.send(f'ERROR: {ex}.\nThis usually means Google didnt respond properly. Trying to find a way to prevent it!')
-        else:
-            await ctx.send(f'{ctx.message.author.mention}: Message too long. Maximum length for BTR is {self.btr_char_limit} characters.', delete_after=10)
+                current_message = task.result()
+                logger.LogPrint(f'BTR: Post:{current_message}', logging.DEBUG)
+            task = asyncio.create_task(self.GetTranslation(current_message))
+            await task
+            await ctx.send(f'{ctx.message.author.mention}: {task.result()}')
+            logger.LogPrint(f'BTR: BadTranslate complete.', logging.DEBUG)
+        except Exception as ex:
+            logger.LogPrint("BAD TRANSLATE ERROR", logging.CRITICAL, ex)
+            await ctx.send(f'ERROR: {ex}.\nThis usually means Google didnt respond properly. Trying to find a way to prevent it!')
 
 def setup(client):
     client.add_cog(Translate(client))

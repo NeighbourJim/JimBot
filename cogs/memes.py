@@ -68,7 +68,6 @@ class Memes(commands.Cog):
             w = [("m_id", m_id)]
             ups = dbm.Retrieve(f'memes{ctx.guild.id}', 'upvotes', w, WhereType.AND, ["author_id", "author_username"], 10000)
             downs = dbm.Retrieve(f'memes{ctx.guild.id}', 'downvotes', w, WhereType.AND, ["author_id", "author_username"], 10000)
-            print(ups)
             return {"ups": ups, "downs": downs}
         except Exception as ex:
             logger.LogPrint(f'ERROR: Could not get meme votes. - {ex}', logging.ERROR)
@@ -230,8 +229,8 @@ class Memes(commands.Cog):
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t execute meme command: {ex}',logging.ERROR)     
 
-    @commands.command(help="Rate a meme as good.", aliases=["gm", "GM", "Gm", "Godmersham", "godmersham"])
-    @commands.cooldown(rate=1, per=0.1, type=BucketType.channel)
+    @commands.command(help="Rate a meme as good.", aliases=["gm", "GM", "Gm", "Godmersham"])
+    @commands.cooldown(rate=1, per=1, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def goodmeme(self, ctx):
@@ -269,8 +268,8 @@ class Memes(commands.Cog):
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t execute goodmeme command: {ex}', logging.ERROR)
 
-    @commands.command(help="Rate a meme as bad.", aliases=["bm", "BM", "Bm", "Bandmaster", "bandmaster"])
-    @commands.cooldown(rate=1, per=0.1, type=BucketType.channel)
+    @commands.command(help="Rate a meme as bad.", aliases=["bm", "BM", "Bm", "Bandmaster"])
+    @commands.cooldown(rate=1, per=1, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def badmeme(self, ctx):
@@ -325,11 +324,12 @@ class Memes(commands.Cog):
             values_to_find.append(t)
             meme = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', values_to_find)
             if len(meme) > 0:
+                fields = []
+                fields.append({"name": f'Requested by {ctx.message.author.display_name}', "value": f'Created by {meme[0][3]} on {meme[0][6]}\nScore: **{meme[0][2]}** (+{self.GetUpvoteCount(ctx, m_id)} / -{self.GetDownvoteCount(ctx, m_id)})', "inline": False})
                 meme_dict = {
                     "author": {"name": f'Meme #{m_id} Info'},
-                    "description": f'Created by {meme[0][3]} on {meme[0][6]}\nScore: **{meme[0][2]}** (+{self.GetUpvoteCount(ctx, m_id)} / -{self.GetDownvoteCount(ctx, m_id)})',
-                    "thumbnail": {"url": f'{self.GetGradeUrl(ctx, meme[0][2])}'},
-                    "footer": {"text": f'Requested by {ctx.message.author.display_name}'}
+                    "fields": fields,
+                    "thumbnail": {"url": f'{self.GetGradeUrl(ctx, meme[0][2])}'} 
                 }
                 result_embed = discord.Embed.from_dict(meme_dict)
                 await ctx.send(embed=result_embed)
@@ -360,53 +360,56 @@ class Memes(commands.Cog):
                 m_id = int(Helper.FuzzyNumberSearch(message))
             if m_id != None:
                 voter_dict = self.GetVoters(ctx, m_id)
-                for a_id, name in voter_dict["ups"]:
-                    print(f'{a_id}, {name}')
-                    member_id = int(Helper.FuzzyNumberSearch(a_id))
+                for up in voter_dict["ups"]:
+                    member_id = int(Helper.FuzzyNumberSearch(up[0]))
                     member = ctx.guild.get_member(member_id)
                     if member != None:
                         upvoters.append(member.name)
                     else:
-                        upvoters.append(name)
-                for a_id, name in voter_dict["downs"]:
-                    member_id = int(Helper.FuzzyNumberSearch(a_id))
+                        upvoters.append(up[1])
+                for down in voter_dict["downs"]:
+                    member_id = int(Helper.FuzzyNumberSearch(down[0]))
                     member = ctx.guild.get_member(member_id)
                     if member != None:
                         downvoters.append(member.name)
                     else:
-                        downvoters.append(name)
+                        upvoters.append(down[1])
                 if len(upvoters) > 0:
                     i = 0
-                    print(upvoters)
                     for member in upvoters:
-                        if member != None:
-                            upvoter_message += f'{member}, '
-                        else:
-                            upvoter_message += f'``Unknown User``, '
-                        if i == 4:
-                            upvoter_message += '\n'
-                            i = 0
-                        else:
+                        if i != 4:
+                            if member != None:
+                                upvoter_message += f'{member}, '
+                            else:
+                                upvoter_message += f'``Unknown User``, '
                             i += 1
-                        
+                        else:
+                            if member != None:
+                                upvoter_message += f'{member},\n'
+                            else:
+                                upvoter_message += f'``Unknown User``,\n'
+                            i = 0                        
                     upvoter_message = upvoter_message[:-2]                    
                 else:
-                    upvoter_message = "None!"
+                    upvoter_message = "None."
                 if len(downvoters) > 0:
                     i = 0
                     for member in downvoters:
-                        if member != None:
-                            downvoter_message += f'{member}, '
+                        if i != 4:
+                            if member != None:
+                                downvoter_message += f'{member}, '
+                            else:
+                                downvoter_message += f'``Unknown User``, '
+                            i += 1
                         else:
-                            downvoter_message += f'``Unknown User``, '
-                        if i == 4:
-                            downvoter_message += '\n'
-                            i = 0
-                        else:
-                            i += 1                       
+                            if member != None:
+                                downvoter_message += f'{member},\n'
+                            else:
+                                downvoter_message += f'``Unknown User``,\n'
+                            i = 0                        
                     downvoter_message = downvoter_message[:-2]                      
                 else:
-                    downvoter_message = "None!"
+                    downvoter_message = "None."
                 final_message = f'**Voters for Meme #{m_id}:**\n**Upvotes:** {upvoter_message}\n**Downvotes:** {downvoter_message}'
                 await ctx.send(f'{ctx.message.author.mention}: {final_message}')
             else:
@@ -563,39 +566,9 @@ class Memes(commands.Cog):
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t get worst meme: {ex}', logging.ERROR)
 
-    @commands.command(help="Get the meme list either in total or for a specific user.", aliases=["ml", "Ml", "ML", "Memelist"])
-    @commands.cooldown(rate=1, per=20, type=BucketType.channel)
-    @commands.has_role("Bot Use")
-    @commands.guild_only()
-    async def memelist(self, ctx):
-        msg = Helper.CommandStrip(ctx.message.content)
-        if len(msg) > 0:
-            names = msg.split(',')
-        else:
-            names = []
-        where = None
-        meme_list = ''
+        
+        
 
-        await ctx.trigger_typing()
-        if len(names) > 0:
-            where = []
-            for name in names:
-                where.append(("author_username", name.strip()))
-            memes = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', where=where, where_type=WhereType.OR, compare_type=CompareType.LIKE, rows_required=99999)
-        else:
-            memes = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', rows_required=99999)
-        if len(memes) > 0:
-            for meme in memes:
-                meme_string = f'ID: {meme[0]}\nAuthor: {meme[3]}\nDate Added: {meme[6]}\nScore: {meme[2]}\nMeme: {meme[1]}\n\n'
-                meme_list += meme_string
-            list_file = open('./internal/data/memelist.txt', 'wb')
-            meme_list = meme_list.encode('utf-8')
-            list_file.write(meme_list)
-            list_file.close()
-            await ctx.send(content=f'{ctx.message.author.mention}', file=discord.File('./internal/data/memelist.txt'))
-        else:
-            ctx.command.reset_cooldown(ctx)
-            await ctx.send(f'{ctx.message.author.mention}: No memes found.', delete_after=6)
 
 
 def setup(client):

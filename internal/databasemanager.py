@@ -146,7 +146,6 @@ class DB_Manager():
                     sql_query += f" WHERE {where_clause}"
                 if order_by != None:
                     sql_query += f" ORDER BY {order_by[0]} {order_by[1]}"
-                print(sql_query)
                 self.cursor.execute(sql_query, where_values)
                 result = self.cursor.fetchmany(rows_required)
                 logger.LogPrint(f'Retrieved from {db_name}: {result}', logging.DEBUG)
