@@ -1,10 +1,6 @@
-discord.py
-sqlite3
+git+https://github.com/Rapptz/discord.py
 googletrans
 PIL
 lxml
-asyncio
-json
 urllib
-requests
 emoji
