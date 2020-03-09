@@ -230,7 +230,7 @@ class Games(commands.Cog):
                     else:
                         stand_embed.description = f"It has the ability: **[{pow_name}]({pow_url})**"
                     sent = await ctx.send(file=image_file, embed=stand_embed)
-                    if len(ctx.guild.members) <= 75:
+                    if len(ctx.guild.members) <= 0: # temporarily disabled as it isnt necessary
                         await asyncio.sleep(7)
                         stand_embed.set_thumbnail(url="attachment://stand.png")
                         stand_embed.set_image(url='')

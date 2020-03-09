@@ -589,7 +589,7 @@ class Memes(commands.Cog):
                 meme_string = f'ID: {meme[0]}\nAuthor: {meme[3]}\nDate Added: {meme[6]}\nScore: {meme[2]}\nMeme: {meme[1]}\n\n'
                 meme_list += meme_string
             list_file = open('./internal/data/memelist.txt', 'wb')
-            meme_list = meme_list.encode('utf-8')
+            meme_list = meme_list.encode('utf-8-sig')
             list_file.write(meme_list)
             list_file.close()
             await ctx.send(content=f'{ctx.message.author.mention}', file=discord.File('./internal/data/memelist.txt'))
