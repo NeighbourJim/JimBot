@@ -1,6 +1,6 @@
 git+https://github.com/Rapptz/discord.py
 googletrans
-PIL
+Pillow
 lxml
 urllib
 emoji
