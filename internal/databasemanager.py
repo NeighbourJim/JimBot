@@ -156,6 +156,18 @@ class DB_Manager():
             logger.LogPrint(f'Failed to retrieve from {db_name} - {table_name}. - {ex}', logging.ERROR)
             return ex
 
+    def ExecuteParamQuery(self, db_name, query, params):
+        try:
+            if self.ConnectToDB(db_name):
+                self.cursor = self.connection.cursor()
+                self.cursor.execute(query, params)
+                result = self.cursor.fetchall()
+                self.connection.commit()
+                self.connection.close()
+                return result
+        except Exception as ex:
+            logger.LogPrint(f'Failed to execute query. DB:{db_name} - Q:{query}. - {ex}', logging.ERROR)
+
     def ExecuteRawQuery(self, db_name, query):
         '''Executes a RAW UNSANITIZED QUERY. This should ONLY be for internal use to do things such as create views. DO NOT PASS IN USER DATA.'''
         try:

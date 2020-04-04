@@ -145,7 +145,8 @@ class Google(commands.Cog):
             if(task.result() != None):
                 image_embed = discord.Embed()
                 image_embed.title = task.result()["title"]
-                image_embed.description = task.result()["link"]
+                if len(task.result()["link"]) <= 200:
+                    image_embed.description = task.result()["link"]
                 image_embed.set_image(url=task.result()["link"])
                 image_embed.set_footer(text=f'{ctx.message.author} searched for \'{Helper.CommandStrip(ctx.message.content)}\'')
                 await ctx.send(embed=image_embed)

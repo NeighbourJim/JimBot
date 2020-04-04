@@ -4,6 +4,7 @@ import logging
 import re
 from discord.ext import commands
 from discord.ext.commands import BucketType
+from discord.ext.commands import EmojiConverter
 
 from internal.helpers import Helper
 from internal.logs import logger
@@ -181,6 +182,18 @@ class Base(commands.Cog):
                 name = f'{member.display_name} ({member.name})'
             response += f'{name}\n'
         await ctx.send(f'{ctx.message.author.mention}: {response}')
+
+    @commands.command(aliases=["e", "E"], help="Get the image link for an emote.")    
+    @commands.cooldown(rate=1, per=2, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def emote(self, ctx):
+        e_id = Helper.GetFirstEmojiID(Helper.CommandStrip(ctx.message.content))
+        if e_id:
+            await ctx.send(f'{ctx.message.author.mention}: https://cdn.discordapp.com/emojis/{e_id.group()}.png')
+        else:            
+            await ctx.send(f'{ctx.message.author.mention}: You didn\'t provide an emoji.')
+
 
     @commands.command(help="Print some info about the bot.")    
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)

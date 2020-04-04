@@ -231,7 +231,7 @@ class Memes(commands.Cog):
             logger.LogPrint(f'ERROR - Couldn\'t execute meme command: {ex}',logging.ERROR)     
 
     @commands.command(help="Rate a meme as good.", aliases=["gm", "GM", "Gm", "Godmersham", "godmersham"])
-    @commands.cooldown(rate=1, per=0.1, type=BucketType.channel)
+    @commands.cooldown(rate=1, per=1, type=BucketType.member)
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def goodmeme(self, ctx):
@@ -256,10 +256,10 @@ class Memes(commands.Cog):
                     dbm.Insert(f'memes{ctx.guild.id}', "upvotes", d)
                     dbm.Delete(f'memes{ctx.guild.id}', "downvotes", {"m_id": m_id, "author_id": f'<@{ctx.message.author.id}>'})
                     dbm.Update(f'memes{ctx.guild.id}', 'memes', {"score": self.GetMemeScore(ctx, m_id)}, {"m_id": m_id})
-                    await ctx.send(f'{ctx.message.author.mention}: :arrow_up: **{self.GetMemeScore(ctx, m_id)}**')
+                    await ctx.send(f'{ctx.message.author.mention}: **ID:{m_id}** - :arrow_up: **{self.GetMemeScore(ctx, m_id)}**')
                     await to_delete.delete(delay=3)
                 else:
-                    await ctx.send(f'{ctx.message.author.mention}: You already upvoted that meme.', delete_after=6)
+                    await ctx.send(f'{ctx.message.author.mention}: You already upvoted **ID:{m_id}**.')
                     await to_delete.delete(delay=3)
             else:
                 ctx.command.reset_cooldown(ctx)
@@ -270,7 +270,7 @@ class Memes(commands.Cog):
             logger.LogPrint(f'ERROR - Couldn\'t execute goodmeme command: {ex}', logging.ERROR)
 
     @commands.command(help="Rate a meme as bad.", aliases=["bm", "BM", "Bm", "Bandmaster", "bandmaster"])
-    @commands.cooldown(rate=1, per=0.1, type=BucketType.channel)
+    @commands.cooldown(rate=1, per=1, type=BucketType.member)
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def badmeme(self, ctx):
@@ -295,9 +295,9 @@ class Memes(commands.Cog):
                     dbm.Insert(f'memes{ctx.guild.id}', "downvotes", d)
                     dbm.Delete(f'memes{ctx.guild.id}', "upvotes", {"m_id": m_id, "author_id": f'<@{ctx.message.author.id}>'})
                     dbm.Update(f'memes{ctx.guild.id}', 'memes', {"score": self.GetMemeScore(ctx, m_id)}, {"m_id": m_id})
-                    await ctx.send(f'{ctx.message.author.mention}: :arrow_down: **{self.GetMemeScore(ctx, m_id)}**')
+                    await ctx.send(f'{ctx.message.author.mention}: **ID:{m_id}** - :arrow_down: **{self.GetMemeScore(ctx, m_id)}**')
                 else:
-                    await ctx.send(f'{ctx.message.author.mention}: You already downvoted that meme.', delete_after=6)
+                    await ctx.send(f'{ctx.message.author.mention}: You already downvoted **ID:{m_id}**.')
             else:
                 ctx.command.reset_cooldown(ctx)
                 await ctx.send(f'{ctx.message.author.mention}: No meme to vote on.\nEither you specified a meme ID that doesn\'t exist or no meme was rolled since the last bot restart.', delete_after=6)
@@ -440,7 +440,7 @@ class Memes(commands.Cog):
                         d = {"meme": message, "score": 0, "author_username": ctx.message.author.name, "author_nickname": ctx.message.author.nick, "author_id": f'<@{ctx.message.author.id}>', "date_added": today}
                         dbm.Insert(f'memes{ctx.guild.id}', 'memes', d)
                         nm = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', [("meme", message)], where_type=WhereType.AND, column_data=["m_id"])
-                        await ctx.send(f'{ctx.message.author.mention}: Meme added. (ID:{nm[0][0]})', delete_after=5)
+                        await ctx.send(f'{ctx.message.author.mention}: Meme added. (ID:{nm[0][0]})')
                     else:
                         ctx.command.reset_cooldown(ctx)
                         await ctx.send(f'{ctx.message.author.mention}: That\'s already a meme, you dip.', delete_after=10)
@@ -596,6 +596,56 @@ class Memes(commands.Cog):
         else:
             ctx.command.reset_cooldown(ctx)
             await ctx.send(f'{ctx.message.author.mention}: No memes found.', delete_after=6)
+
+    
+    @commands.command(help="Get the meme stats for a specific user, or yourself.", aliases=["ms", "Ms", "MS", "Memestats"])
+    @commands.cooldown(rate=1, per=10, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def memestats(self, ctx):
+        total_memes = 0
+        user_count = 0
+        good_count = 0
+        neutral_count = 0
+        bad_count = 0
+        voted_count = 0
+        average = 0
+
+        msg = Helper.CommandStrip(ctx.message.content)
+        if len(msg) > 0:
+            name = msg 
+        else:
+            name = ctx.message.author.name
+        query = '''SELECT * FROM 
+			(SELECT COUNT(DISTINCT m_id) as totalcount FROM memes),
+			(SELECT COUNT(DISTINCT m_id) as memecount FROM memes WHERE author_username LIKE ?1),
+			(SELECT COUNT(DISTINCT m_id) as good FROM memes WHERE author_username LIKE ?1 AND score > 0), 
+			(SELECT COUNT(DISTINCT m_id) as bad FROM memes WHERE author_username LIKE ?1 AND score < 0), 
+			(SELECT COUNT(DISTINCT memes.m_id) as neutral FROM memes INNER JOIN upvotes ON memes.m_id LIKE upvotes.m_id WHERE memes.author_username LIKE ?1 AND memes.score = 0 AND memes.m_id IN (SELECT m_id FROM upvotes)),
+			(SELECT AVG(score) as average FROM memes WHERE author_username LIKE ?1)'''
+        params = [name]
+        results = dbm.ExecuteParamQuery(f'memes{ctx.guild.id}', query, params)
+        print(results)
+        if results != None:
+            total_memes = results[0][0]
+            user_count = results[0][1]
+            good_count = results[0][2]
+            bad_count = results[0][3]
+            neutral_count = results[0][4]
+            average = results[0][5]
+
+            voted_count = good_count + bad_count + neutral_count
+            total_percent = round((user_count/total_memes)*100, 2)
+            good_percent = round((good_count/voted_count)*100, 2)
+            bad_percent = round((bad_count/voted_count)*100, 2)
+            neutral_percent = round((neutral_count/voted_count)*100, 2)
+            average = round(average, 2)
+
+            response = f'**{name}** has added **{user_count}** memes which is **{total_percent}%** of the total **{total_memes}** memes.\nOf their {voted_count} rated memes, **{good_count}** ({good_percent}%) are Good, **{neutral_count}** ({neutral_percent}%) are Neutral, and **{bad_count}** ({bad_percent}%) are Bad.\nTheir average memescore is **{average}**.'
+            await ctx.send(f'{ctx.message.author.mention}: {response}')
+        else:
+            await ctx.send(f'{ctx.message.author.mention}: No memes found for {name}', delete_after=6)
+
 
 
 def setup(client):

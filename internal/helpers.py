@@ -50,6 +50,12 @@ class Helpers():
         regex = r'^(\{}\w*)'.format(configmanager.cm.GetConfig()["settings"]["prefix"])
         return re.sub(r'{}'.format(regex), '', f'{message}').strip()
 
+    def GetFirstEmojiID(self, message):
+        try:
+            return re.search(r'[^:]+(?=\>)', message)
+        except Exception as ex:
+            print(ex)
+
     def FindEmoji(self, context, name_to_find):
         try:
             emoji_list = context.guild.emojis

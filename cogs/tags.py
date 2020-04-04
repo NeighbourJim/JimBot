@@ -73,7 +73,7 @@ class Tags(commands.Cog):
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t create tag: {ex}',logging.ERROR)
 
-    @commands.command(help="Delete a tag.", aliases=["dt", "DT", "Dt", "removetag"])
+    @commands.command(help="Delete a tag.", aliases=["removetag"])
     @commands.cooldown(rate=1, per=10, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
@@ -88,7 +88,7 @@ class Tags(commands.Cog):
                 user_is_admin = ctx.message.author.permissions_in(ctx.message.channel).administrator
                 if user_is_admin or ctx.message.author.id == existing[0][2]:
                     if dbm.Delete(f"tags{ctx.guild.id}", "tags", where_dict) > 0:
-                        await ctx.send(f'{ctx.message.author.mention}: Tag deleted.', delete_after=5)
+                        await ctx.send(f'{ctx.message.author.mention}: Tag \'{tag_name}\' deleted.')
                 else:
                     ctx.command.reset_cooldown(ctx)
                     await ctx.send(f'{ctx.message.author.mention}: You do not have permissions to delete that tag.\nYou must either be an Administrator or the original tag creator.', delete_after=5)
