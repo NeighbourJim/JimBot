@@ -11,21 +11,23 @@ class cliffnet(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @commands.command()    
-    @commands.cooldown(rate=1, per=2, type=BucketType.channel)
+      
+              
+    @commands.command(aliases=["Scramble", "s"], help="scrambles word order")
+    @commands.cooldown(rate=1, per=1, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
-    async def COMMAND(self, ctx):
+
+    async def scramble(self, ctx):
         if ctx.guild.id == 107847342006226944:
-            async def scramble(self, ctx):
-                split_message = Helper.CommandStrip(ctx.message.content).split(' ')
-                if len(split_message) > 0:
-                    result = random.sample(split_message, len(split_message))
-                    stringResult= " "
-                    stringResult = stringResult.join(result)
-                    await ctx.send(f'{ctx.message.author.mention}: {stringResult}')
-                else:
-                    await ctx.send(f'{ctx.message.author.mention}: call tech support on Jims PM')
+            split_message = Helper.CommandStrip(ctx.message.content).split(' ')
+            if len(split_message) > 0:
+                result = random.sample(split_message, len(split_message))
+                stringResult= " "
+                stringResult = stringResult.join(result)
+                await ctx.send(f'{ctx.message.author.mention}: {stringResult}')
+            else:
+                await ctx.send(f'{ctx.message.author.mention}: call tech support on Jims PM')
 
 
 
