@@ -28,6 +28,13 @@ class cliffnet(commands.Cog):
                 await ctx.send(f'{ctx.message.author.mention}: call tech support on Jims PM')
 
 #hi knite! this is a change 
+    @commands.command(aliases=["Thing", "t"], help="scrambles word order")  
+    @commands.cooldown(rate=1, per=2, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def command2(self, ctx):
+        if ctx.guild.id == 107847342006226944:
+            #different stuff
 
 def setup(client):
     client.add_cog(cliffnet(client))
