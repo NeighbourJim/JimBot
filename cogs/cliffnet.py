@@ -11,14 +11,11 @@ class cliffnet(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-
-      
               
     @commands.command(aliases=["Scramble", "s"], help="scrambles word order")
     @commands.cooldown(rate=1, per=1, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
-
     async def scramble(self, ctx):
         if ctx.guild.id == 107847342006226944:
             split_message = Helper.CommandStrip(ctx.message.content).split(' ')
@@ -30,7 +27,7 @@ class cliffnet(commands.Cog):
             else:
                 await ctx.send(f'{ctx.message.author.mention}: call tech support on Jims PM')
 
-
+#hi knite! this is a change 
 
 def setup(client):
     client.add_cog(cliffnet(client))
