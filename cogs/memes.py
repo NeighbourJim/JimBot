@@ -450,7 +450,7 @@ class Memes(commands.Cog):
             else:
                 ctx.command.reset_cooldown(ctx)
                 await ctx.send(f'{ctx.message.author.mention}: Can\'t add a blank meme.', delete_after=10)
-            await to_delete.delete(delay=3)
+            await to_delete.delete(delay=25)
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t add meme: {ex}', logging.ERROR)
 
@@ -598,6 +598,84 @@ class Memes(commands.Cog):
             await ctx.send(f'{ctx.message.author.mention}: No memes found.', delete_after=6)
 
     
+    @commands.command(help="Get the meme stats for a specific user, or yourself.", aliases=["tms", "Tms", "TMS", "Totalmemestats"])
+    @commands.cooldown(rate=1, per=10, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def totalmemestats(self, ctx):
+        total_memes = 0
+        good_count = 0
+        neutral_count = 0
+        bad_count = 0
+        voted_count = 0
+        average = 0
+
+        query = '''SELECT * FROM 
+			(SELECT COUNT(DISTINCT m_id) as totalcount FROM memes),
+			(SELECT COUNT(DISTINCT m_id) as good FROM memes WHERE score > 0), 
+			(SELECT COUNT(DISTINCT m_id) as bad FROM memes WHERE score < 0), 
+			(SELECT COUNT(DISTINCT memes.m_id) as neutral FROM memes INNER JOIN upvotes ON memes.m_id LIKE upvotes.m_id WHERE memes.score = 0 AND memes.m_id IN (SELECT m_id FROM upvotes)),
+			(SELECT AVG(score) as average FROM memes)'''
+        results = dbm.ExecuteRawQuery(f'memes{ctx.guild.id}', query)
+        if results != None:
+            print(results)
+            total_memes = results[0]
+            good_count = results[1]
+            bad_count = results[2]
+            neutral_count = results[3]
+            average = results[4]
+
+            voted_count = good_count + bad_count + neutral_count
+            good_percent = round((good_count/voted_count)*100, 2)
+            bad_percent = round((bad_count/voted_count)*100, 2)
+            neutral_percent = round((neutral_count/voted_count)*100, 2)
+            average = round(average, 2)
+
+            response = f'There are **{total_memes}** memes in the database.\n**{voted_count}** have been rated.\n**{good_count}** ({good_percent}%) are Good, **{neutral_count}** ({neutral_percent}%) are Neutral, and **{bad_count}** ({bad_percent}%) are Bad.\nThe average memescore is **{average}**.'
+            await ctx.send(f'{ctx.message.author.mention}: {response}')
+        else:
+            await ctx.send(f'{ctx.message.author.mention}: No memes found.', delete_after=6)
+
+    @commands.command(help="Get the top or bottom of the rankings for average meme score. A threshold", aliases=["mb", "Mb", "MB", "Memerboard"])
+    @commands.cooldown(rate=1, per=15, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def memerboard(self, ctx):
+        msg = Helper.CommandStrip(ctx.message.content)
+        if len(msg) > 0:
+            msg = msg.split()[0].lower()
+        if msg == 'bottom' or msg == 'bot':
+            if len(ctx.guild.members) > 75:
+                table = 'bottom_five_above_ten'
+            else:
+                table = 'bottom_five'
+        else:
+            if len(ctx.guild.members) > 75:
+                table = 'top_ten_above_ten'
+            else:
+                table = 'top_five'
+        results = dbm.Retrieve(f'memes{ctx.guild.id}', table, rows_required=10)
+        if results != None:
+            print(results)
+            if msg == 'bottom' or msg == 'bot':
+                response = 'The bottom 10 average memescore holders are:\n'
+            else:
+                response = 'The top 10 average memescore holders are:\n'
+            for i in range(0, len(results)):
+                if results[i][1] == None or results[i][1] == 'None':
+                    user = self.client.get_user(Helper.FuzzyNumberSearch(results[i][0]))
+                    if user != None:
+                        name = user.name
+                    else:
+                        name = 'None'
+                else:
+                    name = results[i][1]
+                response += f'**#{i+1}** - {name}: **{round(results[i][2],2)}**.\n'
+            await ctx.send(f'{ctx.message.author.mention}: {response}')
+        else:
+            await ctx.send(f'{ctx.message.author.mention}: No memes found.', delete_after=6)
+        
+
     @commands.command(help="Get the meme stats for a specific user, or yourself.", aliases=["ms", "Ms", "MS", "Memestats"])
     @commands.cooldown(rate=1, per=10, type=BucketType.channel)
     @commands.has_role("Bot Use")

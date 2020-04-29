@@ -120,6 +120,7 @@ class DB_Manager():
 
     def Retrieve(self, db_name, table_name, where = None, where_type=WhereType.AND, column_data = ["*"], rows_required = 1, compare_type = CompareType.EQUALS, order_by=None):
         try:
+            logger.LogPrint(f'Retrieving from {db_name}', logging.DEBUG)
             if self.ConnectToDB(db_name): 
                 columns = []
                 where_values = []
