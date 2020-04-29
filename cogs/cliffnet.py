@@ -1,5 +1,6 @@
 import discord
 import logging
+import random
 from discord.ext import commands
 from discord.ext.commands import BucketType
 
