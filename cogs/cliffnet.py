@@ -17,10 +17,16 @@ class cliffnet(commands.Cog):
     @commands.guild_only()
     async def COMMAND(self, ctx):
         if ctx.guild.id == 107847342006226944:
-            #
-            #   COMMAND GOES HERE
-            #
-            await ctx.send("PONG")
+            async def scramble(self, ctx):
+                split_message = Helper.CommandStrip(ctx.message.content).split(' ')
+                if len(split_message) > 0:
+                    result = random.sample(split_message, len(split_message))
+                    stringResult= " "
+                    stringResult = stringResult.join(result)
+                    await ctx.send(f'{ctx.message.author.mention}: {stringResult}')
+                else:
+                    await ctx.send(f'{ctx.message.author.mention}: call tech support on Jims PM')
+
 
 
 def setup(client):
