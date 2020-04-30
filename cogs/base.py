@@ -104,20 +104,6 @@ class Base(commands.Cog):
         else:
             await ctx.send(f'{ctx.message.author.mention}: You only gave one option.')
 
-    @commands.command(aliases=["Scramble", "s"], help="scrambles word order")
-    @commands.cooldown(rate=1, per=1, type=BucketType.channel)
-    @commands.has_role("Bot Use")
-    @commands.guild_only()
-    async def scramble(self, ctx):
-        split_message = Helper.CommandStrip(ctx.message.content).split(' ')
-        if len(split_message) > 0:
-            result = random.sample(split_message, len(split_message))
-            stringResult= " "
-            stringResult = stringResult.join(result)
-            await ctx.send(f'{ctx.message.author.mention}: {stringResult}')
-        else:
-            await ctx.send(f'{ctx.message.author.mention}: call tech support on Jims PM')
-
     @commands.command(aliases=["Dice"], help="Rolls a die of specified size a specified numer of times.\nUsage: !dice 2d20")
     @commands.cooldown(rate=1, per=1, type=BucketType.channel)
     @commands.has_role("Bot Use")

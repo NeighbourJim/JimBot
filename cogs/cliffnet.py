@@ -36,9 +36,9 @@ class cliffnet(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
-    async def command2(self, ctx):
+    async def news(self, ctx):
         if ctx.guild.id == 107847342006226944:
-
+            await ctx.trigger_typing()
             try:
                 input = Helper.CommandStrip(ctx.message.content)
                 if input=="":
@@ -73,11 +73,11 @@ class cliffnet(commands.Cog):
     @commands.guild_only()
     async def movie(self, ctx):
         if ctx.guild.id == 107847342006226944:
+            await ctx.trigger_typing()
             scope = ['https://spreadsheets.google.com/feeds',
                      'https://www.googleapis.com/auth/drive']
             
-            credentials = ServiceAccountCredentials.from_json_keyfile_name(
-                     'bromoviessearch-08cd123a16ed.json', scope) # Your json file here
+            credentials = ServiceAccountCredentials.from_json_keyfile_name('./internal/data/bromoviessearch.json', scope) # Your json file here
             
             gc = gspread.authorize(credentials)
             
@@ -105,9 +105,5 @@ class cliffnet(commands.Cog):
             except ValueError:
                 await ctx.send('You have to enter a number, for example: 5')
 
-
-
-
-
-    def setup(client):
-        client.add_cog(cliffnet(client))
+def setup(client):
+    client.add_cog(cliffnet(client))
