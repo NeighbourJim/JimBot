@@ -1,6 +1,7 @@
 import discord
 import logging
 import random
+import requests
 from discord.ext import commands
 from discord.ext.commands import BucketType
 
@@ -27,14 +28,29 @@ class cliffnet(commands.Cog):
             else:
                 await ctx.send(f'{ctx.message.author.mention}: call tech support on Jims PM')
 
-#hi knite! this is a change 
-    @commands.command(aliases=["Thing", "t"], help="scrambles word order")  
+
+    @commands.command(aliases=["News", "n"], help="Search the recent news via a keyword! Powered by newsapi.org")  
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def command2(self, ctx):
         if ctx.guild.id == 107847342006226944:
-            #different stuff
+
+            try:
+                input = ctx.message.content
+                source = (f'http://newsapi.org/v2/everything?q={input}&sortBy=popularity&apiKey=fec0d23dd26549a9a6d58a29a675e764')
+                randomId = random.randint(0,19)
+                pull = requests.get(source)
+                content = pull.json()["articles"][randomId]
+                responseUrl = content["url"]
+                if content:
+                    await ctx.send(f'Result: {responseUrl}')
+                else: 
+                    await ctx.send(f'{ctx.message.author.mention}: No results.')
+
+            except Exception as ex:
+                logger.LogPrint(f'Couldn\'t get the news! - {ex}', logging.ERROR)
+
 
 def setup(client):
     client.add_cog(cliffnet(client))
