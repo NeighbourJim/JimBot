@@ -16,20 +16,23 @@ class cliffnet(commands.Cog):
     def __init__(self, client):
         self.client = client
               
-    @commands.command(aliases=["Scramble", "s"], help="scrambles word order")
+    @commands.command(aliases=["Scramble"], help="scrambles word order")
     @commands.cooldown(rate=1, per=1, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def scramble(self, ctx):
         if ctx.guild.id == 107847342006226944:
-            split_message = Helper.CommandStrip(ctx.message.content).split(' ')
+            get_message_task = asyncio.create_task(ctx.channel.fetch_message(ctx.channel.last_message_id))
+            await get_message_task
+            input = get_message_task.result()
+            split_message = input.split(' ')
             if len(split_message) > 0:
                 result = random.sample(split_message, len(split_message))
                 stringResult= " "
                 stringResult = stringResult.join(result)
                 await ctx.send(f'{ctx.message.author.mention}: {stringResult}')
             else:
-                await ctx.send(f'{ctx.message.author.mention}: call tech support on Jims PM')
+                await ctx.send(f'{ctx.message.author.mention}: Call tech support on Jims PM')
 
 
     @commands.command(aliases=["News", "n"], help="Search the recent news via a keyword! Powered by newsapi.org")  
@@ -99,11 +102,11 @@ class cliffnet(commands.Cog):
                 goal = float(goal)
                 results=df.loc[(df['avg'] >= goal) & (df['avg'] < goal+1)]['Title'].values #prints whole row where avg == goal
                 if len(results) > 0:
-                   await ctx.send(random.choice(results))
+                   await ctx.send(f'{ctx.message.author.mention}:', random.choice(results))
                 else:
-                    await ctx.send('no results')
+                    await ctx.send(f'{ctx.message.author.mention}:No results, do not try again')
             except ValueError:
-                await ctx.send('You have to enter a number, for example: 5')
+                await ctx.send('{ctx.message.author.mention}:You have to enter a number, for example: 5')
 
 
 
