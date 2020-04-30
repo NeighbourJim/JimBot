@@ -39,8 +39,17 @@ class cliffnet(commands.Cog):
             try:
                 input = ctx.message.content
                 source = (f'http://newsapi.org/v2/everything?q={input}&sortBy=popularity&apiKey=fec0d23dd26549a9a6d58a29a675e764')
-                randomId = random.randint(0,19)
+                
                 pull = requests.get(source)
+                articles = pull.json()["totalResults"]
+
+                if articles == 0:
+                    await ctx.send(f'{ctx.message.author.mention}: No results.')
+                elif articles < 19:
+                    randomId = random.randint(0,articles)
+                else:
+                    randomId = random.randint(0,19)
+                    
                 content = pull.json()["articles"][randomId]
                 responseUrl = content["url"]
                 if content:
