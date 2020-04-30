@@ -4,6 +4,9 @@ import random
 import requests
 from discord.ext import commands
 from discord.ext.commands import BucketType
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import pandas as pd
 
 from internal.logs import logger
 from internal.helpers import Helper
@@ -59,10 +62,52 @@ class cliffnet(commands.Cog):
                     await ctx.send(f'Result: {responseUrl}')
                 else: 
                     await ctx.send(f'{ctx.message.author.mention}: No results.')
-
+ 
             except Exception as ex:
                 logger.LogPrint(f'Couldn\'t get the news! - {ex}', logging.ERROR)
 
 
-def setup(client):
-    client.add_cog(cliffnet(client))
+    @commands.command(aliases=["Movie"], help="find a random movie based on avg score from bromovies")  
+    @commands.cooldown(rate=1, per=2, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def movie(self, ctx):
+        if ctx.guild.id == 107847342006226944:
+            scope = ['https://spreadsheets.google.com/feeds',
+                     'https://www.googleapis.com/auth/drive']
+            
+            credentials = ServiceAccountCredentials.from_json_keyfile_name(
+                     'bromoviessearch-08cd123a16ed.json', scope) # Your json file here
+            
+            gc = gspread.authorize(credentials)
+            
+            wks = gc.open_by_key("1MJivigtIomBZSWpTpYSCjyOuVq8XpScZ-CKdv1OOIM4") #opens sheetsfile
+            worksheet = wks.worksheet("movies") #selects worksheet
+            data = worksheet.get_all_values()
+            headers = data.pop(0)
+            
+            df = pd.DataFrame(data, columns=headers)
+            #all set up now the querry
+            
+            
+            #print(df['avg'])
+            #print(df.loc[8])
+            df["avg"] = pd.to_numeric(df["avg"])
+
+            try:
+                goal = Helper.CommandStrip(ctx.message.content)
+                goal = float(goal)
+                results=df.loc[(df['avg'] >= goal) & (df['avg'] < goal+1)]['Title'].values #prints whole row where avg == goal
+                if len(results) > 0:
+                   await ctx.send(random.choice(results))
+                else:
+                    await ctx.send('no results')
+            except ValueError:
+                await ctx.send('You have to enter a number, for example: 5')
+
+
+
+
+
+    def setup(client):
+        client.add_cog(cliffnet(client))
