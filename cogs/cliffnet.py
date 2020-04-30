@@ -36,5 +36,5 @@ class cliffnet(commands.Cog):
         if ctx.guild.id == 107847342006226944:
             #different stuff
 
-def setup(client):
-    client.add_cog(cliffnet(client))
+    def setup(client):
+        client.add_cog(cliffnet(client))
