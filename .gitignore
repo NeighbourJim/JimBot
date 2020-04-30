@@ -1,6 +1,6 @@
 # Bot Specific files
 config.json
-bromoviessearch-08cd123a16ed.json
+bromoviessearch.json
 *.db
 *.bat
 .vscode/
