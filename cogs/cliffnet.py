@@ -37,7 +37,7 @@ class cliffnet(commands.Cog):
         if ctx.guild.id == 107847342006226944:
 
             try:
-                input = ctx.message.content
+                input = Helper.CommandStrip(ctx.message.content)
                 source = (f'http://newsapi.org/v2/everything?q={input}&sortBy=popularity&apiKey=fec0d23dd26549a9a6d58a29a675e764')
                 
                 pull = requests.get(source)
