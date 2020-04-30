@@ -38,6 +38,9 @@ class cliffnet(commands.Cog):
 
             try:
                 input = Helper.CommandStrip(ctx.message.content)
+                if input=="":
+                    return await ctx.send(f'Enter a keyword to search')
+                    
                 source = (f'http://newsapi.org/v2/everything?q={input}&sortBy=popularity&apiKey=fec0d23dd26549a9a6d58a29a675e764')
                 
                 pull = requests.get(source)
