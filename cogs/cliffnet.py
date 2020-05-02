@@ -53,7 +53,7 @@ class cliffnet(commands.Cog):
                 articles = pull.json()["totalResults"]
 
                 if articles == 0:
-                    await ctx.send(f'{ctx.message.author.mention}: No results.')
+                   return await ctx.send(f'{ctx.message.author.mention}: No results.')
                 elif articles < 19:
                     randomId = random.randint(0,articles)
                 else:
