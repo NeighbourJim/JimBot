@@ -44,19 +44,11 @@ class cliffnet(commands.Cog):
                 if input=="":
                     return await ctx.send(f'Enter a keyword to search')
                     
-                source = (f'http://newsapi.org/v2/everything?q={input}&sortBy=popularity&apiKey=fec0d23dd26549a9a6d58a29a675e764')
+                source = (f'http://newsapi.org/v2/everything?q={input}&sortBy=top&apiKey=fec0d23dd26549a9a6d58a29a675e764')
                 
                 pull = requests.get(source)
-                articles = pull.json()["totalResults"]
-
-                if articles == 0:
-                    await ctx.send(f'{ctx.message.author.mention}: No results.')
-                elif articles < 19:
-                    randomId = random.randint(0,articles)
-                else:
-                    randomId = random.randint(0,19)
-                    
-                content = pull.json()["articles"][randomId]
+                articles = pull.json()["articles"]                
+                content = random.choice(articles)
                 responseUrl = content["url"]
                 if content:
                     await ctx.send(f'Result: {responseUrl}')
@@ -64,6 +56,7 @@ class cliffnet(commands.Cog):
                     await ctx.send(f'{ctx.message.author.mention}: No results.')
  
             except Exception as ex:
+                await ctx.send(f'Couldn\'t get the news! - {ex}')
                 logger.LogPrint(f'Couldn\'t get the news! - {ex}', logging.ERROR)
 
 
