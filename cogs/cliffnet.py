@@ -181,9 +181,19 @@ class cliffnet(commands.Cog):
                         if daysDict[input][2] == None or daysDict[input][2] == 0 or daysDict[input][2] < lastLength: 
                             recordLength = lastLength
                         daysDict[input]=[currentDate,lastLength,recordLength]
-                        return await ctx.send(f">>>\"{input}\" lasted {timeDeltaFormat(lastLength)[0]} days and {timeDeltaFormat(lastLength)[1]} hours. Longest record {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours.")
+                        return await ctx.send(f">>> {timeDeltaFormat(lastLength)[0]} days and {timeDeltaFormat(lastLength)[1]} hours since last \"{input}\" Longest record: {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours.")
                         with open(daysFile,"wb") as daysFileWriter:
                             pickle.dump(daysDict, daysFileWriter)
+                        if timeDeltaFormat(lastLength)[0] > 1 and timeDeltaFormat(lastLength)[1] > 0:
+                            await ctx.send(f"You didn't even last one measly day, you drongo.")
+                        elif timeDeltaFormat(lastLength)[0] > 1 and timeDeltaFormat(lastLength)[0] < 2:
+                            await ctx.send(f"Pathetic.")
+                        elif timeDeltaFormat(lastLength)[0] > 2 and timeDeltaFormat(lastLength)[0] < 3:
+                            await ctx.send(f"You threw it all away..for this?")
+                        elif timeDeltaFormat(lastLength)[0] > 3 and timeDeltaFormat(lastLength)[0] < 10:
+                            await ctx.send(f"Sad!")
+                        elif timeDeltaFormat(lastLength)[0] > 10:
+                            await ctx.send(f"This program was made by Knite, lets all do our best like him, ok?!")
                     else:
                         return await ctx.send(f">>>Entry for timer reset not found.")
 
