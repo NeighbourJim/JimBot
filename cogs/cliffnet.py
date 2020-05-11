@@ -205,7 +205,7 @@ class cliffnet(commands.Cog):
                         daysDict.pop(input)
                         with open(daysFile,"wb") as daysFileWriter:
                             pickle.dump(daysDict, daysFileWriter)
-                           return await ctx.send(f">>>\"{input}\" Deleted from list")
+                            return await ctx.send(f">>>\"{input}\" Deleted from list")
                     else:
                         return await ctx.send(f">>>\"{input}\" - was not found for deletion.")        
 
