@@ -2,6 +2,10 @@ import discord
 import logging
 import random
 import requests
+import pickle
+import datetime
+import re
+import os.path
 from discord.ext import commands
 from discord.ext.commands import BucketType
 import gspread
@@ -108,7 +112,98 @@ class cliffnet(commands.Cog):
             except ValueError:
                 await ctx.send('{ctx.message.author.mention}:You have to enter a number, for example: 5')
 
+    @commands.command(aliases=["Days", "days"], help="View or add long term timers.")  
+    @commands.cooldown(rate=1, per=2, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def days(self, ctx):
+        def timeDeltaFormat(td: datetime.timedelta):
+            tdHours = td.seconds/60/60
+            if tdHours > 24:
+                tdDaysHours = [tdHours // 24, float("{:.1f}".format(tdHours % 24))]
+                return tdDaysHours
+            else:
+                tdDaysHours = [0, float("{:.1f}".format(tdHours))]
+                return tdDaysHours
 
+            try:
+                try:
+                    keyWords = ["ZERO","DELETE"]
+                    #daysDict dictionary format = {"Entry1": ["StartTime1","LastLength1","LongestLength1"],}
+                    daysDict = {}
+                    daysFile = f"./internal/data/databases/days{ctx.guild.id}"
+                    fileExists = os.path.isfile(daysFile)
+                    contentExists = os.path.getsize(daysFile) > 0
+
+                    if contentExists:
+                        with open(daysFile,"rb") as daysFileReader:           
+                            daysDict = pickle.load(daysFileReader)
+
+                except IOError as ex:
+                    with open(daysFile,"ab+") as daysFileWriter:
+                        pickle.dump(daysDict,daysFileWriter)
+                except Exception as ex:
+                    logger.LogPrint(f'Error during initial file read / creation: {ex}',logging.ERROR)
+            
+                #return all entries
+                input = Helper.CommandStrip(ctx.message.content).upper()
+                if input == "": 
+                    return await ctx.send (f">>>Days since last reset: ")
+                    for x in daysDict:
+                        timeDeltaDif = datetime.datetime.utcnow() - daysDict[x][0]
+                        return await ctx.send(f">>>\"{x}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours") 
+                
+                #add new timer
+                elif input not in keyWords: 
+                    
+                    if input in daysDict:
+                        timeDeltaDif = datetime.datetime.utcnow() - daysDict[input][0]
+                        return await ctx.send(f">>>\"{input}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours since last reset")
+                    else:
+                        daysDict[input.upper()] = [datetime.datetime.utcnow(),0,0]
+                        with open(daysFile,"wb") as daysFileWriter:
+                            pickle.dump(daysDict, daysFileWriter)
+                            return await ctx.send(f">>>Successfully added to the list!")
+                
+                #reset an existing timer
+                elif input.startswith("ZERO"): 
+
+                    pattern = "ZERO "
+                    input = input.upper()
+                    input = re.split(pattern, input, 1)[1]
+                    if input in daysDict:
+                        lastDate=daysDict[input][0]
+                        recordLength=daysDict[input][2]
+                        currentDate=datetime.datetime.utcnow()
+                        lastLength=currentDate-lastDate
+
+                        if daysDict[input][2] == None or daysDict[input][2] == 0 or daysDict[input][2] < lastLength: 
+                            recordLength = lastLength
+                        daysDict[input]=[currentDate,lastLength,recordLength]
+                        return await ctx.send(f">>>\"{input}\" lasted {timeDeltaFormat(lastLength)[0]} days and {timeDeltaFormat(lastLength)[1]} hours. Longest record {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours.")
+                        with open(daysFile,"wb") as daysFileWriter:
+                            pickle.dump(daysDict, daysFileWriter)
+                    else:
+                        return await ctx.send(f">>>Entry for timer reset not found.")
+
+                elif input.startswith("DELETE"): #delete an existing timer
+                    pattern = "DELETE "
+                    input = re.split(pattern, input, 1)[1]
+
+                    if input in daysDict:
+                        daysDict.pop(input)
+                        with open(daysFile,"wb") as daysFileWriter:
+                            pickle.dump(daysDict, daysFileWriter)
+                           return await ctx.send(f">>>\"{input}\" Deleted from list")
+                    else:
+                        return await ctx.send(f">>>\"{input}\" - was not found for deletion.")        
+
+            except FileNotFoundError as ex:
+                logger.LogPrint(f'ERROR - Days file not found - {ex}', logging.ERROR)
+            except EOFError as ex:
+                logger.LogPrint(f"ERROR - File's empty, this shouldn't happen haha :) - {ex}", logging.ERROR)
+            except Exception as ex:
+                logger.LogPrint(f"ERROR - {ex}", logging.ERROR)
 
 
 
