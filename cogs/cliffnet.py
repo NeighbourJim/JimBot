@@ -152,7 +152,7 @@ class cliffnet(commands.Cog):
                     return await ctx.send (f">>>Days since last reset: ")
                     for x in daysDict:
                         timeDeltaDif = datetime.datetime.utcnow() - daysDict[x][0]
-                        return await ctx.send(f">>>\"{x}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours") 
+                        return await ctx.send(f">>>\"{x}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours. Record: {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours.") 
                 
                 #add new timer
                 elif input not in keyWords: 
