@@ -43,17 +43,18 @@ class cliffnet(commands.Cog):
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
-    async def command2(self, ctx):
+    async def news(self, ctx):
         if ctx.guild.id == 107847342006226944:
-
+            await ctx.trigger_typing()
             try:
                 input = Helper.CommandStrip(ctx.message.content)
                 if input=="":
                     return await ctx.send(f'Enter a keyword to search')
                     
-                source = (f'http://newsapi.org/v2/everything?q={input}&sortBy=popularity&apiKey=fec0d23dd26549a9a6d58a29a675e764')
+                source = (f'http://newsapi.org/v2/everything?q={input}&sortBy=top&apiKey=fec0d23dd26549a9a6d58a29a675e764')
                 
                 pull = requests.get(source)
+
                 articles = pull.json()["totalResults"]
 
                 if articles == 0:
@@ -68,9 +69,9 @@ class cliffnet(commands.Cog):
                 if content:
                     await ctx.send(f'Result: {responseUrl}')
                 else: 
-                    await ctx.send(f'{ctx.message.author.mention}: No results.')
- 
+                    await ctx.send(f'{ctx.message.author.mention}: No results.') 
             except Exception as ex:
+                await ctx.send(f'Couldn\'t get the news! - {ex}')
                 logger.LogPrint(f'Couldn\'t get the news! - {ex}', logging.ERROR)
 
 
@@ -80,11 +81,11 @@ class cliffnet(commands.Cog):
     @commands.guild_only()
     async def movie(self, ctx):
         if ctx.guild.id == 107847342006226944:
+            await ctx.trigger_typing()
             scope = ['https://spreadsheets.google.com/feeds',
                      'https://www.googleapis.com/auth/drive']
             
-            credentials = ServiceAccountCredentials.from_json_keyfile_name(
-                     'bromoviessearch-08cd123a16ed.json', scope) # Your json file here
+            credentials = ServiceAccountCredentials.from_json_keyfile_name('./internal/data/bromoviessearch.json', scope) # Your json file here
             
             gc = gspread.authorize(credentials)
             
@@ -206,6 +207,5 @@ class cliffnet(commands.Cog):
                 logger.LogPrint(f"ERROR - {ex}", logging.ERROR)
 
 
-
-    def setup(client):
-        client.add_cog(cliffnet(client))
+def setup(client):
+    client.add_cog(cliffnet(client))
