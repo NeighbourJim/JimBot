@@ -9,7 +9,7 @@ from googleapiclient.errors import HttpError
 
 # Internal Imports
 from internal.logs import logger
-from internal.helpers import Helper
+from internal.helpers import Helpers
 from bot import current_settings
 
 
@@ -23,7 +23,7 @@ class Google(commands.Cog):
 
     #region --------------- Google Search ---------------
     async def GetSearchResult(self, message):
-        query = Helper.CommandStrip(message)
+        query = Helpers.CommandStrip(self, message)
         results = self.cse_service.cse().list(q=query, cx=current_settings["keys"]["cse"]).execute()
         if "items" in results:
             final_results = []
@@ -39,7 +39,7 @@ class Google(commands.Cog):
             return None
 
     async def GetSafeSearchResult(self, message):
-        query = Helper.CommandStrip(message)
+        query = Helpers.CommandStrip(self, message)
         results = self.cse_service.cse().list(q=query, cx=current_settings["keys"]["cse"], safe="active").execute()
         if "items" in results:
             final_results = []
@@ -70,7 +70,7 @@ class Google(commands.Cog):
                 for item in task.result():
                     fields.append({"name": item['title'], "value": item['link'], "inline": False })        
                 result_dict = {
-                    "author": {"name": "Search Results for '{}'".format(Helper.CommandStrip(ctx.message.content))}, 
+                    "author": {"name": "Search Results for '{}'".format(Helpers.CommandStrip(self, ctx.message.content))}, 
                     "footer": {"text": "Searched for by {}".format(ctx.message.author)}, 
                     "fields": fields,
                     "thumbnail": {"url": "https://cdn.discordapp.com/attachments/144073497939935232/677385165462568970/500px-Google_G_Logo.svg.png"}
@@ -90,7 +90,7 @@ class Google(commands.Cog):
     #region --------------- Image Search ---------------
     async def GetImageResult(self, message):
         forbidden = ["fbsbx.com", "i.kym-cdn.com"]
-        query = Helper.CommandStrip(message)
+        query = Helpers.CommandStrip(self, message)
         results = self.cse_service.cse().list(q=query, cx=current_settings["keys"]["cse"], searchType="image").execute()
         if "items" in results:
             for i in range(0,100):
@@ -110,7 +110,7 @@ class Google(commands.Cog):
             return None
 
     async def GetSafeImageResult(self, message):
-        query = Helper.CommandStrip(message)
+        query = Helpers.CommandStrip(self, message)
         forbidden = ["fbsbx.com", "i.kym-cdn.com"]
         results = self.cse_service.cse().list(q=query, cx=current_settings["keys"]["cse"], searchType="image", safe="active").execute()
         if "items" in results:
@@ -148,10 +148,10 @@ class Google(commands.Cog):
                 if len(task.result()["link"]) <= 200:
                     image_embed.description = task.result()["link"]
                 image_embed.set_image(url=task.result()["link"])
-                image_embed.set_footer(text=f'{ctx.message.author} searched for \'{Helper.CommandStrip(ctx.message.content)}\'')
+                image_embed.set_footer(text=f'{ctx.message.author} searched for \'{Helpers.CommandStrip(self, ctx.message.content)}\'')
                 await ctx.send(embed=image_embed)
             else:
-                await ctx.send(f'{ctx.message.author.mention}: No results found for \'{Helper.CommandStrip(ctx.message.content)}\'. Note that Safe Search is on if the channel is not marked as NSFW!', delete_after=10)
+                await ctx.send(f'{ctx.message.author.mention}: No results found for \'{Helpers.CommandStrip(self, ctx.message.content)}\'. Note that Safe Search is on if the channel is not marked as NSFW!', delete_after=10)
             await to_delete.delete(delay=2)
         except Exception as ex:
             logger.LogPrint("IMAGE ERROR", logging.CRITICAL, ex)
@@ -160,7 +160,7 @@ class Google(commands.Cog):
 
     #region --------------- Youtube Search ---------------
     async def GetYoutubeVideo(self, message):
-        query = Helper.CommandStrip(message) # removes the command invocation from the message ie '!yt funny dog' becomes 'funny dog'
+        query = Helpers.CommandStrip(self, message) # removes the command invocation from the message ie '!yt funny dog' becomes 'funny dog'
         results = self.yt_service.search().list(q=query, part='id,snippet', type="video", maxResults=1).execute()
         videos = []
         if "items" in results:

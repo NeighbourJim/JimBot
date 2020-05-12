@@ -1,4 +1,3 @@
-# General use helper methods used throughout various commands
 import discord
 import re
 import requests
@@ -10,7 +9,10 @@ from internal.logs import logger
 
 
 class Helpers(): 
+    """Contains simple helper functions reused throughout the bot."""
+
     def __init__(self):
+        """Constructor for Helpers class."""
         # NOTE: This regex pattern courtesy of top answer here: https://stackoverflow.com/questions/20157375/fuzzy-smart-number-parsing-in-python
         self.__fuzzy_number_pattern = r"""(?x)       # enable verbose mode (which ignores whitespace and comments)
         ^                     # start of the input
@@ -45,17 +47,28 @@ class Helpers():
         [^\d]*                # suffixed junk
         $                     # end of the input
     """
-
+    @staticmethod
     def CommandStrip(self, message):
+        """Strip the command evocation from a string and returns the rest.
+        
+        Parameters:
+        message (string): String to strip command from.
+
+        Returns:
+        string: Original string with command evoke removed.
+
+        """
         regex = r'^(\{}\w*)'.format(configmanager.cm.GetConfig()["settings"]["prefix"])
         return re.sub(r'{}'.format(regex), '', f'{message}').strip()
 
+    @staticmethod
     def GetFirstEmojiID(self, message):
         try:
             return re.search(r'[^:]+(?=\>)', message)
         except Exception as ex:
             print(ex)
 
+    @staticmethod
     def FindEmoji(self, context, name_to_find):
         try:
             emoji_list = context.guild.emojis
@@ -66,9 +79,11 @@ class Helpers():
         except Exception as ex:
             print(ex)
 
+    @staticmethod
     def EmojiConvert(self, message):
         return emoji.demojize(message)
 
+    @staticmethod
     def FuzzyNumberSearch(self, message):
         match = re.match(self.__fuzzy_number_pattern, message)
         if match is None or not (match.group("integer_part") or match.group("decimal_part")):    # failed to match
@@ -85,11 +100,13 @@ class Helpers():
 
         return int(num_str)
 
+    @staticmethod
     def CheckIfMemberHasRole(self, member, role_name):
         for role in member.roles:
             if role.name == role_name:
                 return True
 
+    @staticmethod
     def GetWebPage(self, url, params=None):
         try:
             if params:
@@ -103,5 +120,5 @@ class Helpers():
         except Exception as ex:
             print(ex)
 
-Helper = Helpers()
 
+Helper = Helpers()

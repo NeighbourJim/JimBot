@@ -9,7 +9,7 @@ from os import path
 from datetime import datetime
 
 from internal.logs import logger
-from internal.helpers import Helper
+from internal.helpers import Helpers
 from internal.enums import WhereType, CompareType
 from internal.databasemanager import dbm
 from internal.data.meme_views import meme_views
@@ -22,7 +22,7 @@ class Memes(commands.Cog):
         self.last_meme_roll = {}
         self.CheckAndCreateDatabase()
 
-#region Non-Command Methods - General Helper Methods specific to this cog
+#region Non-Command Methods - General Helpers Methods specific to this cog
     def CheckAndCreateDatabase(self):
         try:
             guilds = self.client.guilds
@@ -136,7 +136,7 @@ class Memes(commands.Cog):
     async def meme(self, ctx):
         try:
             to_delete = ctx.message
-            message = Helper.CommandStrip(ctx.message.content)
+            message = Helpers.CommandStrip(self, ctx.message.content)
             values_to_find = []
             if len(message) > 0:
                 split_message = message.split(',')
@@ -145,8 +145,8 @@ class Memes(commands.Cog):
                     if member is not None:
                         t = ("author_id", f'<@{member.id}>')
                     else:
-                        if Helper.FuzzyNumberSearch(message):
-                            t = ("m_id", int(Helper.FuzzyNumberSearch(message)))
+                        if Helpers.FuzzyNumberSearch(self, message):
+                            t = ("m_id", int(Helpers.FuzzyNumberSearch(self, message)))
                         else:
                             t = ("author_username", name)
                     values_to_find.append(t)
@@ -171,7 +171,7 @@ class Memes(commands.Cog):
     async def newmeme(self, ctx):
         try:
             to_delete = ctx.message
-            message = Helper.CommandStrip(ctx.message.content)
+            message = Helpers.CommandStrip(self, ctx.message.content)
             values_to_find = []
             if len(message) > 0:
                 split_message = message.split(',')
@@ -204,7 +204,7 @@ class Memes(commands.Cog):
     async def unratedmeme(self, ctx):
         try:
             to_delete = ctx.message
-            message = Helper.CommandStrip(ctx.message.content)
+            message = Helpers.CommandStrip(self, ctx.message.content)
             values_to_find = []
             if len(message) > 0:
                 split_message = message.split(',')
@@ -239,13 +239,13 @@ class Memes(commands.Cog):
         values_to_find = []
         try:
             to_delete = ctx.message
-            message = Helper.CommandStrip(ctx.message.content)
+            message = Helpers.CommandStrip(self, ctx.message.content)
             if f"{ctx.guild.id}" in self.last_meme_roll:
                 m_id = self.last_meme_roll[f"{ctx.guild.id}"]
             else:
                 m_id = None
-            if len(message) > 0 and Helper.FuzzyNumberSearch(message) is not None:
-                m_id = int(Helper.FuzzyNumberSearch(message))
+            if len(message) > 0 and Helpers.FuzzyNumberSearch(self, message) is not None:
+                m_id = int(Helpers.FuzzyNumberSearch(self, message))
             t = ("m_id", m_id)
             values_to_find.append(t)
             meme = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', values_to_find)
@@ -278,13 +278,13 @@ class Memes(commands.Cog):
         values_to_find = []
         try:
             to_delete = ctx.message
-            message = Helper.CommandStrip(ctx.message.content)
+            message = Helpers.CommandStrip(self, ctx.message.content)
             if f"{ctx.guild.id}" in self.last_meme_roll:
                 m_id = self.last_meme_roll[f"{ctx.guild.id}"]
             else:
                 m_id = None
-            if len(message) > 0 and Helper.FuzzyNumberSearch(message) is not None:
-                m_id = int(Helper.FuzzyNumberSearch(message))
+            if len(message) > 0 and Helpers.FuzzyNumberSearch(self, message) is not None:
+                m_id = int(Helpers.FuzzyNumberSearch(self, message))
             t = ("m_id", m_id)
             values_to_find.append(t)
             meme = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', values_to_find)
@@ -314,13 +314,13 @@ class Memes(commands.Cog):
         values_to_find = []
         try:
             to_delete = ctx.message
-            message = Helper.CommandStrip(ctx.message.content)
+            message = Helpers.CommandStrip(self, ctx.message.content)
             if f"{ctx.guild.id}" in self.last_meme_roll:
                 m_id = self.last_meme_roll[f"{ctx.guild.id}"]
             else:
                 m_id = None
-            if len(message) > 0 and Helper.FuzzyNumberSearch(message) is not None:
-                m_id = int(Helper.FuzzyNumberSearch(message))
+            if len(message) > 0 and Helpers.FuzzyNumberSearch(self, message) is not None:
+                m_id = int(Helpers.FuzzyNumberSearch(self, message))
             t = ("m_id", m_id)
             values_to_find.append(t)
             meme = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', values_to_find)
@@ -351,25 +351,25 @@ class Memes(commands.Cog):
             downvoters = []
             downvoter_message = ""
             to_delete = ctx.message
-            message = Helper.CommandStrip(ctx.message.content)
+            message = Helpers.CommandStrip(self, ctx.message.content)
             if f"{ctx.guild.id}" in self.last_meme_roll:
                 m_id = self.last_meme_roll[f"{ctx.guild.id}"]
             else:
                 m_id = None
-            if len(message) > 0 and Helper.FuzzyNumberSearch(message) is not None:
-                m_id = int(Helper.FuzzyNumberSearch(message))
+            if len(message) > 0 and Helpers.FuzzyNumberSearch(self, message) is not None:
+                m_id = int(Helpers.FuzzyNumberSearch(self, message))
             if m_id != None:
                 voter_dict = self.GetVoters(ctx, m_id)
                 for a_id, name in voter_dict["ups"]:
                     print(f'{a_id}, {name}')
-                    member_id = int(Helper.FuzzyNumberSearch(a_id))
+                    member_id = int(Helpers.FuzzyNumberSearch(self, a_id))
                     member = ctx.guild.get_member(member_id)
                     if member != None:
                         upvoters.append(member.name)
                     else:
                         upvoters.append(name)
                 for a_id, name in voter_dict["downs"]:
-                    member_id = int(Helper.FuzzyNumberSearch(a_id))
+                    member_id = int(Helpers.FuzzyNumberSearch(self, a_id))
                     member = ctx.guild.get_member(member_id)
                     if member != None:
                         downvoters.append(member.name)
@@ -424,7 +424,7 @@ class Memes(commands.Cog):
         try:
             to_delete = ctx.message
             forbidden = ["@everyone", "@here", "puu.sh", "twimg.com", "i.4cdn.org", "4chan.org", "mixtape.moe"]
-            message = Helper.CommandStrip(ctx.message.content)
+            message = Helpers.CommandStrip(self, ctx.message.content)
             mentions = ctx.message.mentions
             valid = True
             if len(message) > 0:
@@ -461,7 +461,7 @@ class Memes(commands.Cog):
     async def deletememe(self, ctx):
         try:
             to_delete = ctx.message
-            m_id = int(Helper.FuzzyNumberSearch(Helper.CommandStrip(ctx.message.content)))
+            m_id = int(Helpers.FuzzyNumberSearch(self, Helpers.CommandStrip(self, ctx.message.content)))
             if m_id != None:
                 where = {"m_id": m_id}
                 affected = dbm.Delete(f'memes{ctx.guild.id}', 'memes', where)
@@ -486,7 +486,7 @@ class Memes(commands.Cog):
     async def selfdeletememe(self, ctx):
         try:
             to_delete = ctx.message
-            m_id = int(Helper.FuzzyNumberSearch(Helper.CommandStrip(ctx.message.content)))
+            m_id = int(Helpers.FuzzyNumberSearch(self, Helpers.CommandStrip(self, ctx.message.content)))
             if m_id != None:
                 where = {"m_id": m_id, "author_id": f'<@{ctx.message.author.id}>'}
                 affected = dbm.Delete(f'memes{ctx.guild.id}', 'memes', where)
@@ -511,7 +511,7 @@ class Memes(commands.Cog):
     @commands.guild_only()
     async def bestmeme(self, ctx):
         try:
-            name = Helper.CommandStrip(ctx.message.content)
+            name = Helpers.CommandStrip(self, ctx.message.content)
             where = None
             if len(name) > 0:
                 where = [("author_username", name)]
@@ -540,7 +540,7 @@ class Memes(commands.Cog):
     @commands.guild_only()
     async def worstmeme(self, ctx):
         try:
-            name = Helper.CommandStrip(ctx.message.content)
+            name = Helpers.CommandStrip(self, ctx.message.content)
             where = None
             if len(name) > 0:
                 where = [("author_username", name)]
@@ -568,7 +568,7 @@ class Memes(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def memelist(self, ctx):
-        msg = Helper.CommandStrip(ctx.message.content)
+        msg = Helpers.CommandStrip(self, ctx.message.content)
         if len(msg) > 0:
             names = msg.split(',')
         else:
@@ -641,7 +641,7 @@ class Memes(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def memerboard(self, ctx):
-        msg = Helper.CommandStrip(ctx.message.content)
+        msg = Helpers.CommandStrip(self, ctx.message.content)
         if len(msg) > 0:
             msg = msg.split()[0].lower()
         if msg == 'bottom' or msg == 'bot':
@@ -663,7 +663,7 @@ class Memes(commands.Cog):
                 response = 'The top 10 average memescore holders are:\n'
             for i in range(0, len(results)):
                 if results[i][1] == None or results[i][1] == 'None':
-                    user = self.client.get_user(Helper.FuzzyNumberSearch(results[i][0]))
+                    user = self.client.get_user(Helpers.FuzzyNumberSearch(self, results[i][0]))
                     if user != None:
                         name = user.name
                     else:
@@ -689,7 +689,7 @@ class Memes(commands.Cog):
         voted_count = 0
         average = 0
 
-        msg = Helper.CommandStrip(ctx.message.content)
+        msg = Helpers.CommandStrip(self, ctx.message.content)
         if len(msg) > 0:
             name = msg 
         else:

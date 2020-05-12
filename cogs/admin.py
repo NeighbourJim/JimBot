@@ -5,7 +5,7 @@ from discord.ext import commands
 from discord.ext.commands import BucketType
 
 from internal.logs import logger
-from internal.helpers import Helper
+from internal.helpers import Helpers
 
 
 class Admin(commands.Cog):
@@ -61,9 +61,9 @@ class Admin(commands.Cog):
             return message.author == mentions[0]
         try:            
             # Get the amount by using regex to strip all mentions out 
-            msg = Helper.CommandStrip(ctx.message.clean_content)
+            msg = Helpers.CommandStrip(self, ctx.message.clean_content)
             print(msg)
-            amount = Helper.FuzzyNumberSearch(msg)
+            amount = Helpers.FuzzyNumberSearch(self, msg)
             print(amount)
             if amount > 0 and amount <= 50:
                 if len(mentions) == 0:

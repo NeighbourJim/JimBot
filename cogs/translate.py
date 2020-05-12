@@ -9,7 +9,7 @@ from googletrans import Translator
 # Internal Imports
 from internal.logs import logger
 from internal.data.trans_languages import language_dictionary, bad_trans_languages, bad_trans_languages_old
-from internal.helpers import Helper
+from internal.helpers import Helpers
 from bot import current_settings
 
 
@@ -38,7 +38,7 @@ class Translate(commands.Cog):
     async def translate(self, ctx):
         await ctx.trigger_typing()
         try:
-            split_message = Helper.CommandStrip(ctx.message.content).split('lang:')
+            split_message = Helpers.CommandStrip(self, ctx.message.content).split('lang:')
             message_to_translate = split_message[0]
             target = None
             if len(split_message) > 1:
@@ -62,8 +62,8 @@ class Translate(commands.Cog):
     @commands.guild_only()
     async def badtranslate(self,ctx):
         random_lang = None        
-        message_to_translate = Helper.CommandStrip(ctx.message.content)
-        message_to_translate = Helper.EmojiConvert(message_to_translate)
+        message_to_translate = Helpers.CommandStrip(self, ctx.message.content)
+        message_to_translate = Helpers.EmojiConvert(self, message_to_translate)
         if len(message_to_translate) <= self.btr_char_limit:
             await ctx.trigger_typing()
             try:

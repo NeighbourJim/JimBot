@@ -5,7 +5,7 @@ from discord.ext.commands import BucketType
 from os import path
 
 from internal.logs import logger
-from internal.helpers import Helper
+from internal.helpers import Helpers
 from internal.enums import WhereType
 from internal.databasemanager import dbm
 
@@ -36,10 +36,10 @@ class Tags(commands.Cog):
     async def tag(self, ctx):
         try:
             to_delete = ctx.message
-            where = ("tag_name", Helper.CommandStrip(ctx.message.content))
+            where = ("tag_name", Helpers.CommandStrip(self, ctx.message.content))
             tag = dbm.Retrieve(f"tags{ctx.guild.id}", "tags", [where])
             if len(tag) > 0:
-                await ctx.send(f'{ctx.message.author.mention}: Tag - {Helper.CommandStrip(ctx.message.content)}\n{tag[0][1]}')
+                await ctx.send(f'{ctx.message.author.mention}: Tag - {Helpers.CommandStrip(self, ctx.message.content)}\n{tag[0][1]}')
             else:
                 ctx.command.reset_cooldown(ctx)
                 await ctx.send(f'{ctx.message.author.mention}: No tag with that name.', delete_after=6)
@@ -54,7 +54,7 @@ class Tags(commands.Cog):
     async def createtag(self, ctx):
         try:
             to_delete = ctx.message
-            split_message = Helper.CommandStrip(ctx.message.content).split(' ')
+            split_message = Helpers.CommandStrip(self, ctx.message.content).split(' ')
             if len(split_message) > 1 and len(split_message) < 400:
                 tag_name = split_message[0]
                 tag_content = ' '.join(split_message[1:])
@@ -80,7 +80,7 @@ class Tags(commands.Cog):
     async def deletetag(self, ctx):
         try:
             to_delete = ctx.message
-            tag_name = Helper.CommandStrip(ctx.message.content)
+            tag_name = Helpers.CommandStrip(self, ctx.message.content)
             where = ("tag_name", tag_name)
             where_dict = {"tag_name": tag_name}
             existing = dbm.Retrieve(f"tags{ctx.guild.id}", "tags", [where])

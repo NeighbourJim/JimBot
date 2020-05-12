@@ -9,7 +9,7 @@ from discord.ext import commands
 from discord.ext.commands import BucketType
 
 from internal.logs import logger
-from internal.helpers import Helper
+from internal.helpers import Helpers
 from internal.data.adjectives import adjectives
 from internal.stand_image_generator import stand_gen
 
@@ -45,9 +45,9 @@ class Games(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def trollbox(self, ctx):
-        fftrolled = Helper.FindEmoji(ctx, "fftrolled")
-        left_side = Helper.FindEmoji(ctx, "longtroll3")
-        right_side = Helper.FindEmoji(ctx, "longtroll1")
+        fftrolled = Helpers.FindEmoji(self,ctx, "fftrolled")
+        left_side = Helpers.FindEmoji(self,ctx, "longtroll3")
+        right_side = Helpers.FindEmoji(self,ctx, "longtroll1")
         try:
             if fftrolled is not None and left_side is not None and right_side is not None:
                 prize = random.choice(ctx.guild.emojis)
@@ -80,8 +80,8 @@ class Games(commands.Cog):
     async def adjective(self, ctx):
         adjs = []
         response = ''
-        split_message = Helper.CommandStrip(ctx.message.content).split(' ')
-        amount = Helper.FuzzyNumberSearch(split_message[0])
+        split_message = Helpers.CommandStrip(self, ctx.message.content).split(' ')
+        amount = Helpers.FuzzyNumberSearch(self, split_message[0])
         if amount == None:
             amount = 1
         else:
@@ -137,12 +137,12 @@ class Games(commands.Cog):
                 "rnlimit": "1",
                 "format": "json"
             }
-            random_power = Helper.GetWebPage(api_url, params)
+            random_power = Helpers.GetWebPage(self, api_url, params)
             if random_power:
                 power = random_power.json()["query"]["random"][0]
                 name = power["title"]
                 encoded_url = f'https://powerlisting.fandom.com/wiki/{urllib.parse.quote(name)}'
-                power_data = Helper.GetWebPage(encoded_url)
+                power_data = Helpers.GetWebPage(self, encoded_url)
                 if power_data:
                     page_tree = html.fromstring(power_data.text)
                     desc = page_tree.xpath('//meta[@name="description"]/@content')
@@ -174,8 +174,8 @@ class Games(commands.Cog):
             "rnlimit": "1",
             "format": "json"
         }
-        random_power = Helper.GetWebPage(power_api_url, params)            
-        random_music = Helper.GetWebPage(music_api_url, params)
+        random_power = Helpers.GetWebPage(self, power_api_url, params)            
+        random_music = Helpers.GetWebPage(self, music_api_url, params)
         if random_power and random_music:
             power = random_power.json()["query"]["random"][0]
             pow_name = power["title"]
@@ -195,7 +195,7 @@ class Games(commands.Cog):
                 music_name = music_name.split(':')[0]
             if music_name == "Lyrics":
                 music_name = music["title"].split(':')[1]
-            power_data = Helper.GetWebPage(pow_url)
+            power_data = Helpers.GetWebPage(self, pow_url)
             if power_data:
                 page_tree = html.fromstring(power_data.text)
                 desc = page_tree.xpath('//meta[@name="description"]/@content')

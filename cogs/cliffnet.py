@@ -1,9 +1,12 @@
+### THIS COG IS FOR MACHIO AND KNITE TO PRACTICE AND MAKE THEIR OWN COMMANDS
+
 import discord
 import logging
 import random
 import requests
 import pickle
 import datetime
+import asyncio
 import re
 import os.path
 from discord.ext import commands
@@ -13,7 +16,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 
 from internal.logs import logger
-from internal.helpers import Helper
+from internal.helpers import Helpers
 
 class cliffnet(commands.Cog):
 
@@ -47,7 +50,7 @@ class cliffnet(commands.Cog):
         if ctx.guild.id == 107847342006226944:
             await ctx.trigger_typing()
             try:
-                userInput = Helper.CommandStrip(ctx.message.content)
+                userInput = Helpers.CommandStrip(self, ctx.message.content)
                 if userInput=="":
                     return await ctx.send(f'Enter a keyword to search')
                     
@@ -103,7 +106,7 @@ class cliffnet(commands.Cog):
             df["avg"] = pd.to_numeric(df["avg"])
 
             try:
-                goal = Helper.CommandStrip(ctx.message.content)
+                goal = Helpers.CommandStrip(self, ctx.message.content)
                 goal = float(goal)
                 results=df.loc[(df['avg'] >= goal) & (df['avg'] < goal+1)]['Title'].values #prints whole row where avg == goal
                 if len(results) > 0:
@@ -147,7 +150,7 @@ class cliffnet(commands.Cog):
                 logger.LogPrint(f'Error during initial file read / creation: {ex}',logging.ERROR)
         
             #return all entries
-            userInput = Helper.CommandStrip(ctx.message.content).upper()
+            userInput = Helpers.CommandStrip(self, ctx.message.content).upper()
             if userInput == "": 
                 response = f"**Days Since:**\n>>> "
                 for x in daysDict:
@@ -188,7 +191,7 @@ class cliffnet(commands.Cog):
                         recordLength = lastLength
                     daysDict[userInput]=[currentDate,lastLength,recordLength]
                     await ctx.send(f">>> Clock reset on **{userInput}**. Time was: {timeDeltaFormat(lastLength)[0]} days and {timeDeltaFormat(lastLength)[1]} hours." 
-                    f" Longest record {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours.")
+                    f"\n>>> Longest record {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours.")
                     
                     with open(daysFile,"wb") as daysFileWriter:
                         pickle.dump(daysDict, daysFileWriter)
