@@ -162,7 +162,7 @@ class cliffnet(commands.Cog):
                     timeDeltaDif = datetime.datetime.utcnow() - daysDict[userInput][0]
                     return await ctx.send(f">>> \"{userInput}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours since last reset")
                 else:
-                    daysDict[userInput.upper()] = [datetime.datetime.utcnow(),0,0]
+                    daysDict[userInput.upper()] = [datetime.datetime.utcnow(),datetime.timedelta(0),datetime.timedelta(0)]
                     with open(daysFile,"wb") as daysFileWriter:
                         pickle.dump(daysDict, daysFileWriter)
                         return await ctx.send(f">>> Successfully added to the list!")
