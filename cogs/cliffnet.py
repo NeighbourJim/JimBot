@@ -147,69 +147,58 @@ class cliffnet(commands.Cog):
                 logger.LogPrint(f'Error during initial file read / creation: {ex}',logging.ERROR)
         
             #return all entries
-            inpud = Helper.CommandStrip(ctx.message.content).upper()
-            if inpud == "": 
+            input = Helper.CommandStrip(ctx.message.content).upper()
+            if input == "": 
                 response = f">>> Days since last reset: "
                 for x in daysDict:
-                    recordLength = daysDict[x][2]
                     timeDeltaDif = datetime.datetime.utcnow() - daysDict[x][0]
-                    response += f"\n\"\"{x}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours. Record: {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours."
+                    response += f"\n\"{x}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours"
                 await ctx.send(response)
             
             #add new timer
-            elif inpud.split(' ')[0].upper() not in keyWords: 
+            elif input.split(' ')[0].upper() not in keyWords: 
                 
-                if inpud in daysDict:
-                    timeDeltaDif = datetime.datetime.utcnow() - daysDict[inpud][0]
-                    return await ctx.send(f">>> \"{inpud}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours since last reset")
+                if input in daysDict:
+                    timeDeltaDif = datetime.datetime.utcnow() - daysDict[input][0]
+                    return await ctx.send(f">>>\"{input}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours since last reset")
                 else:
-                    daysDict[inpud.upper()] = [datetime.datetime.utcnow(),0,0]
+                    daysDict[input.upper()] = [datetime.datetime.utcnow(),0,0]
                     with open(daysFile,"wb") as daysFileWriter:
                         pickle.dump(daysDict, daysFileWriter)
-                        return await ctx.send(f">>> Successfully added to the list!")
+                        return await ctx.send(f">>>Successfully added to the list!")
             
             #reset an existing timer
-            elif inpud.startswith("ZERO"): 
+            elif input.startswith("ZERO"): 
 
                 pattern = "ZERO "
-                inpud = inpud.upper()
-                inpud = re.split(pattern, inpud, 1)[1]
-                if inpud in daysDict:
-                    lastDate=daysDict[inpud][0]
-                    recordLength=daysDict[inpud][2]
+                input = input.upper()
+                input = re.split(pattern, input, 1)[1]
+                if input in daysDict:
+                    lastDate=daysDict[input][0]
+                    recordLength=daysDict[input][2]
                     currentDate=datetime.datetime.utcnow()
                     lastLength=currentDate-lastDate
 
-                    if daysDict[inpud][2] == None or daysDict[inpud][2] == 0 or daysDict[inpud][2] < lastLength: 
+                    if daysDict[input][2] == None or daysDict[input][2] == 0 or daysDict[input][2] < lastLength: 
                         recordLength = lastLength
-                    daysDict[inpud]=[currentDate,lastLength,recordLength]
-                    await ctx.send(f">>> 0 days and 0 hours since last \"{inpud}\". Previous record: {timeDeltaFormat(lastLength)[0]} days and {timeDeltaFormat(lastLength)[1]} hours. All-time record: {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours.")
+                    daysDict[input]=[currentDate,lastLength,recordLength]
+                    return await ctx.send(f">>>\"{input}\" lasted {timeDeltaFormat(lastLength)[0]} days and {timeDeltaFormat(lastLength)[1]} hours. Longest record {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours.")
                     with open(daysFile,"wb") as daysFileWriter:
                         pickle.dump(daysDict, daysFileWriter)
-                    if timeDeltaFormat(lastLength)[0] > 1 and timeDeltaFormat(lastLength)[1] > 0:
-                        await ctx.send(f">>> You didn't even last one measly day, you drongo.")
-                    elif timeDeltaFormat(lastLength)[0] > 1 and timeDeltaFormat(lastLength)[0] < 2:
-                        await ctx.send(f">>> Pathetic.")
-                    elif timeDeltaFormat(lastLength)[0] > 2 and timeDeltaFormat(lastLength)[0] < 3:
-                        await ctx.send(f">>> You threw it all away..for this?")
-                    elif timeDeltaFormat(lastLength)[0] > 3 and timeDeltaFormat(lastLength)[0] < 10:
-                        await ctx.send(f">>> Sad!")
-                    elif timeDeltaFormat(lastLength)[0] > 10:
-                        await ctx.send(f">>> After ten thousand years i'm free!")    
                 else:
-                    return await ctx.send(f">>> Entry for timer reset not found.")
+                    return await ctx.send(f">>>Entry for timer reset not found.")
 
-            elif inpud.startswith("DELETE"): #delete an existing timer
+            elif input.startswith("DELETE"): #delete an existing timer
                 pattern = "DELETE "
-                inpud = re.split(pattern, inpud, 1)[1]
+                input = re.split(pattern, input, 1)[1]
 
-                if inpud in daysDict:
-                    daysDict.pop(inpud)
+                if input in daysDict:
+                    daysDict.pop(input)
                     with open(daysFile,"wb") as daysFileWriter:
                         pickle.dump(daysDict, daysFileWriter)
-                        return await ctx.send(f">>> \"{inpud}\" Deleted from list")
+                        return await ctx.send(f">>>\"{input}\" Deleted from list")
                 else:
-                    return await ctx.send(f">>> \"{inpud}\" - was not found for deletion.")        
+                    return await ctx.send(f">>>\"{input}\" - was not found for deletion.")        
 
         except FileNotFoundError as ex:
             logger.LogPrint(f'ERROR - Days file not found - {ex}', logging.ERROR)
