@@ -152,11 +152,12 @@ class cliffnet(commands.Cog):
                 response = f">>> Days since: (Commands: !days zero [entry] , !days delete [entry])"
                 for x in daysDict:
                     timeDeltaDif = datetime.datetime.utcnow() - daysDict[x][0]
-                    if daysDict[x][1] == datetime.timedelta(0):
+                    recordLength = daysDict[x][1]
+                    if recordLength == datetime.timedelta(0):
                         response += f"\n\"{x}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours."
                     else:
                         response += (f"\n\"{x}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours." 
-                        f" All time record: {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]}")
+                        f" All time record: {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]}")
                 await ctx.send(response)
             
             #add new timer
