@@ -151,7 +151,7 @@ class cliffnet(commands.Cog):
             if inpud == "": 
                 response = f">>> Days since last reset: "
                 for x in daysDict:
-                    recordLength = daysDict[x][2]
+                    recordLength = daysDict[inpud][2]
                     timeDeltaDif = datetime.datetime.utcnow() - daysDict[x][0]
                     response += f"\n\"\"{x}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours. Record: {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours."
                 await ctx.send(response)
