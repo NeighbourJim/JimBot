@@ -157,7 +157,7 @@ class cliffnet(commands.Cog):
                         response += f"\n\"{x}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours."
                     else:
                         response += (f"\n\"{x}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours." 
-                        f" All time record: {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]}")
+                        f" All time record: {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]}  hours.")
                 await ctx.send(response)
             
             #add new timer
