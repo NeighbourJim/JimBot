@@ -147,43 +147,43 @@ class cliffnet(commands.Cog):
                 logger.LogPrint(f'Error during initial file read / creation: {ex}',logging.ERROR)
         
             #return all entries
-            input = Helper.CommandStrip(ctx.message.content).upper()
-            if input == "": 
+            inpud = Helper.CommandStrip(ctx.message.content).upper()
+            if inpud == "": 
                 response = f">>> Days since last reset: "
                 for x in daysDict:
-                    recordLength = daysDict[input][2]
+                    recordLength = daysDict[inpud][2]
                     timeDeltaDif = datetime.datetime.utcnow() - daysDict[x][0]
                     response += f"\n\"\"{x}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours. Record: {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours."
                 await ctx.send(response)
             
             #add new timer
-            elif input.split(' ')[0].upper() not in keyWords: 
+            elif inpud.split(' ')[0].upper() not in keyWords: 
                 
-                if input in daysDict:
-                    timeDeltaDif = datetime.datetime.utcnow() - daysDict[input][0]
-                    return await ctx.send(f">>> \"{input}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours since last reset")
+                if inpud in daysDict:
+                    timeDeltaDif = datetime.datetime.utcnow() - daysDict[inpud][0]
+                    return await ctx.send(f">>> \"{inpud}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours since last reset")
                 else:
-                    daysDict[input.upper()] = [datetime.datetime.utcnow(),0,0]
+                    daysDict[inpud.upper()] = [datetime.datetime.utcnow(),0,0]
                     with open(daysFile,"wb") as daysFileWriter:
                         pickle.dump(daysDict, daysFileWriter)
                         return await ctx.send(f">>> Successfully added to the list!")
             
             #reset an existing timer
-            elif input.startswith("ZERO"): 
+            elif inpud.startswith("ZERO"): 
 
                 pattern = "ZERO "
-                input = input.upper()
-                input = re.split(pattern, input, 1)[1]
-                if input in daysDict:
-                    lastDate=daysDict[input][0]
-                    recordLength=daysDict[input][2]
+                inpud = inpud.upper()
+                inpud = re.split(pattern, inpud, 1)[1]
+                if inpud in daysDict:
+                    lastDate=daysDict[inpud][0]
+                    recordLength=daysDict[inpud][2]
                     currentDate=datetime.datetime.utcnow()
                     lastLength=currentDate-lastDate
 
-                    if daysDict[input][2] == None or daysDict[input][2] == 0 or daysDict[input][2] < lastLength: 
+                    if daysDict[inpud][2] == None or daysDict[inpud][2] == 0 or daysDict[inpud][2] < lastLength: 
                         recordLength = lastLength
-                    daysDict[input]=[currentDate,lastLength,recordLength]
-                    await ctx.send(f">>> 0 days and 0 hours since last \"{input}\". Previous record: {timeDeltaFormat(lastLength)[0]} days and {timeDeltaFormat(lastLength)[1]} hours. All-time record: {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours.")
+                    daysDict[inpud]=[currentDate,lastLength,recordLength]
+                    await ctx.send(f">>> 0 days and 0 hours since last \"{inpud}\". Previous record: {timeDeltaFormat(lastLength)[0]} days and {timeDeltaFormat(lastLength)[1]} hours. All-time record: {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours.")
                     with open(daysFile,"wb") as daysFileWriter:
                         pickle.dump(daysDict, daysFileWriter)
                     if timeDeltaFormat(lastLength)[0] > 1 and timeDeltaFormat(lastLength)[1] > 0:
@@ -199,17 +199,17 @@ class cliffnet(commands.Cog):
                 else:
                     return await ctx.send(f">>> Entry for timer reset not found.")
 
-            elif input.startswith("DELETE"): #delete an existing timer
+            elif inpud.startswith("DELETE"): #delete an existing timer
                 pattern = "DELETE "
-                input = re.split(pattern, input, 1)[1]
+                inpud = re.split(pattern, inpud, 1)[1]
 
-                if input in daysDict:
-                    daysDict.pop(input)
+                if inpud in daysDict:
+                    daysDict.pop(inpud)
                     with open(daysFile,"wb") as daysFileWriter:
                         pickle.dump(daysDict, daysFileWriter)
-                        return await ctx.send(f">>> \"{input}\" Deleted from list")
+                        return await ctx.send(f">>> \"{inpud}\" Deleted from list")
                 else:
-                    return await ctx.send(f">>> \"{input}\" - was not found for deletion.")        
+                    return await ctx.send(f">>> \"{inpud}\" - was not found for deletion.")        
 
         except FileNotFoundError as ex:
             logger.LogPrint(f'ERROR - Days file not found - {ex}', logging.ERROR)
