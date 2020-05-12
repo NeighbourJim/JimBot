@@ -151,6 +151,7 @@ class cliffnet(commands.Cog):
                 if input == "": 
                     return await ctx.send (f">>>Days since last reset: ")
                     for x in daysDict:
+                        recordLength=daysDict[input][2]
                         timeDeltaDif = datetime.datetime.utcnow() - daysDict[x][0]
                         return await ctx.send(f">>>\"{x}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours. Record: {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours.") 
                 
@@ -181,9 +182,9 @@ class cliffnet(commands.Cog):
                         if daysDict[input][2] == None or daysDict[input][2] == 0 or daysDict[input][2] < lastLength: 
                             recordLength = lastLength
                         daysDict[input]=[currentDate,lastLength,recordLength]
-                        return await ctx.send(f">>> {timeDeltaFormat(lastLength)[0]} days and {timeDeltaFormat(lastLength)[1]} hours since last \"{input}\" Longest record: {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours.")
-                        with open(daysFile,"wb") as daysFileWriter:
-                            pickle.dump(daysDict, daysFileWriter)
+                        return await ctx.send(f">>> 0 days and 0 hours since last \"{input}\". Previous record: {timeDeltaFormat(lastLength)[0]} days and {timeDeltaFormat(lastLength)[1]} hours. All-time record: {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours.")
+                        with open(daysFile,"wb") as daysFileWriter: 
+                            pickle.dump(daysDict, daysFileWriter) #whats this do? love, machio. program doesnt seem to reset eh
                         if timeDeltaFormat(lastLength)[0] > 1 and timeDeltaFormat(lastLength)[1] > 0:
                             await ctx.send(f"You didn't even last one measly day, you drongo.")
                         elif timeDeltaFormat(lastLength)[0] > 1 and timeDeltaFormat(lastLength)[0] < 2:
