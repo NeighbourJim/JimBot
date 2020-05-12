@@ -3,6 +3,7 @@ import re
 import requests
 import logging
 import emoji
+import datetime
 
 import internal.configmanager as configmanager
 from internal.logs import logger
@@ -52,6 +53,7 @@ class Helpers():
         """Strip the command evocation from a string and returns the rest.
         
         Parameters:
+        self (object): Required. Simply pass in self.
         message (string): String to strip command from.
 
         Returns:
@@ -119,6 +121,16 @@ class Helpers():
                 return None
         except Exception as ex:
             print(ex)
+
+    @staticmethod
+    def timeDeltaFormat(self, td: datetime.timedelta):
+            tdHours = td.seconds/60/60
+            if tdHours > 24:
+                tdDaysHours = [tdHours // 24, float("{:.1f}".format(tdHours % 24))]
+                return tdDaysHours
+            else:
+                tdDaysHours = [0, float("{:.1f}".format(tdHours))]
+                return tdDaysHours
 
 
 Helper = Helpers()

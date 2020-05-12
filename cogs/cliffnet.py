@@ -121,15 +121,6 @@ class cliffnet(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def days(self, ctx):
-        def timeDeltaFormat(td: datetime.timedelta):
-            tdHours = td.seconds/60/60
-            if tdHours > 24:
-                tdDaysHours = [tdHours // 24, float("{:.1f}".format(tdHours % 24))]
-                return tdDaysHours
-            else:
-                tdDaysHours = [0, float("{:.1f}".format(tdHours))]
-                return tdDaysHours
-
         try:
             try:
                 keyWords = ["ZERO","DELETE"]
@@ -157,10 +148,10 @@ class cliffnet(commands.Cog):
                     timeDeltaDif = datetime.datetime.utcnow() - daysDict[x][0]
                     recordLength = daysDict[x][1]
                     if recordLength == datetime.timedelta(0):
-                        response += f"**{x.title()}** - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours.\n"
+                        response += f"**{x.title()}** - {Helpers.timeDeltaFormat(self, timeDeltaDif)[0]} days and {Helpers.timeDeltaFormat(self, timeDeltaDif)[1]} hours.\n"
                     else:
-                        response += (f"**{x.title()}** - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours." 
-                        f" Record: {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours.\n")
+                        response += (f"**{x.title()}** - {Helpers.timeDeltaFormat(self, timeDeltaDif)[0]} days and {Helpers.timeDeltaFormat(self, timeDeltaDif)[1]} hours." 
+                        f" Record: {Helpers.timeDeltaFormat(self, recordLength)[0]} days and {Helpers.timeDeltaFormat(self, recordLength)[1]} hours.\n")
                 await ctx.send(response)
             
             #add new timer
@@ -168,7 +159,7 @@ class cliffnet(commands.Cog):
                 
                 if userInput in daysDict:
                     timeDeltaDif = datetime.datetime.utcnow() - daysDict[userInput][0]
-                    return await ctx.send(f">>> It has been {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours since the last **{userInput}**.")
+                    return await ctx.send(f">>> It has been {Helpers.timeDeltaFormat(self, timeDeltaDif)[0]} days and {Helpers.timeDeltaFormat(self, timeDeltaDif)[1]} hours since the last **{userInput}**.")
                 else:
                     daysDict[userInput.upper()] = [datetime.datetime.utcnow(),datetime.timedelta(0),datetime.timedelta(0)]
                     with open(daysFile,"wb") as daysFileWriter:
@@ -190,8 +181,8 @@ class cliffnet(commands.Cog):
                     if daysDict[userInput][2] == None or daysDict[userInput][2] == 0 or daysDict[userInput][2] < lastLength: 
                         recordLength = lastLength
                     daysDict[userInput]=[currentDate,lastLength,recordLength]
-                    await ctx.send(f">>> Clock reset on **{userInput}**. Time was: {timeDeltaFormat(lastLength)[0]} days and {timeDeltaFormat(lastLength)[1]} hours." 
-                    f"\n>>> Longest record {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours.")
+                    await ctx.send(f">>> Clock reset on **{userInput}**. Time was: {Helpers.timeDeltaFormat(self, lastLength)[0]} days and {Helpers.timeDeltaFormat(self, lastLength)[1]} hours." 
+                    f"\n>>> Longest record {Helpers.timeDeltaFormat(self, recordLength)[0]} days and {Helpers.timeDeltaFormat(self, recordLength)[1]} hours.")
                     
                     with open(daysFile,"wb") as daysFileWriter:
                         pickle.dump(daysDict, daysFileWriter)
