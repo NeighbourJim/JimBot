@@ -149,7 +149,7 @@ class cliffnet(commands.Cog):
             #return all entries
             userInput = Helper.CommandStrip(ctx.message.content).upper()
             if userInput == "": 
-                response = f">>> Days since last reset: "
+                response = f">>> Days since: (Commands: !days zero [entry] , !days delete [entry])"
                 for x in daysDict:
                     timeDeltaDif = datetime.datetime.utcnow() - daysDict[x][0]
                     response += f"\n\"{x}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours"
