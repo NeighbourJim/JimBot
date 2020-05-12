@@ -146,7 +146,7 @@ class cliffnet(commands.Cog):
                 response = f"**Days Since:**\n>>> "
                 for x in daysDict:
                     timeDeltaDif = datetime.datetime.utcnow() - daysDict[x][0]
-                    recordLength = daysDict[x][1]
+                    recordLength = daysDict[x][2]
                     if recordLength == datetime.timedelta(0):
                         response += f"**{x.title()}** - {Helpers.timeDeltaFormat(self, timeDeltaDif)[0]} days and {Helpers.timeDeltaFormat(self, timeDeltaDif)[1]} hours.\n"
                     else:
