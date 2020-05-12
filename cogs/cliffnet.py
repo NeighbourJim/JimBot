@@ -152,7 +152,11 @@ class cliffnet(commands.Cog):
                 response = f">>> Days since: (Commands: !days zero [entry] , !days delete [entry])"
                 for x in daysDict:
                     timeDeltaDif = datetime.datetime.utcnow() - daysDict[x][0]
-                    response += f"\n\"{x}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours"
+                    if daysDict[x][1] == datetime.timedelta(0):
+                        response += f"\n\"{x}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours."
+                    else:
+                        response += (f"\n\"{x}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours." 
+                        f" All time record: {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]}")
                 await ctx.send(response)
             
             #add new timer
@@ -182,7 +186,9 @@ class cliffnet(commands.Cog):
                     if daysDict[userInput][2] == None or daysDict[userInput][2] == 0 or daysDict[userInput][2] < lastLength: 
                         recordLength = lastLength
                     daysDict[userInput]=[currentDate,lastLength,recordLength]
-                    await ctx.send(f">>> \"{userInput}\" lasted {timeDeltaFormat(lastLength)[0]} days and {timeDeltaFormat(lastLength)[1]} hours. Longest record {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours.")
+                    await ctx.send(f">>> \"{userInput}\" lasted {timeDeltaFormat(lastLength)[0]} days and {timeDeltaFormat(lastLength)[1]} hours." 
+                    f" Longest record {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours.")
+                    
                     with open(daysFile,"wb") as daysFileWriter:
                         pickle.dump(daysDict, daysFileWriter)
                 else:
