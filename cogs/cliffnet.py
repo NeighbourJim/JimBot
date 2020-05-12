@@ -113,7 +113,7 @@ class cliffnet(commands.Cog):
             except ValueError:
                 await ctx.send('{ctx.message.author.mention}:You have to enter a number, for example: 5')
 
-    @commands.command(aliases=["Days"], help="View or add long term timers.")  
+    @commands.command(aliases=["Days"], help="View or add long term timers. To add a timer it is !days [entry]. To reset is !days zero [entry]. To delete is !days delete [entry].")  
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
@@ -149,15 +149,15 @@ class cliffnet(commands.Cog):
             #return all entries
             userInput = Helper.CommandStrip(ctx.message.content).upper()
             if userInput == "": 
-                response = f">>> Days since: (Commands: !days zero [entry] , !days delete [entry])"
+                response = f"**Days Since:**\n>>> "
                 for x in daysDict:
                     timeDeltaDif = datetime.datetime.utcnow() - daysDict[x][0]
                     recordLength = daysDict[x][1]
                     if recordLength == datetime.timedelta(0):
-                        response += f"\n\"{x}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours."
+                        response += f"**{x.title()}** - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours.\n"
                     else:
-                        response += (f"\n\"{x}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours." 
-                        f" All time record: {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]}")
+                        response += (f"**{x.title()}** - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours." 
+                        f" Record: {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours.\n")
                 await ctx.send(response)
             
             #add new timer
@@ -165,7 +165,7 @@ class cliffnet(commands.Cog):
                 
                 if userInput in daysDict:
                     timeDeltaDif = datetime.datetime.utcnow() - daysDict[userInput][0]
-                    return await ctx.send(f">>> \"{userInput}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours since last reset")
+                    return await ctx.send(f">>> **{userInput}** - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours since last reset")
                 else:
                     daysDict[userInput.upper()] = [datetime.datetime.utcnow(),datetime.timedelta(0),datetime.timedelta(0)]
                     with open(daysFile,"wb") as daysFileWriter:
@@ -187,7 +187,7 @@ class cliffnet(commands.Cog):
                     if daysDict[userInput][2] == None or daysDict[userInput][2] == 0 or daysDict[userInput][2] < lastLength: 
                         recordLength = lastLength
                     daysDict[userInput]=[currentDate,lastLength,recordLength]
-                    await ctx.send(f">>> \"{userInput}\" lasted {timeDeltaFormat(lastLength)[0]} days and {timeDeltaFormat(lastLength)[1]} hours." 
+                    await ctx.send(f">>> **{userInput}** lasted {timeDeltaFormat(lastLength)[0]} days and {timeDeltaFormat(lastLength)[1]} hours." 
                     f" Longest record {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours.")
                     
                     with open(daysFile,"wb") as daysFileWriter:
@@ -203,9 +203,9 @@ class cliffnet(commands.Cog):
                     daysDict.pop(userInput)
                     with open(daysFile,"wb") as daysFileWriter:
                         pickle.dump(daysDict, daysFileWriter)
-                        return await ctx.send(f">>> \"{userInput}\" Deleted from list")
+                        return await ctx.send(f">>> **{userInput}** - Deleted from list")
                 else:
-                    return await ctx.send(f">>> \"{userInput}\" - was not found for deletion.")        
+                    return await ctx.send(f">>> **{userInput}** - Not found for deletion.")        
 
         except FileNotFoundError as ex:
             logger.LogPrint(f'ERROR - Days file not found - {ex}', logging.ERROR)
