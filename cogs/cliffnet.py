@@ -165,7 +165,7 @@ class cliffnet(commands.Cog):
                 
                 if userInput in daysDict:
                     timeDeltaDif = datetime.datetime.utcnow() - daysDict[userInput][0]
-                    return await ctx.send(f">>> **{userInput}** - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours since last reset")
+                    return await ctx.send(f">>> It has been {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours since the last **{userInput}**.")
                 else:
                     daysDict[userInput.upper()] = [datetime.datetime.utcnow(),datetime.timedelta(0),datetime.timedelta(0)]
                     with open(daysFile,"wb") as daysFileWriter:
@@ -187,7 +187,7 @@ class cliffnet(commands.Cog):
                     if daysDict[userInput][2] == None or daysDict[userInput][2] == 0 or daysDict[userInput][2] < lastLength: 
                         recordLength = lastLength
                     daysDict[userInput]=[currentDate,lastLength,recordLength]
-                    await ctx.send(f">>> **{userInput}** lasted {timeDeltaFormat(lastLength)[0]} days and {timeDeltaFormat(lastLength)[1]} hours." 
+                    await ctx.send(f">>> Clock reset on **{userInput}**. Time was: {timeDeltaFormat(lastLength)[0]} days and {timeDeltaFormat(lastLength)[1]} hours." 
                     f" Longest record {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours.")
                     
                     with open(daysFile,"wb") as daysFileWriter:
