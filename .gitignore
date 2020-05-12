@@ -5,6 +5,7 @@ bromoviessearch.json
 *.db
 *.bat
 .vscode/
+**/data/databases/
 stand.png
 memelist.txt
 
