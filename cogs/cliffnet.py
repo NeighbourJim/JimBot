@@ -151,8 +151,9 @@ class cliffnet(commands.Cog):
             if input == "": 
                 response = f">>> Days since last reset: "
                 for x in daysDict:
+                    recordLength = daysDict[input][2]
                     timeDeltaDif = datetime.datetime.utcnow() - daysDict[x][0]
-                    response += f"\n\"{x}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours"
+                    response += f"\n\"\"{x}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours. Record: {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours."
                 await ctx.send(response)
             
             #add new timer
@@ -160,12 +161,12 @@ class cliffnet(commands.Cog):
                 
                 if input in daysDict:
                     timeDeltaDif = datetime.datetime.utcnow() - daysDict[input][0]
-                    return await ctx.send(f">>>\"{input}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours since last reset")
+                    return await ctx.send(f">>> \"{input}\" - {timeDeltaFormat(timeDeltaDif)[0]} days and {timeDeltaFormat(timeDeltaDif)[1]} hours since last reset")
                 else:
                     daysDict[input.upper()] = [datetime.datetime.utcnow(),0,0]
                     with open(daysFile,"wb") as daysFileWriter:
                         pickle.dump(daysDict, daysFileWriter)
-                        return await ctx.send(f">>>Successfully added to the list!")
+                        return await ctx.send(f">>> Successfully added to the list!")
             
             #reset an existing timer
             elif input.startswith("ZERO"): 
@@ -182,11 +183,21 @@ class cliffnet(commands.Cog):
                     if daysDict[input][2] == None or daysDict[input][2] == 0 or daysDict[input][2] < lastLength: 
                         recordLength = lastLength
                     daysDict[input]=[currentDate,lastLength,recordLength]
-                    await ctx.send(f">>>\"{input}\" lasted {timeDeltaFormat(lastLength)[0]} days and {timeDeltaFormat(lastLength)[1]} hours. Longest record {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours.")
+                    await ctx.send(f">>> 0 days and 0 hours since last \"{input}\". Previous record: {timeDeltaFormat(lastLength)[0]} days and {timeDeltaFormat(lastLength)[1]} hours. All-time record: {timeDeltaFormat(recordLength)[0]} days and {timeDeltaFormat(recordLength)[1]} hours.")
                     with open(daysFile,"wb") as daysFileWriter:
                         pickle.dump(daysDict, daysFileWriter)
+                    if timeDeltaFormat(lastLength)[0] > 1 and timeDeltaFormat(lastLength)[1] > 0:
+                        await ctx.send(f">>> You didn't even last one measly day, you drongo.")
+                    elif timeDeltaFormat(lastLength)[0] > 1 and timeDeltaFormat(lastLength)[0] < 2:
+                        await ctx.send(f">>> Pathetic.")
+                    elif timeDeltaFormat(lastLength)[0] > 2 and timeDeltaFormat(lastLength)[0] < 3:
+                        await ctx.send(f">>> You threw it all away..for this?")
+                    elif timeDeltaFormat(lastLength)[0] > 3 and timeDeltaFormat(lastLength)[0] < 10:
+                        await ctx.send(f">>> Sad!")
+                    elif timeDeltaFormat(lastLength)[0] > 10:
+                        await ctx.send(f">>> After ten thousand years i'm free!")    
                 else:
-                    return await ctx.send(f">>>Entry for timer reset not found.")
+                    return await ctx.send(f">>> Entry for timer reset not found.")
 
             elif input.startswith("DELETE"): #delete an existing timer
                 pattern = "DELETE "
@@ -196,9 +207,9 @@ class cliffnet(commands.Cog):
                     daysDict.pop(input)
                     with open(daysFile,"wb") as daysFileWriter:
                         pickle.dump(daysDict, daysFileWriter)
-                        return await ctx.send(f">>>\"{input}\" Deleted from list")
+                        return await ctx.send(f">>> \"{input}\" Deleted from list")
                 else:
-                    return await ctx.send(f">>>\"{input}\" - was not found for deletion.")        
+                    return await ctx.send(f">>> \"{input}\" - was not found for deletion.")        
 
         except FileNotFoundError as ex:
             logger.LogPrint(f'ERROR - Days file not found - {ex}', logging.ERROR)
