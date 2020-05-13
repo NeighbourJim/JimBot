@@ -81,6 +81,61 @@ class Pokemon(commands.Cog):
         else:
             await ctx.send(f'{ctx.message.author.mention}: Something went wrong when contacting the API.')
 
+    @commands.command(help="Get information about a Pokemon (Gen 1 - 7).", aliases=['pdt', 'Pdt', 'PDT', 'pdata', 'pd'])
+    @commands.cooldown(rate=1, per=4, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def pokedata(self, ctx):
+        poke = Helpers.CommandStrip(self, ctx.message.content).replace(' ', '-')
+        api_results = Helpers.GetWebPage(self, f'https://pokeapi.co/api/v2/pokemon/{poke}/')
+        if api_results:
+            results_json = api_results.json()
+            name = results_json['name'].title()
+            number = results_json['id']
+            if number < 100:
+                number_string = f'0{number}'
+            else:
+                number_string = str(number)
+            sprite = results_json['sprites']['front_default']
+
+            abilities = results_json['abilities']
+            abilities_formatted = []
+            for a in reversed(abilities):
+                ab_str = ''
+                ab_str += f"{a['ability']['name'].title().replace('-', ' ')}"
+                if a['is_hidden']:
+                    ab_str += ' (Hidden)'
+                abilities_formatted.append(ab_str)                
+            
+            typing = results_json['types']
+            typing_formatted = []
+            for t in reversed(typing):
+                typing_formatted.append(t['type']['name'].title())
+            
+            stats = results_json['stats']                     # API stat order is Spe, SpD, SpA, Def, Atk, HP
+            print('hello!!!!!')
+            poke_embed = discord.Embed()
+            poke_embed.title = f'{name.title()} - #{number}'
+            poke_embed.set_thumbnail(url=sprite)
+            poke_embed.add_field(name='Type', value=' / '.join(typing_formatted), inline=True)
+            poke_embed.add_field(name='Abilities', value=', '.join(abilities_formatted), inline=False)
+            poke_embed.add_field(name='Base', value=(
+                f"**HP:** {stats[5]['base_stat']}\n"
+                f"**ATK:** {stats[4]['base_stat']}\n"
+                f"**DEF:** {stats[3]['base_stat']}\n"
+                ), inline=True)
+            poke_embed.add_field(name='Stats', value=(
+                f"**SP.ATK:** {stats[2]['base_stat']}\n"
+                f"**SP.DEF:** {stats[1]['base_stat']}\n"
+                f"**SPE:** {stats[0]['base_stat']}\n"
+            ), inline=True)
+            poke_embed.set_footer(text=f'More info: https://pokemondb.net/pokedex/{poke}')
+            await ctx.send(embed=poke_embed)
+            
+        else:
+            await ctx.send(f'{ctx.message.author.mention}: No pokemon with that name or number found.')
+
+
 
 def setup(client):
     client.add_cog(Pokemon(client))

@@ -24,6 +24,8 @@ class Memes(commands.Cog):
 
 #region Non-Command Methods - General Helpers Methods specific to this cog
     def CheckAndCreateDatabase(self):
+        """Check if a meme database has been made for each server the bot is connected to, and create it if not.
+        """
         try:
             guilds = self.client.guilds
             for g in guilds:
@@ -44,12 +46,30 @@ class Memes(commands.Cog):
             logger.LogPrint(f'ERROR - Could not create table or view: {ex}',logging.ERROR)     
 
     def GetMemeScore(self, ctx, m_id):
+        """Get the score of a specific meme. Calls GetUpvoteCount() and GetDownvoteCount().
+
+        Args:
+            ctx (discord.ext.commands.context): Context in which to search. Should be the context of the evocation message.
+            m_id (int): The meme ID to look up.
+
+        Returns:
+            int: The score of the meme. Calculated by subtracting upvotes from downvotes.
+        """
         try: 
             return self.GetUpvoteCount(ctx, m_id) - self.GetDownvoteCount(ctx, m_id)
         except Exception as ex:
             logger.LogPrint(f'ERROR - Could not get meme score: {ex}',logging.ERROR)  
 
     def GetUpvoteCount(self, ctx, m_id):
+        """Get the total number of 'goodmeme' votes for a given meme.
+
+        Args:
+            ctx (discord.ext.commands.context): Context in which to search. Should be the context of the evocation message.
+            m_id (int): The meme ID to look up.
+
+        Returns:
+            int: The number of upvotes on requested meme.
+        """
         try:
             ups = dbm.ExecuteRawQuery(f'memes{ctx.guild.id}',f'SELECT COUNT(DISTINCT author_id) as C FROM upvotes WHERE m_id = {m_id}')
             return ups[0]
@@ -57,6 +77,15 @@ class Memes(commands.Cog):
             logger.LogPrint(f'ERROR - Could not get meme upvote count: {ex}',logging.ERROR) 
 
     def GetDownvoteCount(self, ctx, m_id):
+        """Get the total number of 'badmeme' votes for a given meme.
+
+        Args:
+            ctx (discord.ext.commands.context): Context in which to search. Should be the context of the evocation message.
+            m_id (int): The meme ID to look up.
+
+        Returns:
+            int: The number of downvotes on requested meme.
+        """
         try:
             downs = dbm.ExecuteRawQuery(f'memes{ctx.guild.id}',f'SELECT COUNT(DISTINCT author_id) as C FROM downvotes WHERE m_id = {m_id}')
             return downs[0]
@@ -64,16 +93,32 @@ class Memes(commands.Cog):
             logger.LogPrint(f'ERROR - Could not get meme downvote count: {ex}',logging.ERROR) 
 
     def GetVoters(self, ctx, m_id):
+        """Get all of the votes for a meme, both good and bad.
+
+        Args:
+            ctx (discord.ext.commands.context): Context in which to search. Should be the context of the evocation message.
+            m_id (int): The meme ID to look up.
+
+        Returns:
+            dict: Dictionary with 2 keys. dict["ups"] holds a list of upvotes. dict["downs"] holds a list of downvotes.
+        """
         try:
             w = [("m_id", m_id)]
             ups = dbm.Retrieve(f'memes{ctx.guild.id}', 'upvotes', w, WhereType.AND, ["author_id", "author_username"], 10000)
             downs = dbm.Retrieve(f'memes{ctx.guild.id}', 'downvotes', w, WhereType.AND, ["author_id", "author_username"], 10000)
-            print(ups)
             return {"ups": ups, "downs": downs}
         except Exception as ex:
             logger.LogPrint(f'ERROR: Could not get meme votes. - {ex}', logging.ERROR)
 
     def GetGradeSmallServer(self, score):
+        """Get the Grade image for a given score for a smaller server.
+
+        Args:
+            score (int): Score to get Grade for.
+
+        Returns:
+            str: URL of appropriate Grade image.
+        """
         if score >= 10:
             return "https://i.imgur.com/UfxLyJd.png"
         elif score >= 7:
@@ -96,6 +141,14 @@ class Memes(commands.Cog):
             return "https://cdn.discordapp.com/attachments/131374467476750336/680053237549891609/emote.png"
 
     def GetGradeLargeServer(self, score):
+        """Get the Grade image for a given score for a larger server.
+
+        Args:
+            score (int): Score to get Grade for.
+
+        Returns:
+            str: URL of appropriate Grade image.
+        """
         if score >= 25:
             return "https://i.imgur.com/UfxLyJd.png"
         elif score >= 20:
