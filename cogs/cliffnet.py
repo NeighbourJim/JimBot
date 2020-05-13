@@ -184,7 +184,7 @@ class cliffnet(commands.Cog):
                         recordLength = lastLength
                     daysDict[userInput]=[currentDate,lastLength,recordLength]
                     await ctx.send(f">>> Clock reset on **{userInput}**. Time was: {Helpers.timeDeltaFormat(self, lastLength)[0]} days and {Helpers.timeDeltaFormat(self, lastLength)[1]} hours." 
-                    f"\n>>> Longest record {Helpers.timeDeltaFormat(self, recordLength)[0]} days and {Helpers.timeDeltaFormat(self, recordLength)[1]} hours.")
+                    f"\nLongest record {Helpers.timeDeltaFormat(self, recordLength)[0]} days and {Helpers.timeDeltaFormat(self, recordLength)[1]} hours.")
                     
                     with open(daysFile,"wb") as daysFileWriter:
                         pickle.dump(daysDict, daysFileWriter)
