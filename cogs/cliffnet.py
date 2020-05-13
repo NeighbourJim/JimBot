@@ -123,7 +123,7 @@ class cliffnet(commands.Cog):
     async def days(self, ctx):
         try:
             try:
-                keyWords = ["ZERO","DELETE"]
+                keyWords = ["ZERO","DELETE","RESET"]
                 #daysDict dictionary format = {"Entry1": ["StartTime1","LastLength1","LongestLength1"],}
                 daysDict = {}
                 daysFile = f"./internal/data/databases/days{ctx.guild.id}.pk"
@@ -146,7 +146,7 @@ class cliffnet(commands.Cog):
                 response = f"**Days Since:**\n>>> "
                 for x in daysDict:
                     timeDeltaDif = datetime.datetime.utcnow() - daysDict[x][0]
-                    recordLength = daysDict[x][1]
+                    recordLength = daysDict[x][2]
                     if recordLength == datetime.timedelta(0):
                         response += f"**{x.title()}** - {Helpers.timeDeltaFormat(self, timeDeltaDif)[0]} days and {Helpers.timeDeltaFormat(self, timeDeltaDif)[1]} hours.\n"
                     else:
@@ -167,9 +167,11 @@ class cliffnet(commands.Cog):
                         return await ctx.send(f">>> Successfully added to the list!")
             
             #reset an existing timer
-            elif userInput.startswith("ZERO"): 
-
-                pattern = "ZERO "
+            elif userInput.startswith("ZERO") or userInput.startswith("RESET"): 
+                if userInput.startswith("ZERO"):
+                    pattern = "ZERO "
+                else:
+                    pattern = "RESET "
                 userInput = userInput.upper()
                 userInput = re.split(pattern, userInput, 1)[1]
                 if userInput in daysDict:
