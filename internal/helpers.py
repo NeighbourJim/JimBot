@@ -187,7 +187,7 @@ class Helpers():
                 list(int,float): list with days and hours. Hours rounded to the first decimal.
             """
             tdHours = td.seconds/60/60
-            tdDaysHours = [tdHours // 24, float("{:.1f}".format(tdHours % 24))]
+            tdDaysHours = [td.days, float("{:.1f}".format(tdHours % 24))]
             return tdDaysHours
 
 
