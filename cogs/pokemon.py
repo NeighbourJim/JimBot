@@ -5,7 +5,7 @@ from discord.ext import commands
 from discord.ext.commands import BucketType
 
 from internal.logs import logger
-from internal.helpers import Helper
+from internal.helpers import Helpers
 from internal.data.pokemon_names import pokemon_names
 
 class Pokemon(commands.Cog):

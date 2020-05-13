@@ -18,7 +18,7 @@ class Admin(commands.Cog):
     @commands.command(help="Loads a command module.", hidden=True)
     @commands.has_guild_permissions(administrator=True)
     @commands.guild_only()
-    async def load(self, ctx, extension):
+    async def load(self, ctx: discord.ext.commands.Context, extension: str):
         self.client.load_extension(f'cogs.{extension}')
         logger.LogPrint(f'Loaded extension {extension}')
         await ctx.send(f'Loaded extension {extension}')
@@ -27,7 +27,7 @@ class Admin(commands.Cog):
     @commands.command(help="Unloads a command module.", hidden=True)
     @commands.has_guild_permissions(administrator=True)
     @commands.guild_only()
-    async def unload(self, ctx, extension):
+    async def unload(self, ctx: discord.ext.commands.Context, extension: str):
         self.client.unload_extension(f'cogs.{extension}')
         logger.LogPrint(f'Unloaded extension {extension}')
         await ctx.send(f'Unloaded extension {extension}')
@@ -36,7 +36,7 @@ class Admin(commands.Cog):
     @commands.command(help="Reloads a command module.", hidden=True)
     @commands.has_guild_permissions(administrator=True)
     @commands.guild_only()
-    async def reload(self, ctx, extension):
+    async def reload(self, ctx: discord.ext.commands.Context, extension: str):
         self.client.unload_extension(f'cogs.{extension}')
         self.client.load_extension(f'cogs.{extension}')
         logger.LogPrint(f'Reloaded extension {extension}')
@@ -44,6 +44,7 @@ class Admin(commands.Cog):
     
     #endregion
     
+    # Shuts down the bot
     @commands.command(aliases=["q"], help="Causes the bot to shut down. Owner command only.")
     @commands.is_owner()
     async def quit(self, ctx):
@@ -51,6 +52,7 @@ class Admin(commands.Cog):
         await ctx.send("Bot shutting down...")
         await self.client.close()
 
+    # Deletes a specified number of messages.
     @commands.command(help="Deletes a specified number of messages from the channel.\nCan be used to target only one specific user.\nUsage: !purge 5 / !purge @user 5")
     @commands.cooldown(rate=1, per=10, type=BucketType.channel)
     @commands.has_permissions(manage_messages=True)

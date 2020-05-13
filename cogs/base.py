@@ -51,7 +51,7 @@ class Base(commands.Cog):
 					'Who cares?',
 					'Never, ever, ever.'
 				]
-        if len(Helpers.CommandStrip(ctx.message.content)) > 0:
+        if len(Helpers.CommandStrip(self, ctx.message.content)) > 0:
             await ctx.send(f'{ctx.message.author.mention}: **{random.choice(answers)}**')
         else:
             await ctx.send(f'{ctx.message.author.mention}: What are you asking?')
@@ -60,20 +60,20 @@ class Base(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def roll(self, ctx):
-        split_message = Helpers.CommandStrip(ctx.message.content).split(',')
+        split_message = Helpers.CommandStrip(self, ctx.message.content).split(',')
         number = None
         min = None
         max = None
         if len(split_message) > 1:            
             try:
-                min = int(Helpers.FuzzyNumberSearch(split_message[0]))
-                max = int(Helpers.FuzzyNumberSearch(split_message[1]))
+                min = int(Helpers.FuzzyNumberSearch(self, split_message[0]))
+                max = int(Helpers.FuzzyNumberSearch(self, split_message[1]))
             except:
                 await ctx.send(f'{ctx.message.author.mention}: One of your numbers wasn\'t a number.')
         else:
             try:
                 min = 0
-                max = int(Helpers.FuzzyNumberSearch(split_message[0]))
+                max = int(Helpers.FuzzyNumberSearch(self, split_message[0]))
             except Exception as ex:
                 print(ex)
                 await ctx.send(f'{ctx.message.author.mention}: That\'s not a number.')
@@ -83,7 +83,7 @@ class Base(commands.Cog):
                 response = f'{ctx.message.author.mention}: Your number between {min} and {max} was: **{number}**.'
                 if len(str(number)) >= 2:
                     if str(number)[-1] == str(number)[-2]:
-                        digits_emoji = Helpers.FindEmoji(ctx, "checkEm")
+                        digits_emoji = Helpers.FindEmoji(self, ctx, "checkEm")
                         if digits_emoji != None:
                             response += f'<:{digits_emoji.name}:{digits_emoji.id}>'
                 if number == 7:
@@ -97,7 +97,7 @@ class Base(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def pick(self, ctx):
-        split_message = Helpers.CommandStrip(ctx.message.content).split(',')
+        split_message = Helpers.CommandStrip(self, ctx.message.content).split(',')
         if len(split_message) > 1:
             result = random.choice(split_message)
             await ctx.send(f'{ctx.message.author.mention}: {result}')
@@ -136,7 +136,7 @@ class Base(commands.Cog):
         response = ''
         members = ctx.guild.members
         try:
-            amount = int(Helpers.FuzzyNumberSearch(Helpers.CommandStrip(ctx.message.content).split(' ')[0]))
+            amount = int(Helpers.FuzzyNumberSearch(self, Helpers.CommandStrip(self, ctx.message.content).split(' ')[0]))
         except:
             amount = 1
         if amount > 10:
@@ -165,7 +165,7 @@ class Base(commands.Cog):
         response = ''
         members = ctx.guild.members
         try:
-            amount = int(Helpers.FuzzyNumberSearch(Helpers.CommandStrip(ctx.message.content)))
+            amount = int(Helpers.FuzzyNumberSearch(self, Helpers.CommandStrip(self, ctx.message.content)))
         except:
             amount = 1
         for i in range(0,1000): 
@@ -187,7 +187,7 @@ class Base(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def emote(self, ctx):
-        e_id = Helpers.GetFirstEmojiID(Helpers.CommandStrip(ctx.message.content))
+        e_id = Helpers.GetFirstEmojiID(self, Helpers.CommandStrip(self, ctx.message.content))
         if e_id:
             await ctx.send(f'{ctx.message.author.mention}: https://cdn.discordapp.com/emojis/{e_id.group()}.png')
         else:            
