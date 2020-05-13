@@ -128,9 +128,6 @@ class Helpers():
             if tdHours > 24:
                 tdDaysHours = [tdHours // 24, float("{:.1f}".format(tdHours % 24))]
                 return tdDaysHours
-            else:
-                tdDaysHours = [0, float("{:.1f}".format(tdHours))]
-                return tdDaysHours
 
 
 Helper = Helpers()
