@@ -1,4 +1,5 @@
 import discord
+import json
 import logging
 import random
 from discord.ext import commands
@@ -41,6 +42,44 @@ class Pokemon(commands.Cog):
             message = f'**{poke_num} - {poke_name}**\n{url}'
         await ctx.send(f'{ctx.message.author.mention}: {message}')
 
+    @commands.command(help="Get a random Pokemon move.", aliases=['rmove', 'Rmove', 'RMove', 'RMOVE'])
+    @commands.cooldown(rate=1, per=4, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def randommove(self, ctx):
+        api_results = Helpers.GetWebPage(self, 'https://pokeapi.co/api/v2/move/?offset=0&limit=20000')
+        if api_results:
+            move = random.choice(api_results.json()['results'])['name']
+            move = move.title().replace("-", " ")
+            await ctx.send(f'{ctx.message.author.mention}: {move}')
+        else:
+            await ctx.send(f'{ctx.message.author.mention}: Something went wrong when contacting the API.')
+
+    @commands.command(help="Get a random Pokemon ability.", aliases=['rability', 'Rability', 'RAbility', 'RABILITY'])
+    @commands.cooldown(rate=1, per=4, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def randomability(self, ctx):
+        api_results = Helpers.GetWebPage(self, 'https://pokeapi.co/api/v2/ability/?offset=0&limit=20000')
+        if api_results:
+            ability = random.choice(api_results.json()['results'])['name']
+            ability = ability.title().replace("-", " ")
+            await ctx.send(f'{ctx.message.author.mention}: {ability}')
+        else:
+            await ctx.send(f'{ctx.message.author.mention}: Something went wrong when contacting the API.')
+
+    @commands.command(help="Get a random Pokemon item.", aliases=['ritem', 'Ritem', 'RItem', 'RITEM'])
+    @commands.cooldown(rate=1, per=4, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def randomitem(self, ctx):
+        api_results = Helpers.GetWebPage(self, 'https://pokeapi.co/api/v2/item/?offset=0&limit=850')
+        if api_results:
+            item = random.choice(api_results.json()['results'])['name']
+            item = item.title().replace("-", " ")
+            await ctx.send(f'{ctx.message.author.mention}: {item}')
+        else:
+            await ctx.send(f'{ctx.message.author.mention}: Something went wrong when contacting the API.')
 
 
 def setup(client):
