@@ -670,6 +670,7 @@ class Memes(commands.Cog):
 			(SELECT COUNT(DISTINCT memes.m_id) as neutral FROM memes INNER JOIN upvotes ON memes.m_id LIKE upvotes.m_id WHERE memes.score = 0 AND memes.m_id IN (SELECT m_id FROM upvotes)),
 			(SELECT AVG(score) as average FROM memes)'''
         results = dbm.ExecuteRawQuery(f'memes{ctx.guild.id}', query)
+        
         if results != None:
             print(results)
             total_memes = results[0]
@@ -756,26 +757,28 @@ class Memes(commands.Cog):
 			(SELECT AVG(score) as average FROM memes WHERE author_username LIKE ?1)'''
         params = [name]
         results = dbm.ExecuteParamQuery(f'memes{ctx.guild.id}', query, params)
-        print(results)
         if results != None:
-            total_memes = results[0][0]
-            user_count = results[0][1]
-            good_count = results[0][2]
-            bad_count = results[0][3]
-            neutral_count = results[0][4]
-            average = results[0][5]
-
-            voted_count = good_count + bad_count + neutral_count
-            total_percent = round((user_count/total_memes)*100, 2)
-            good_percent = round((good_count/voted_count)*100, 2)
-            bad_percent = round((bad_count/voted_count)*100, 2)
-            neutral_percent = round((neutral_count/voted_count)*100, 2)
-            average = round(average, 2)
-
-            response = f'**{name}** has added **{user_count}** memes which is **{total_percent}%** of the total **{total_memes}** memes.\nOf their {voted_count} rated memes, **{good_count}** ({good_percent}%) are Good, **{neutral_count}** ({neutral_percent}%) are Neutral, and **{bad_count}** ({bad_percent}%) are Bad.\nTheir average memescore is **{average}**.'
-            await ctx.send(f'{ctx.message.author.mention}: {response}')
+            if results[0][1] > 0:
+                total_memes = results[0][0]
+                user_count = results[0][1]
+                good_count = results[0][2]
+                bad_count = results[0][3]
+                neutral_count = results[0][4]
+                average = results[0][5]
+    
+                voted_count = good_count + bad_count + neutral_count
+                total_percent = round((user_count/total_memes)*100, 2) if total_memes > 0 else 0
+                good_percent = round((good_count/voted_count)*100, 2)  if voted_count > 0 else 0
+                bad_percent = round((bad_count/voted_count)*100, 2)  if voted_count > 0 else 0
+                neutral_percent = round((neutral_count/voted_count)*100, 2)  if voted_count > 0 else 0
+                average = round(average, 2) if average != None else 0
+    
+                response = f'**{name}** has added **{user_count}** memes which is **{total_percent}%** of the total **{total_memes}** memes.\nOf their {voted_count} rated memes, **{good_count}** ({good_percent}%) are Good, **{neutral_count}** ({neutral_percent}%) are Neutral, and **{bad_count}** ({bad_percent}%) are Bad.\nTheir average memescore is **{average}**.'
+                await ctx.send(f'{ctx.message.author.mention}: {response}')
+            else:
+                await ctx.send(f'{ctx.message.author.mention}: No memes found for {name}', delete_after=6)
         else:
-            await ctx.send(f'{ctx.message.author.mention}: No memes found for {name}', delete_after=6)
+                await ctx.send(f'{ctx.message.author.mention}: Something went wrong connecting to the database.', delete_after=6)
 
 
 

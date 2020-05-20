@@ -155,7 +155,10 @@ class Google(commands.Cog):
             await to_delete.delete(delay=2)
         except Exception as ex:
             logger.LogPrint("IMAGE ERROR", logging.CRITICAL, ex)
-            await ctx.send(f'ERROR: {ex}.')
+            if str(ex).find('HttpError 429') != -1:
+                await ctx.send(f'ERROR: Quota exceeded.')
+            else:
+                await ctx.send(f'ERROR: {ex}.')
     #endregion
 
     #region --------------- Youtube Search ---------------
