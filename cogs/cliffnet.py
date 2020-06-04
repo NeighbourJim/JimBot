@@ -90,7 +90,7 @@ class cliffnet(commands.Cog):
             y= 6
             tension = 0
             
-            if bullets <7 and int(bullets) > 0:
+            if bullets <7 and bullets > 0:
             
                 while bullets !=0:
                     pick = random.randint(1, int(y))
