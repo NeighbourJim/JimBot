@@ -94,22 +94,23 @@ class cliffnet(commands.Cog):
                 while bullets !=0:
                     pick = random.randint(1, int(y))
                     y-=1
+                    await asyncio.sleep(1.5)
                     
                     if pick == 1:
                         await ctx.send("*BANG*")
                         break
-                    else:await ctx.send("*click*")
+                    else:await ctx.send("*click*", delete_after=1)
                     bullets-=1
-                    await asyncio.sleep(1.5)
                     
                 if pick != 1:
+                    await asyncio.sleep(0.2)
                     await ctx.send("You made it!")
                     
             else:await ctx.send("Incorrect bullets.")
         
         except Exception as ex:
                         await ctx.send("gun failure.")
-                        logger.LogPrint(f'Couldn\'t get the news! - {ex}', logging.ERROR)
+                        logger.LogPrint(f'wrong bullets bad! bad!, logging.ERROR)
 
 
 
