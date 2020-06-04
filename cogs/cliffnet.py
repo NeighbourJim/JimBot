@@ -82,24 +82,31 @@ class cliffnet(commands.Cog):
 
     async def rr(self, ctx):
         if ctx.guild.id == 107847342006226944:
-                await ctx.trigger_typing()
+            await ctx.trigger_typing()
         try:
             get_message_task = asyncio.create_task(ctx.channel.fetch_message(ctx.channel.last_message_id))    
             bullets = int(get_message_task)
             pick = 1
             y= 6
+            tension = 0
             
             if bullets <7 and int(bullets) > 0:
             
                 while bullets !=0:
                     pick = random.randint(1, int(y))
                     y-=1
+                    tension += 1
                     await asyncio.sleep(1.5)
-                    
+                    if tension > 3 and tension <5:
+                        await ctx.send("AAAH AAH AAH", delete_after=1)
+                        time.sleep(1)
+                    if tension == 6: 
+                        await ctx.send("... ... .... ...", delete_after=1)
+                        time.sleep(3) 
                     if pick == 1:
                         await ctx.send("*BANG*")
                         break
-                    else:await ctx.send("*click*", delete_after=1)
+                    else: await ctx.send("*click*", delete_after=1)
                     bullets-=1
                     
                 if pick != 1:
