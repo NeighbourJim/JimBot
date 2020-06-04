@@ -117,7 +117,7 @@ class cliffnet(commands.Cog):
         
         except Exception as ex:
                         await ctx.send("gun failure.")
-                        logger.LogPrint(f'wrong bullets bad! bad!, logging.ERROR)
+                        logger.LogPrint(f'wrong bullets bad! bad!', logging.ERROR)
 
 
 
