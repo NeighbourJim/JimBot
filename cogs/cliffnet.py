@@ -7,6 +7,7 @@ import requests
 import pickle
 import datetime
 import asyncio
+import time
 import re
 import os.path
 from discord.ext import commands
@@ -74,6 +75,51 @@ class cliffnet(commands.Cog):
             except Exception as ex:
                 await ctx.send(f'Couldn\'t get the news! - {ex}')
                 logger.LogPrint(f'Couldn\'t get the news! - {ex}', logging.ERROR)
+                
+    @commands.command(aliases=["Roulette", "rr"], help="Prove your barevery/ commit suicide. between 1-6 bullets")  
+    @commands.cooldown(rate=1, per=2, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+
+    async def rr(self, ctx):
+        if ctx.guild.id == 107847342006226944:
+            await ctx.trigger_typing()
+        try:
+            get_message_task = asyncio.create_task(ctx.channel.fetch_message(ctx.channel.last_message_id))    
+            bullets = int(get_message_task)
+            pick = 1
+            y= 6
+            tension = 0
+            
+            if bullets <7 and bullets > 0:
+            
+                while bullets !=0:
+                    pick = random.randint(1, int(y))
+                    y-=1
+                    tension += 1
+                    await asyncio.sleep(1.5)
+                    if tension > 3 and tension <5:
+                        await ctx.send("AAAH AAH AAH", delete_after=1)
+                        time.sleep(1)
+                    if tension == 6: 
+                        await ctx.send("... ... .... ...", delete_after=1)
+                        time.sleep(3) 
+                    if pick == 1:
+                        await ctx.send("*BANG*")
+                        break
+                    else: await ctx.send("*click*", delete_after=1)
+                    bullets-=1
+                    
+                if pick != 1:
+                    await asyncio.sleep(0.2)
+                    await ctx.send("You made it!")
+                    
+            else:await ctx.send("Incorrect bullets.")
+        
+        except Exception as ex:
+                        await ctx.send("gun failure.")
+                        logger.LogPrint(f'wrong bullets bad! bad!', logging.ERROR)
+
 
 
     @commands.command(aliases=["Movie"], help="find a random movie based on avg score from bromovies")  
