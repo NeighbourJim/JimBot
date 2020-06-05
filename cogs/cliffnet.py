@@ -81,7 +81,7 @@ class cliffnet(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
 
-    async def rr(self, ctx):
+    async def russianroulette(self, ctx):
         if ctx.guild.id == 107847342006226944:
             await ctx.trigger_typing()
         try:
