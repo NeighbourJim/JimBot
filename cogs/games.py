@@ -45,11 +45,10 @@ class Games(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def trollbox(self, ctx):
-        fftrolled = Helpers.FindEmoji(self,ctx, "fftrolled")
         left_side = Helpers.FindEmoji(self,ctx, "longtroll3")
         right_side = Helpers.FindEmoji(self,ctx, "longtroll1")
         try:
-            if fftrolled is not None and left_side is not None and right_side is not None:
+            if left_side is not None and right_side is not None:
                 prize = random.choice(ctx.guild.emojis)
                 while(prize.animated == True):
                     prize = random.choice(ctx.guild.emojis)

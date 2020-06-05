@@ -29,9 +29,7 @@ class cliffnet(commands.Cog):
     @commands.guild_only()
     async def scramble(self, ctx):
         if ctx.guild.id == 107847342006226944:
-            get_message_task = asyncio.create_task(ctx.channel.fetch_message(ctx.channel.last_message_id))
-            await get_message_task
-            userInput = get_message_task.result()
+            userInput = Helpers.CommandStrip(self, ctx.message.content)
             split_message = userInput.split(' ')
             if len(split_message) > 0:
                 result = random.sample(split_message, len(split_message))

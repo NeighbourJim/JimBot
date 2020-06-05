@@ -22,21 +22,23 @@ class Pokemon(commands.Cog):
         pokemon_count = 890
         shiny_rarity = 1365
         poke_num = random.randint(1, pokemon_count)
-        shiny = (random.randint(1,shiny_rarity) == shiny_rarity)
+        shiny = random.randint(1,shiny_rarity)
         poke_name = pokemon_names[poke_num]
         if poke_num < 100:
             poke_num_string = f'0{poke_num}'
+        elif poke_num < 10:
+            poke_num_string = f'00{poke_num}'
         else:
             poke_num_string = str(poke_num)
-        if shiny:
+        if shiny == shiny_rarity:
             if poke_num < 810:
-                url = f'https://www.serebii.net/Shiny/SM/{poke_num_string}.png'
+                url = f'https://www.serebii.net/Shiny/SWSH/{poke_num_string}.png'
             else:
                 url = f'https://www.serebii.net/Shiny/SWSH/{poke_num_string}.png'
             message = f'**{poke_num} - :sparkles:{poke_name}:sparkles:**\n{url}'
         else:
             if poke_num < 810:
-                url = f'https://www.serebii.net/sunmoon/pokemon/{poke_num_string}.png'
+                url = f'https://www.serebii.net/swordshield/pokemon/{poke_num_string}.png'
             else:
                 url = f'https://www.serebii.net/swordshield/pokemon/{poke_num_string}.png'
             message = f'**{poke_num} - {poke_name}**\n{url}'
@@ -73,7 +75,7 @@ class Pokemon(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def randomitem(self, ctx):
-        api_results = Helpers.GetWebPage(self, 'https://pokeapi.co/api/v2/item/?offset=0&limit=850')
+        api_results = Helpers.GetWebPage(self, 'https://pokeapi.co/api/v2/item/?offset=0&limit=485')
         if api_results:
             item = random.choice(api_results.json()['results'])['name']
             item = item.title().replace("-", " ")
@@ -113,10 +115,10 @@ class Pokemon(commands.Cog):
                 typing_formatted.append(t['type']['name'].title())
             
             stats = results_json['stats']                     # API stat order is Spe, SpD, SpA, Def, Atk, HP
-            print('hello!!!!!')
             poke_embed = discord.Embed()
             poke_embed.title = f'{name.title()} - #{number}'
-            poke_embed.set_thumbnail(url=sprite)
+            if sprite != None:
+                poke_embed.set_thumbnail(url=sprite)
             poke_embed.add_field(name='Type', value=' / '.join(typing_formatted), inline=True)
             poke_embed.add_field(name='Abilities', value=', '.join(abilities_formatted), inline=False)
             poke_embed.add_field(name='Base', value=(
