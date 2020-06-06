@@ -85,11 +85,11 @@ class cliffnet(commands.Cog):
         if ctx.guild.id == 107847342006226944:
             await ctx.trigger_typing()
         try:
-            get_message_task = asyncio.create_task(ctx.channel.fetch_message(ctx.channel.last_message_id))    
-            bullets = int(get_message_task)
-            pick = 1
-            y= 6
-            tension = 0
+            get_message_task = ctx.channel.fetch_message(ctx.channel.last_message_id)   
+            bullets = int(get_message_task[-1])
+            pick = 1 
+            y= 6 #chambers left
+            tension = 0 
             
             if bullets <7 and bullets > 0:
             
@@ -100,10 +100,10 @@ class cliffnet(commands.Cog):
                     await asyncio.sleep(1.5)
                     if tension > 3 and tension <5:
                         await ctx.send("AAAH AAH AAH", delete_after=1)
-                        time.sleep(1)
+                        await asyncio.sleep(1)
                     if tension == 6: 
                         await ctx.send("... ... .... ...", delete_after=1)
-                        time.sleep(3) 
+                        await asyncio.sleep(3)
                     if pick == 1:
                         await ctx.send("*BANG*")
                         break
@@ -117,8 +117,8 @@ class cliffnet(commands.Cog):
             else:await ctx.send("Incorrect bullets.")
         
         except Exception as ex:
-                        await ctx.send("gun failure.")
-                        logger.LogPrint(f'wrong bullets bad! bad!', logging.ERROR)
+                        await ctx.send(f'gun failure. {ex}')
+                        logger.LogPrint(f'wrong bullets bad! bad! {ex}', logging.ERROR)
 
 
 
