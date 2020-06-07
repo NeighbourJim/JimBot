@@ -95,7 +95,7 @@ class cliffnet(commands.Cog):
             y= 6 #chambers left
             tension = 0 
             clicks=1
-            message= ("*click..*")
+            message= ("..click..")
             
             if bullets <7 and bullets > 0:
             
