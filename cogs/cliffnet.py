@@ -94,6 +94,8 @@ class cliffnet(commands.Cog):
             pick = 1 
             y= 6 #chambers left
             tension = 0 
+            clicks=1
+            message= ("*click..*")
             
             if bullets <7 and bullets > 0:
             
@@ -111,7 +113,12 @@ class cliffnet(commands.Cog):
                     if pick == 1:
                         await ctx.send("*BANG*")
                         break
-                    else: await ctx.send("*click*", delete_after=1)
+                    elif pick!=1 and clicks=1: 
+                        await ctx.send("*click*")
+                        clicks+=1
+                    else:
+                        asyncio.create_task(task_one.result().edit(content=message * clicks))
+                        clicks+=1
                     bullets-=1
                     
                 if pick != 1:
