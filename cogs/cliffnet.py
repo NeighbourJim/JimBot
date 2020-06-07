@@ -85,7 +85,7 @@ class cliffnet(commands.Cog):
         if ctx.guild.id == 107847342006226944:
             await ctx.trigger_typing()
         try:
-            get_message_task = ctx.channel.fetch_message(ctx.channel.last_message_id)   
+            #get_message_task = ctx.channel.fetch_message(ctx.channel.last_message_id)   
             bullets = Helpers.FuzzyNumberSearch(self, ctx.message.content)
             pick = 1 
             y= 6 #chambers left
