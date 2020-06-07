@@ -26,7 +26,7 @@ class Pokemon(commands.Cog):
         poke_name = pokemon_names[poke_num]
         if poke_num < 100:
             poke_num_string = f'0{poke_num}'
-        elif poke_num < 10:
+        elif poke_num <= 10:
             poke_num_string = f'00{poke_num}'
         else:
             poke_num_string = str(poke_num)
@@ -41,7 +41,7 @@ class Pokemon(commands.Cog):
                 url = f'https://www.serebii.net/swordshield/pokemon/{poke_num_string}.png'
             else:
                 url = f'https://www.serebii.net/swordshield/pokemon/{poke_num_string}.png'
-            message = f'**{poke_num} - {poke_name}**\n{url}'
+            message = f'**{poke_num_string} - {poke_name}**\n{url}'
         await ctx.send(f'{ctx.message.author.mention}: {message}')
 
     @commands.command(help="Get a random Pokemon move.", aliases=['rmove', 'Rmove', 'RMove', 'RMOVE'])
