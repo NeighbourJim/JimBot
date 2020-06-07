@@ -113,11 +113,12 @@ class cliffnet(commands.Cog):
                     if pick == 1:
                         await ctx.send("*BANG*")
                         break
-                    elif pick!=1 and clicks=1: 
-                        await ctx.send("*click*")
+                    elif pick!=1 and clicks==1:
+                        task_one = asyncio.create_task(ctx.send(message))
+                        await task_one
                         clicks+=1
                     else:
-                        asyncio.create_task(task_one.result().edit(content=message * clicks))
+                        await asyncio.create_task(task_one.result().edit(content=message * clicks))
                         clicks+=1
                     bullets-=1
                     
