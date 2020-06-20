@@ -24,10 +24,10 @@ class Pokemon(commands.Cog):
         poke_num = random.randint(1, pokemon_count)
         shiny = random.randint(1,shiny_rarity)
         poke_name = pokemon_names[poke_num]
-        if poke_num < 100:
-            poke_num_string = f'0{poke_num}'
-        elif poke_num <= 10:
+        if poke_num < 10:
             poke_num_string = f'00{poke_num}'
+        elif poke_num < 100:
+            poke_num_string = f'0{poke_num}'
         else:
             poke_num_string = str(poke_num)
         if shiny == shiny_rarity:
