@@ -1,4 +1,5 @@
 # Bot Specific files
+internal/data/databases
 config.json
 bromoviessearch.json
 *.pk
@@ -6,7 +7,6 @@ bromoviessearch.json
 *.bat
 .vscode/
 stand.png
-memelist.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

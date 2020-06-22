@@ -641,11 +641,11 @@ class Memes(commands.Cog):
             for meme in memes:
                 meme_string = f'ID: {meme[0]}\nAuthor: {meme[3]}\nDate Added: {meme[6]}\nScore: {meme[2]}\nMeme: {meme[1]}\n\n'
                 meme_list += meme_string
-            list_file = open('./internal/data/memelist.txt', 'wb')
+            list_file = open(f'./internal/data/databases/memelist-{ctx.guild.id}.txt', 'wb')
             meme_list = meme_list.encode('utf-8-sig')
             list_file.write(meme_list)
             list_file.close()
-            await ctx.send(content=f'{ctx.message.author.mention}', file=discord.File('./internal/data/memelist.txt'))
+            await ctx.send(content=f'{ctx.message.author.mention}', file=discord.File(f'./internal/data/databases/memelist-{ctx.guild.id}.txt'))
         else:
             ctx.command.reset_cooldown(ctx)
             await ctx.send(f'{ctx.message.author.mention}: No memes found.', delete_after=6)

@@ -22,7 +22,6 @@ class Tags(commands.Cog):
             for g in guilds:
                 filename = f"tags{g.id}"
                 if not path.exists(f'{self.db_folder}{filename}.db'):
-                    print("COCK")
                     # Create the required tables
                     columns = {"tag_name": "text PRIMARY KEY", "tag_content": "text NOT NULL", "author_id": "integer NOT NULL"}
                     dbm.CreateTable(filename, "tags", columns)
@@ -99,8 +98,28 @@ class Tags(commands.Cog):
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t delete tag: {ex}',logging.ERROR)
 
-
-
+    @commands.command(help="Get a list of all tags.", aliases=["tl"])
+    @commands.cooldown(rate=1, per=10, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def taglist(self, ctx):
+        try:
+            filename = f"{self.db_folder}taglist-{ctx.guild.id}.txt"
+            tags = dbm.Retrieve(f"tags{ctx.guild.id}", "tags", rows_required=100000, order_by=("tag_name", "asc"))
+            if len(tags) > 0:
+                tag_details_list = []
+                for tag in tags:                    
+                    tag_details_list.append(f"Tag Name: {tag[0]}\nAuthor ID: <@{tag[2]}>\nContent: {tag[1]}")
+                with open(filename, 'w', encoding="utf-8") as list_file:
+                    for item in tag_details_list:
+                        list_file.write('%s\n\n' % item)
+                with open(f'{self.db_folder}taglist-{ctx.guild.id}.txt', 'rb') as fp:
+                    await ctx.send(f'{ctx.message.author.mention}', file=discord.File(fp, f'taglist-{ctx.guild.id}.txt'))
+            else:
+                ctx.command.reset_cooldown(ctx)
+                await ctx.send(f'{ctx.message.author.mention}: No tags in the database.', delete_after=5)
+        except Exception as ex:
+            logger.LogPrint(f'ERROR - Couldn\'t get tag list: {ex}',logging.ERROR)
 
 
 def setup(client):
