@@ -14,6 +14,26 @@ class Pokemon(commands.Cog):
     def __init__(self, client):
         self.client = client
 
+    def GenerateName(self):
+        name1 = random.choice(pokemon_names).lower()
+        while True:
+            name2 = random.choice(pokemon_names).lower()
+            if name1 != name2:
+                break
+
+        roll = random.randint(0,4)
+        if roll == 0:
+            name = name1[:len(name1)//2] + name2[len(name2)//2:] # start of first name, end of second
+        elif roll == 1:
+            name = name1[len(name1)//2:] + name2[:len(name2)//2] # end of first, start of second
+        elif roll == 2: 
+            name = name2[:len(name2)//2] + name1[len(name1)//2:] # start of second, end of first
+        elif roll == 3:
+            name = name2[len(name2)//2:] + name1[:len(name1)//2] # end of second, start of first
+        elif roll == 4:
+            name = name1[:len(name1)//2] + name2[:len(name2)//2] # start of both
+        return name.title()
+
     @commands.command(help="Get a random Pokemon.", aliases=["rmon", "RMon", "Rmon", "RMON"])
     @commands.cooldown(rate=1, per=1, type=BucketType.channel)
     @commands.has_role("Bot Use")
@@ -142,27 +162,19 @@ class Pokemon(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def randomname(self, ctx):
-        # Generate Name
-        name1 = random.choice(pokemon_names).lower()
-        while True:
-            name2 = random.choice(pokemon_names).lower()
-            if name1 != name2:
-                break
+        number = Helpers.FuzzyNumberSearch(self, Helpers.CommandStrip(self, ctx.message.content))
+        names = []
+        if number == None:
+            number = 1
+        elif number < 1:
+            number = 1
+        elif number > 6:
+            number = 6
 
-        roll = random.randint(0,4)
-        if roll == 0:
-            name = name1[:len(name1)//2] + name2[len(name2)//2:] # start of first name, end of second
-        elif roll == 1:
-            name = name1[len(name1)//2:] + name2[:len(name2)//2] # end of first, start of second
-        elif roll == 2: 
-            name = name2[:len(name2)//2] + name1[len(name1)//2:] # start of second, end of first
-        elif roll == 3:
-            name = name2[len(name2)//2:] + name1[:len(name1)//2] # end of second, start of first
-        elif roll == 4:
-            name = name1[:len(name1)//2] + name2[:len(name2)//2] # start of both
-        name = name.title()
-
-        await ctx.send(f'{ctx.message.author.mention}: {name}')
+        for i in range(number):
+            names.append(self.GenerateName())
+        name_string =  ', '.join(names)
+        await ctx.send(f'{ctx.message.author.mention}: {name_string}')
 
     @commands.command(help="Generate an entirely random new Pokemon.", aliases=['gpoke', 'genpoke', 'GPoke', 'Genpoke', 'gmon'])
     @commands.cooldown(rate=1, per=5, type=BucketType.channel)
@@ -174,26 +186,7 @@ class Pokemon(commands.Cog):
 
         await ctx.trigger_typing()
 
-        # Generate Name
-        name1 = random.choice(pokemon_names).lower()
-        while True:
-            name2 = random.choice(pokemon_names).lower()
-            if name1 != name2:
-                break
-
-        roll = random.randint(0,4)
-        if roll == 0:
-            name = name1[:len(name1)//2] + name2[len(name2)//2:] # start of first name, end of second
-        elif roll == 1:
-            name = name1[len(name1)//2:] + name2[:len(name2)//2] # end of first, start of second
-        elif roll == 2: 
-            name = name2[:len(name2)//2] + name1[len(name1)//2:] # start of second, end of first
-        elif roll == 3:
-            name = name2[len(name2)//2:] + name1[:len(name1)//2] # end of second, start of first
-        elif roll == 4:
-            name = name1[:len(name1)//2] + name2[:len(name2)//2] # start of both
-        name = name.title()
-
+        name = self.GenerateName()
 
         # Generate Typing
         if random.randint(0,100) <= 40:
