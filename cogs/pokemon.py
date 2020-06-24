@@ -19,11 +19,11 @@ class Pokemon(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def randompokemon(self, ctx):
-        pokemon_count = 890
+        pokemon_count = len(pokemon_names)
         shiny_rarity = 1365
-        poke_num = random.randint(1, pokemon_count)
+        poke_num = random.randint(0, pokemon_count-1)
         shiny = random.randint(1,shiny_rarity)
-        poke_name = pokemon_names[poke_num]
+        poke_name = pokemon_names[poke_num-1]
         if poke_num < 10:
             poke_num_string = f'00{poke_num}'
         elif poke_num < 100:
@@ -144,17 +144,22 @@ class Pokemon(commands.Cog):
     async def randomname(self, ctx):
         # Generate Name
         name1 = random.choice(pokemon_names).lower()
-        name2 = random.choice(pokemon_names).lower()
+        while True:
+            name2 = random.choice(pokemon_names).lower()
+            if name1 != name2:
+                break
 
-        roll = random.randint(0,3)
+        roll = random.randint(0,4)
         if roll == 0:
-            name = name1[:len(name1)//2] + name2[len(name2)//2:]
+            name = name1[:len(name1)//2] + name2[len(name2)//2:] # start of first name, end of second
         elif roll == 1:
-            name = name1[len(name1)//2:] + name2[:len(name2)//2]
-        elif roll == 2:
-            name = name2[len(name2)//2:] + name1[:len(name1)//2]
+            name = name1[len(name1)//2:] + name2[:len(name2)//2] # end of first, start of second
+        elif roll == 2: 
+            name = name2[:len(name2)//2] + name1[len(name1)//2:] # start of second, end of first
         elif roll == 3:
-            name = name2[:len(name2)//2] + name1[len(name1)//2:]
+            name = name2[len(name2)//2:] + name1[:len(name1)//2] # end of second, start of first
+        elif roll == 4:
+            name = name1[:len(name1)//2] + name2[:len(name2)//2] # start of both
         name = name.title()
 
         await ctx.send(f'{ctx.message.author.mention}: {name}')
@@ -176,15 +181,17 @@ class Pokemon(commands.Cog):
             if name1 != name2:
                 break
 
-        roll = random.randint(0,3)
+        roll = random.randint(0,4)
         if roll == 0:
-            name = name1[:len(name1)//2] + name2[len(name2)//2:]
+            name = name1[:len(name1)//2] + name2[len(name2)//2:] # start of first name, end of second
         elif roll == 1:
-            name = name1[len(name1)//2:] + name2[:len(name2)//2]
-        elif roll == 2:
-            name = name2[len(name2)//2:] + name1[:len(name1)//2]
+            name = name1[len(name1)//2:] + name2[:len(name2)//2] # end of first, start of second
+        elif roll == 2: 
+            name = name2[:len(name2)//2] + name1[len(name1)//2:] # start of second, end of first
         elif roll == 3:
-            name = name2[:len(name2)//2] + name1[len(name1)//2:]
+            name = name2[len(name2)//2:] + name1[:len(name1)//2] # end of second, start of first
+        elif roll == 4:
+            name = name1[:len(name1)//2] + name2[:len(name2)//2] # start of both
         name = name.title()
 
 
@@ -239,7 +246,7 @@ class Pokemon(commands.Cog):
                 ability3 = random.choice(api_results.json()['results'])['name']
                 ability3 = ability3.title().replace("-", " ")
 
-                if ability1 != ability2 != ability3:
+                if ability1 != ability2 and ability1 != ability3 and ability2 != ability3:
                     break
         else:
             await ctx.send(f'{ctx.message.author.mention}: Something went wrong when contacting the API.')

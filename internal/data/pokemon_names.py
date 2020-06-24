@@ -1,5 +1,4 @@
-pokemon_names = [None,
-"Bulbasaur",
+pokemon_names = ["Bulbasaur",
 "Ivysaur",
 "Venusaur",
 "Charmander",

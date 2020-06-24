@@ -40,6 +40,7 @@ class Translate(commands.Cog):
         try:
             split_message = Helpers.CommandStrip(self, ctx.message.content).split('lang:')
             message_to_translate = split_message[0]
+            message_to_translate = Helpers.EmojiConvert(self, message_to_translate)
             target = None
             if len(split_message) > 1:
                 target = split_message[1].strip()

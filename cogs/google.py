@@ -156,7 +156,7 @@ class Google(commands.Cog):
         except Exception as ex:
             logger.LogPrint("IMAGE ERROR", logging.CRITICAL, ex)
             if str(ex).find('HttpError 429') != -1:
-                await ctx.send(f'ERROR: Quota exceeded.')
+                await ctx.send(f'ERROR: Quota exceeded. Resets at Midnight PST.')
             else:
                 await ctx.send(f'ERROR: {ex}.')
     #endregion
