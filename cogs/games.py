@@ -4,6 +4,7 @@ import random
 import asyncio
 import json
 import urllib.parse
+from bs4 import BeautifulSoup as BS
 from lxml import html
 from discord.ext import commands
 from discord.ext.commands import BucketType
@@ -244,7 +245,24 @@ class Games(commands.Cog):
             response = f"Couldn't generate Stand."
             await ctx.send(response)
 
-
+    @commands.command(aliases=["tvt", "TVT"], help="Get a random TVTropes page.")    
+    @commands.cooldown(rate=1, per=7, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def tvtropes(self, ctx):
+        try:            
+            await ctx.trigger_typing()
+            page = Helpers.GetWebPage(self, "https://tvtropes.org/pmwiki/randomitem.php?p=1")
+            if page:
+                soup = BS(page.content, "lxml")
+                url = soup.find('meta', {"property":"og:url"})['content']
+                response = f'{ctx.message.author.mention}: {url}'
+            else:
+                response = f'{ctx.message.author.mention}: Couldn\'t get TVTropes page.'
+            await ctx.send(response)
+        except Exception as ex:
+            logger.LogPrint("IMAGE ERROR", logging.CRITICAL, ex)
+            await ctx.send(f'{ctx.message.author.mention}: Something went wrong getting TVTropes page.')
 
 def setup(client):
     client.add_cog(Games(client))

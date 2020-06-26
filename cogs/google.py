@@ -155,6 +155,8 @@ class Google(commands.Cog):
             await to_delete.delete(delay=2)
         except Exception as ex:
             logger.LogPrint("IMAGE ERROR", logging.CRITICAL, ex)
+            if str(ex).find('Invalid Form Body') != -1:
+                await ctx.send(f'{ctx.message.author.mention}: {task.result()["link"]}')
             if str(ex).find('HttpError 429') != -1:
                 await ctx.send(f'ERROR: Quota exceeded. Resets at Midnight PST.')
             else:
