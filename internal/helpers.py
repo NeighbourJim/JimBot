@@ -77,7 +77,25 @@ class Helpers():
 
     @staticmethod
     def FuzzyNumberSearch(self, message: str):
-        """Search for a number inside a string and convert to numeric data type using regex.
+        """Search for whole numbers inside a string and returns the first one found.
+
+        Args:
+            message (str): Message to search.
+
+        Returns:
+            int: The first integer found.
+            None: If the string contains no numbers.
+        """
+        result = re.findall(r'\d+', message)
+        if len(result) > 0:
+            return int(result[0])
+        else:
+            return None
+
+    @staticmethod
+    def FuzzyNumberSearch_OLD(self, message: str):
+        """Search for a number inside a string and convert to numeric data type using regex. 
+        No longer actively used because it doesn't work if there are multiple numbers in a message, but may still have some use since it can find floats.
 
         Args:
             message (str): Message to search for a number.

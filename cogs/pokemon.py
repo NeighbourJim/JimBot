@@ -55,14 +55,18 @@ class Pokemon(commands.Cog):
                 url = f'https://www.serebii.net/Shiny/SWSH/{poke_num_string}.png'
             else:
                 url = f'https://www.serebii.net/Shiny/SWSH/{poke_num_string}.png'
-            message = f'**{poke_num} - :sparkles:{poke_name}:sparkles:**\n{url}'
+            message = f'**{poke_num} - :sparkles:{poke_name}:sparkles:**'
         else:
             if poke_num < 810:
                 url = f'https://www.serebii.net/swordshield/pokemon/{poke_num_string}.png'
             else:
                 url = f'https://www.serebii.net/swordshield/pokemon/{poke_num_string}.png'
-            message = f'**{poke_num_string} - {poke_name}**\n{url}'
-        await ctx.send(f'{ctx.message.author.mention}: {message}')
+            message = f'**{poke_num_string} - {poke_name}**'
+        poke_embed = discord.Embed()
+        poke_embed.title = f'{message}'
+        poke_embed.set_image(url=url)
+        poke_embed.set_footer(text=f'Rolled by {ctx.message.author.name}')
+        await ctx.send(embed=poke_embed)
 
     @commands.command(help="Get a random Pokemon move.", aliases=['rmove', 'Rmove', 'RMove', 'RMOVE'])
     @commands.cooldown(rate=1, per=4, type=BucketType.channel)
@@ -213,7 +217,7 @@ class Pokemon(commands.Cog):
         # On average (over 10000 runs) this process should result in an average BST of about 460, min 180, max 725.
         stat_weight = round(max(min((base_bst / max_base_bst) * 1.5, 1.0), 0.8), 2)
         for i in range(6):
-            stat = random.randint(100,200) + random.randint(-50, 55)
+            stat = random.randint(100,200) + random.randint(-75, 55)
             if stat > 255:
                 stat = 255
             if stat < 5:
@@ -221,8 +225,8 @@ class Pokemon(commands.Cog):
             # subtract the stat from the remaining stat total, multiplying by stat weight
             # doing this should get more relatively accurate stat spreads ON AVERAGE (you can still end up with absolutely pathetic stats)
             base_bst -= round(stat * stat_weight)
-            if base_bst < 50:
-                stat = random.randint(25,50)
+            if base_bst < 100:
+                stat = random.randint(5,80)
             stats.append(stat)
         random.shuffle(stats)
         stat_total = sum(stats)
