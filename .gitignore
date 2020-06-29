@@ -2,6 +2,8 @@
 internal/data/databases
 config.json
 bromoviessearch.json
+viper.json
+music.py
 *.pk
 *.db
 *.bat
