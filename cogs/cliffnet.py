@@ -86,7 +86,7 @@ class cliffnet(commands.Cog):
             await ctx.trigger_typing()
         try:
             #get_message_task = ctx.channel.fetch_message(ctx.channel.last_message_id)   
-            bullets = Helpers.FuzzyNumberSearch(self, ctx.message.content)
+            bullets = Helpers.FuzzyIntegerSearch(self, ctx.message.content)
             if bullets != None:
                 bullets = int(bullets)
             else:

@@ -66,19 +66,24 @@ class Base(commands.Cog):
         max = None
         if len(split_message) > 1:            
             try:
-                min = int(Helpers.FuzzyNumberSearch(self, split_message[0]))
-                max = int(Helpers.FuzzyNumberSearch(self, split_message[1]))
+                min = int(Helpers.FuzzyIntegerSearch(self, split_message[0]))
+                max = int(Helpers.FuzzyIntegerSearch(self, split_message[1]))
             except:
                 await ctx.send(f'{ctx.message.author.mention}: One of your numbers wasn\'t a number.')
         else:
             try:
                 min = 0
-                max = int(Helpers.FuzzyNumberSearch(self, split_message[0]))
+                max = int(Helpers.FuzzyIntegerSearch(self, split_message[0]))
             except Exception as ex:
                 print(ex)
                 await ctx.send(f'{ctx.message.author.mention}: That\'s not a number.')
         try:
             if min != None and max != None:
+                if max < min:
+                    # swap them because the user did something weird
+                    tmp = max
+                    max = min
+                    min = tmp
                 number = random.randint(min, max)
                 response = f'{ctx.message.author.mention}: Your number between {min} and {max} was: **{number}**.'
                 if len(str(number)) >= 2:
@@ -89,7 +94,7 @@ class Base(commands.Cog):
                 if number == 7:
                     response += ' :zap:'
                 await ctx.send(response)
-        except:
+        except Exception as ex:
             logger.LogPrint(f'ROLL command failed. - {ex}', logging.ERROR)
 
     @commands.command(aliases=["Pick", "p"], help="Selects a random item out of provided choices.\nUsage: !pick cat,dog.")
@@ -112,8 +117,8 @@ class Base(commands.Cog):
         split_message = Helpers.CommandStrip(self, ctx.message.content).lower().split('d')
         if len(split_message) > 1:
             try:
-                dice_amount = int(Helpers.FuzzyNumberSearch(self, split_message[0]))
-                dice_size = int(Helpers.FuzzyNumberSearch(self, split_message[1]))
+                dice_amount = int(Helpers.FuzzyIntegerSearch(self, split_message[0]))
+                dice_size = int(Helpers.FuzzyIntegerSearch(self, split_message[1]))
                 rolls = []
                 if dice_amount > 0 and dice_size > 0:
                     for i in range(dice_amount):
@@ -136,7 +141,7 @@ class Base(commands.Cog):
         response = ''
         members = ctx.guild.members
         try:
-            amount = int(Helpers.FuzzyNumberSearch(self, Helpers.CommandStrip(self, ctx.message.content).split(' ')[0]))
+            amount = int(Helpers.FuzzyIntegerSearch(self, Helpers.CommandStrip(self, ctx.message.content).split(' ')[0]))
         except:
             amount = 1
         if amount > 10:
@@ -165,7 +170,7 @@ class Base(commands.Cog):
         response = ''
         members = ctx.guild.members
         try:
-            amount = int(Helpers.FuzzyNumberSearch(self, Helpers.CommandStrip(self, ctx.message.content)))
+            amount = int(Helpers.FuzzyIntegerSearch(self, Helpers.CommandStrip(self, ctx.message.content)))
         except:
             amount = 1
         for i in range(0,1000): 

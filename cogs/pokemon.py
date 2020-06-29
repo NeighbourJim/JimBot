@@ -166,7 +166,7 @@ class Pokemon(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def randomname(self, ctx):
-        number = Helpers.FuzzyNumberSearch(self, Helpers.CommandStrip(self, ctx.message.content))
+        number = Helpers.FuzzyIntegerSearch(self, Helpers.CommandStrip(self, ctx.message.content))
         names = []
         if number == None:
             number = 1

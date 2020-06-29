@@ -65,7 +65,7 @@ class Admin(commands.Cog):
             # Get the amount by using regex to strip all mentions out 
             msg = Helpers.CommandStrip(self, ctx.message.clean_content)
             print(msg)
-            amount = Helpers.FuzzyNumberSearch(self, msg)
+            amount = Helpers.FuzzyIntegerSearch(self, msg)
             print(amount)
             if amount > 0 and amount <= 50:
                 if len(mentions) == 0:

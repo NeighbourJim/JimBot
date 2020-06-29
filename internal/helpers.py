@@ -76,7 +76,7 @@ class Helpers():
         return emoji.demojize(message)
 
     @staticmethod
-    def FuzzyNumberSearch(self, message: str):
+    def FuzzyIntegerSearch(self, message: str):
         """Search for whole numbers inside a string and returns the first one found.
 
         Args:
@@ -86,7 +86,7 @@ class Helpers():
             int: The first integer found.
             None: If the string contains no numbers.
         """
-        result = re.findall(r'\d+', message)
+        result = re.findall(r'-?\d+', message)
         if len(result) > 0:
             return int(result[0])
         else:

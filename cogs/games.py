@@ -81,7 +81,7 @@ class Games(commands.Cog):
         adjs = []
         response = ''
         split_message = Helpers.CommandStrip(self, ctx.message.content).split(' ')
-        amount = Helpers.FuzzyNumberSearch(self, split_message[0])
+        amount = Helpers.FuzzyIntegerSearch(self, split_message[0])
         if amount == None:
             amount = 1
         else:
