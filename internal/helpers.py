@@ -183,10 +183,12 @@ class Helpers():
             None: If any other Status Code
         """
         try:
+            logger.LogPrint(f"Initiating request...")
             if params:
                 result = requests.get(url, params)
             else:
                 result = requests.get(url)
+            logger.LogPrint(f"Response: {result}")
             if result.status_code == 200:
                 return result
             else:
