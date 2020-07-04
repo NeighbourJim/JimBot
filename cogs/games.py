@@ -19,6 +19,7 @@ class Games(commands.Cog):
     def __init__(self, client):
         self.client = client
 
+    # Generate Stats for the Stand command
     def GetStandStats(self):
         stats = []
         for i in range(6):
@@ -41,6 +42,8 @@ class Games(commands.Cog):
 
     # This command is very server specific. 
     # It will basically only run for the server I'm building the bot for.
+    # It will play an animation of an emoji splitting apart to reveal a random other emoji
+    # Provided a server has appropriately named emoji it will work.
     @commands.command(aliases=["tb", "TB", "Tb"])
     @commands.cooldown(rate=1, per=10, type=BucketType.channel)
     @commands.has_role("Bot Use")
@@ -49,20 +52,33 @@ class Games(commands.Cog):
         left_side = Helpers.FindEmoji(self,ctx, "longtroll3")
         right_side = Helpers.FindEmoji(self,ctx, "longtroll1")
         try:
+            # If the server has appropriately named emoji
             if left_side is not None and right_side is not None:
+                # Select a prize
                 prize = random.choice(ctx.guild.emojis)
-                while(prize.animated == True):
-                    prize = random.choice(ctx.guild.emojis)
-                message_one = f'<:{left_side.name}:{left_side.id}><:{right_side.name}:{right_side.id}>'
-                message_two = f'<:{left_side.name}:{left_side.id}>    <:{right_side.name}:{right_side.id}>'
-                message_three = f'<:{left_side.name}:{left_side.id}> :sparkles: <:{right_side.name}:{right_side.id}>'
-                message_four = f'<:{left_side.name}:{left_side.id}> <:{prize.name}:{prize.id}> <:{right_side.name}:{right_side.id}>'
+                # Prepare the formatted emoji strings
+                left_side_string = f'<:{left_side.name}:{left_side.id}>'
+                right_side_string = f'<:{right_side.name}:{right_side.id}>'                                
+                if prize.animated == True:
+                    prize_string = f'<a:{prize.name}:{prize.id}>'
+                else:
+                    prize_string = f'<:{prize.name}:{prize.id}>'
+                # Prepare each of the messages - The first will be sent, and then the message will be edited to each subsequent message in order
+                message_one = f'{left_side_string}{right_side_string}'
+                message_two = f'{left_side_string}    {right_side_string}'
+                message_three = f'{left_side_string} :sparkles: {right_side_string}'
+                message_four = f'{left_side_string} {prize_string} {right_side_string}'
+                # Create a task to send the first message
                 task_one = asyncio.create_task(ctx.send(message_one))
+                # Await the message send completion, and then sleep for 1 second
                 await task_one
                 await asyncio.sleep(1)
+                # Create a new task to edit the result of the first task with the content of message two
                 task_two = asyncio.create_task(task_one.result().edit(content=message_two))
+                # Await and then sleep for 0.2 seconds
                 await task_two
                 await asyncio.sleep(0.2)
+                # Repeat as above for messages three and four
                 task_three = asyncio.create_task(task_one.result().edit(content=message_three))
                 await task_three
                 await asyncio.sleep(1.2)

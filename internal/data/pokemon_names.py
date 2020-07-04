@@ -887,4 +887,7 @@ pokemon_names = ["Bulbasaur",
 "Dragapult",
 "Zacian",
 "Zamazenta",
-"Eternatus"]
+"Eternatus",
+"Kubfu",
+"Urshifu",
+"Zarude"]

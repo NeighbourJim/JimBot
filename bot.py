@@ -22,11 +22,14 @@ client = commands.Bot(
 #region ---------------- Event Listeners ----------------
 @client.event
 async def on_ready():        
-    logger.LogPrint('Logged in as {}'.format(client.user))
-    logger.LogPrint('Connected to {} server(s).'.format(len(client.guilds)))
+    logger.LogPrint(f'Logged in as {client.user}')
+    logger.LogPrint(f'Connected to {len(client.guilds)} server(s).')
+
 
 @client.event
 async def on_command_error(ctx, error):
+    # Ignore CommandNotFound error, as it fires every time any message beginning with the prefix is posted
+    # Otherwise, post the error message to the chat and log it, then restart the bot.
     if type(error) != discord.ext.commands.errors.CommandNotFound:
         to_delete = ctx.message    
         await ctx.send(content=f'{ctx.message.author.mention}: **ERROR:** ``{error}``', delete_after=6.0)
@@ -37,11 +40,12 @@ async def on_command_error(ctx, error):
 
 @client.event
 async def on_command(ctx):
-    logger.LogPrint(f'Executing command {ctx.command.name} for user {ctx.message.author}')
+    # Log Command evocations to the console at INFO level
+    logger.LogPrint(f'Executing command {ctx.command.name} for user {ctx.message.author}', logging.INFO)
 
 @client.event
 async def on_error(ctx, error):
-    logger.LogPrint(f'!!!ERROR!!!:',logging.ERROR, sys.exc_info())
+    logger.LogPrint(f'!!!ERROR!!!: {error}',logging.ERROR, sys.exc_info())
 #endregion
 
 # Load the Cog files from ./cogs

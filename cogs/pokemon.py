@@ -21,17 +21,14 @@ class Pokemon(commands.Cog):
             if name1 != name2:
                 break
 
-        roll = random.randint(0,4)
+        name1parts = [name1[:len(name1)//2],name1[len(name1)//2:]]
+        name2parts = [name2[:len(name2)//2],name2[len(name2)//2:]]
+        roll = random.randint(0,1)
         if roll == 0:
-            name = name1[:len(name1)//2] + name2[len(name2)//2:] # start of first name, end of second
-        elif roll == 1:
-            name = name1[len(name1)//2:] + name2[:len(name2)//2] # end of first, start of second
-        elif roll == 2: 
-            name = name2[:len(name2)//2] + name1[len(name1)//2:] # start of second, end of first
-        elif roll == 3:
-            name = name2[len(name2)//2:] + name1[:len(name1)//2] # end of second, start of first
-        elif roll == 4:
-            name = name1[:len(name1)//2] + name2[:len(name2)//2] # start of both
+            
+            name = random.choice(name1parts) + random.choice(name2parts)
+        else:
+            name = random.choice(name2parts) + random.choice(name1parts)
         return name.title()
 
     @commands.command(help="Get a random Pokemon.", aliases=["rmon", "RMon", "Rmon", "RMON"])
@@ -207,25 +204,31 @@ class Pokemon(commands.Cog):
 
         # Generate Stats 
         stats = []
-        min_base_bst = 300
+        min_base_bst = 500
         max_base_bst = 720
         # get a random base total to use
         base_bst = random.randint(min_base_bst,max_base_bst)
         # decide the stat weight
         # clamped float value between 0.8 and 1.0, varying based on the base total
         # higher base totals will tend to have higher stat weight
-        # On average (over 10000 runs) this process should result in an average BST of about 460, min 180, max 725.
+        # On average (over 10000 runs) this process should result in an average BST of about 525, min 280, max 725.
         stat_weight = round(max(min((base_bst / max_base_bst) * 1.5, 1.0), 0.8), 2)
         for i in range(6):
-            stat = random.randint(100,200) + random.randint(-75, 55)
-            if stat > 255:
-                stat = 255
-            if stat < 5:
-                stat = 5
+            stat = random.randint(100,200) + random.randint(-65,55)
+            if stat >= 150:
+                for s in stats:
+                    if s >= 150:
+                        stat -= random.randint(25,149)
+                        break
+            elif stat <= 70:
+                for s in stats:
+                    if s <= 70:
+                        stat += random.randint(15, 50)
+                        break
             # subtract the stat from the remaining stat total, multiplying by stat weight
             # doing this should get more relatively accurate stat spreads ON AVERAGE (you can still end up with absolutely pathetic stats)
             base_bst -= round(stat * stat_weight)
-            if base_bst < 100:
+            if base_bst <= 80:
                 stat = random.randint(5,80)
             stats.append(stat)
         random.shuffle(stats)
