@@ -11,6 +11,8 @@
     "keys": 
     {
         "google": "GOOGLE_API_KEY_HERE",
-        "cse": "GOOGLE_CUSTOM_SEARCH_ENGINE_KEY_HERE"
+        "cse": "GOOGLE_CUSTOM_SEARCH_ENGINE_KEY_HERE",        
+        "open_weather_key": "OPENWEATHERMAP.ORG_KEY_HERE",
+        "spoonacular_key": "SPOONACULAR.COM_KEY_HERE"
     }
 }
