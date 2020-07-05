@@ -76,7 +76,7 @@ class cliffnet(commands.Cog):
                 await ctx.send(f'Couldn\'t get the news! - {ex}')
                 logger.LogPrint(f'Couldn\'t get the news! - {ex}', logging.ERROR)
                 
-    @commands.command(aliases=["Roulette", "rr"], help="Prove your barevery/ commit suicide. between 1-6 bullets")  
+    @commands.command(aliases=["Roulette"], help="Prove your barevery/ commit suicide. between 1-6 bullets")  
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()

@@ -88,7 +88,7 @@ class Weather(commands.Cog):
                 name = api_results["name"]
                 country = self.CountryCodeToName(api_results["sys"]["country"])
                 weather = api_results["weather"][0]["description"].title()
-                icon = f'http://openweathermap.org/img/wn/{api_results["weather"][0]["icon"]}@2x.png'
+                icon = f'http://openweathermap.org/img/wn/{api_results["weather"][0]["icon"]}@4x.png'
                 tempC = self.ConvertKtoC(api_results["main"]["temp"])
                 minC = self.ConvertKtoC(api_results["main"]["temp_min"])
                 maxC = self.ConvertKtoC(api_results["main"]["temp_max"])
@@ -98,7 +98,7 @@ class Weather(commands.Cog):
                 weather_embed = discord.Embed()
                 weather_embed.title = f'Current Weather in {name}, {country}'
                 weather_embed.set_thumbnail(url=icon)
-                weather_embed.add_field(name='Temperature', value=f'**Current:** {tempC}°C ({self.ConvertCtoF(tempC)}°F)\n**Min:** {minC}°C ({self.ConvertCtoF(minC)}°F)\n**Max:** {maxC}°C ({self.ConvertCtoF(maxC)}°F)', inline=False)
+                weather_embed.add_field(name='Temperature', value=f'{tempC}°C ({self.ConvertCtoF(tempC)}°F)', inline=False)
                 weather_embed.add_field(name='Weather Type', value=f'{weather}', inline=True)
                 weather_embed.add_field(name='Humidity', value=f"{humidity}%", inline=True)
                 weather_embed.add_field(name='Wind Speed', value=f"{wind_speed} km/h", inline=True)
@@ -151,7 +151,8 @@ class Weather(commands.Cog):
                 for day in days_unformatted:
                     minC = 10000
                     maxC = -10000
-                    weather_type = day[len(day)//2]["weather"][0]["icon"]
+                    weather_icon = day[len(day)//2]["weather"][0]["icon"]
+                    weather_type = day[len(day)//2]["weather"][0]["description"].title()
                     humidity = day[len(day)//2]["main"]["humidity"]
                     wind = round(day[len(day)//2]["wind"]["speed"] * 3.6,1)
                     date = datetime.datetime.strptime(day[0]["dt_txt"].split(" ")[0], '%Y-%m-%d').date()
@@ -160,12 +161,12 @@ class Weather(commands.Cog):
                             minC = self.ConvertKtoC(t_period["main"]["temp"])
                         if self.ConvertKtoC(t_period["main"]["temp"]) > maxC:
                             maxC = self.ConvertKtoC(t_period["main"]["temp"])
-                    day_data = {"min": minC, "max": maxC, "weather": weather_type, "date": date, "humidity": humidity, "wind": wind}
+                    day_data = {"min": minC, "max": maxC, "weather_icon": weather_icon, "weather_type": weather_type, "date": date, "humidity": humidity, "wind": wind}
                     days_formatted.append(day_data)
                 weather_embed = discord.Embed()
                 weather_embed.title = f'4-Day Forecast for {name}, {country}'
                 for day in days_formatted:
-                    weather_embed.add_field(name=f'{day["date"].strftime("%d/%m")}', value=f'{self.IconToEmoji(day["weather"])}\n**Min:** {day["min"]}°C ({self.ConvertCtoF(day["min"])}°F)\n**Max:** {day["max"]}°C ({self.ConvertCtoF(day["max"])}°F)\n**Wind:** {day["wind"]} km/h\n**Humidity:** {day["humidity"]}%', inline=True)
+                    weather_embed.add_field(name=f'__{day["date"].strftime("%d/%m")}__', value=f'**{day["weather_type"]}** {self.IconToEmoji(day["weather_icon"])}\n**Min:** {day["min"]}°C ({self.ConvertCtoF(day["min"])}°F)\n**Max:** {day["max"]}°C ({self.ConvertCtoF(day["max"])}°F)\n**Wind:** {day["wind"]} km/h\n**Humidity:** {day["humidity"]}%', inline=True)
                 weather_embed.set_footer(text=f'Retrieved from OpenWeatherMap.org for {ctx.message.author.name}')
                 await ctx.send(embed=weather_embed)
             else:
