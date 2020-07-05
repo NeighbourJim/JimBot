@@ -9,7 +9,7 @@
  The bot is not specifically set up for public use on a large amount of servers, though theoretically it should support that - mostly.  
  If you want to run an instance of JimBot for yourself, then you need only to clone this repository and fill in the appropriate keys into config.json. An example file is provided, simply plug in your keys and remove EXAMPLE from the filename.  
  
- You will require a Discord bot token, placed in the "token" field in config.json
+ You will require a Discord bot token, placed in the "token" field in config.json  
  Certain Cogs also require API keys, placed in their appropriate fields in config.json.  
  These are:
  * Google Cog - Requires a Google API key, and a Google Custom Search Engine key.
