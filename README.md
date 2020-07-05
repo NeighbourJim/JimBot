@@ -24,6 +24,7 @@ Several python packages outside of those included with Python are required for t
 * googletrans
 * emoji
 * PIL
+* pycountry
 
 
 ## Made With
