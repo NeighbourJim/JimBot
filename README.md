@@ -7,9 +7,11 @@
  All of these cogs were written by me, with the one exception of the cog 'cliffnet.py', which was written by friends of mine for coding practice. The commands in that cog are set up only to work on one specific server for them to test.
  
  The bot is not specifically set up for public use on a large amount of servers, though theoretically it should support that - mostly.  
- If you want to run an instance of JimBot for yourself, then you need only to clone this repository and fill in the appropriate keys into config.json. An example file is provided, simply plug in your keys and remove EXAMPLE from the filename.
+ If you want to run an instance of JimBot for yourself, then you need only to clone this repository and fill in the appropriate keys into config.json. An example file is provided, simply plug in your keys and remove EXAMPLE from the filename.  
+ 
  You will require a Discord bot token, placed in the "token" field in config.json
- Certain Cogs also require API keys. These are:
+ Certain Cogs also require API keys, placed in their appropriate fields in config.json.  
+ These are:
  * Google Cog - Requires a Google API key, and a Google Custom Search Engine key.
  * Weather Cog - Requires an OpenWeatherMap.org API key.
  * Food Cog - Requires a Spoonacular.com API key.
