@@ -51,18 +51,17 @@ class Food(commands.Cog):
     @commands.guild_only()
     async def recipesearch(self, ctx):
         await ctx.trigger_typing()
-        keywords = ["cuisine", "ingredient", "diet"]
+        keywords = {"cuisine": "cuisine", "ingredient": "includeIngredients", "diet": "diet"}
         split_message = Helpers.CommandStrip(self, ctx.message.content).split(' ')
-        if split_message[0].lower() in keywords and len(split_message) > 1:
-            user_kw = split_message.pop(0).lower()
-            if user_kw == "ingredient":
-                user_kw = "includeIngredients"
+        if split_message[0].lower() in keywords.keys() and len(split_message) > 1:
+            user_kw = split_message.pop(0)
+            converted_kw = keywords[user_kw.lower()]            
             query = " ".join(split_message)
         else:
             user_kw = "query"
             query = Helpers.CommandStrip(self, ctx.message.content)
         if len(query.strip()) > 0:
-            url = f'https://api.spoonacular.com/recipes/complexSearch?{user_kw}={query}&number=1&offset={random.randint(0,10)}&addRecipeInformation=true&apiKey={current_settings["keys"]["spoonacular_key"]}'
+            url = f'https://api.spoonacular.com/recipes/complexSearch?{converted_kw}={query}&number=1&offset={random.randint(0,10)}&addRecipeInformation=true&apiKey={current_settings["keys"]["spoonacular_key"]}'
             api_results = Helpers.GetWebPage(self, url)
             if api_results:
                 api_results = api_results.json()
@@ -83,7 +82,7 @@ class Food(commands.Cog):
                         food_embed.add_field(name="__Ready In__", value=f'{recipe["readyInMinutes"]} min(s).', inline=True)
                     if "servings" in recipe.keys():
                         food_embed.add_field(name="__Servings__", value=f'{recipe["servings"]}', inline=True)
-                    food_embed.set_footer(text=f'Recipe including \'{query}\' retrieved from Spoonacular API for {ctx.message.author.name}.')
+                    food_embed.set_footer(text=f'Recipe including {user_kw} - \'{query}\' retrieved from Spoonacular API for {ctx.message.author.name}.')
                     await ctx.send(embed=food_embed)
                 else:
                     await ctx.send(f'{ctx.message.author.mention}: No results for \'{query}\'.')
