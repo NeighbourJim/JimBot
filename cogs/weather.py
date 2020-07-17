@@ -127,8 +127,9 @@ class Weather(commands.Cog):
                 city = None
         if city != None:
             api_url = f'https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={current_settings["keys"]["open_weather_key"]}'
-            api_results = Helpers.GetWebPage(self, api_url).json()
+            api_results = Helpers.GetWebPage(self, api_url)
             if api_results:
+                api_results = api_results.json()
                 data_list = api_results["list"]
                 days_unformatted = []
                 day_periods = []

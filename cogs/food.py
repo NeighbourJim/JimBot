@@ -59,6 +59,7 @@ class Food(commands.Cog):
             query = " ".join(split_message)
         else:
             user_kw = "query"
+            converted_kw = "query"
             query = Helpers.CommandStrip(self, ctx.message.content)
         if len(query.strip()) > 0:
             url = f'https://api.spoonacular.com/recipes/complexSearch?{converted_kw}={query}&number=1&offset={random.randint(0,10)}&addRecipeInformation=true&apiKey={current_settings["keys"]["spoonacular_key"]}'
