@@ -2,6 +2,7 @@ import discord
 import json
 import logging
 import random
+import asyncio
 from discord.ext import commands
 from discord.ext.commands import BucketType
 
@@ -63,7 +64,11 @@ class Pokemon(commands.Cog):
         poke_embed.title = f'{message}'
         poke_embed.set_image(url=url)
         poke_embed.set_footer(text=f'Rolled by {ctx.message.author.name}')
-        await ctx.send(embed=poke_embed)
+        sent = await ctx.send(embed=poke_embed)
+        await asyncio.sleep(10)
+        poke_embed.set_thumbnail(url=url)
+        poke_embed.set_image(url='')
+        await sent.edit(embed=poke_embed)
 
     @commands.command(help="Get a random Pokemon move.", aliases=['rmove', 'Rmove', 'RMove', 'RMOVE'])
     @commands.cooldown(rate=1, per=4, type=BucketType.channel)
