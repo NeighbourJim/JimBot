@@ -3,6 +3,7 @@ import logging
 import random
 import asyncio
 import json
+import html as base_html
 import urllib.parse
 from bs4 import BeautifulSoup as BS
 from lxml import html
@@ -162,10 +163,11 @@ class Games(commands.Cog):
                 if power_data:
                     page_tree = html.fromstring(power_data.text)
                     desc = page_tree.xpath('//meta[@name="description"]/@content')
+                    readable_url = urllib.parse.unquote(encoded_url).replace(" ", "_")
                     if len(desc) > 0:
-                        response = f'{ctx.message.author.mention}: **Power:** {name}\n**Description:** {desc[0].strip()}\n<{encoded_url}>'
+                        response = f'{ctx.message.author.mention}: **Power:** {name}\n**Description:** {base_html.unescape(desc[0].strip())}\n<{readable_url}>'
                     else:
-                        response = f'{ctx.message.author.mention}: **Power:**{name}\n<{encoded_url}>'
+                        response = f'{ctx.message.author.mention}: **Power:**{name}\n<{readable_url}>'
                 else:
                     response = f'{ctx.message.author.mention}: Couldn\'t get Power info.'
             else:
@@ -242,7 +244,7 @@ class Games(commands.Cog):
                     stand_embed.set_author(name=f'{ctx.message.author.display_name}\'s Stand')
                     stand_embed.title = f'**「{music_name}」**'
                     if len(desc) > 0:
-                        stand_embed.description = f"It has the ability: **[{pow_name}]({pow_url})**\n{'.'.join(desc[0].split('.')[0:2])}"
+                        stand_embed.description = f"It has the ability: **[{pow_name}]({pow_url})**\n{base_html.unescape('.'.join(desc[0].split('.')[0:2]))}"
                     else:
                         stand_embed.description = f"It has the ability: **[{pow_name}]({pow_url})**"
                     sent = await ctx.send(file=image_file, embed=stand_embed)
@@ -279,6 +281,88 @@ class Games(commands.Cog):
         except Exception as ex:
             logger.LogPrint("IMAGE ERROR", logging.CRITICAL, ex)
             await ctx.send(f'{ctx.message.author.mention}: Something went wrong getting TVTropes page.')
+
+    
+    @commands.command(aliases=["ae", "aes", "Aesthetic"], help="By request - Get a random aesthetic wiki page.")    
+    @commands.cooldown(rate=1, per=7, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def aesthetic(self, ctx):
+        try:
+            await ctx.trigger_typing()
+            api_url = 'https://aesthetics.fandom.com/api.php'
+            params = {
+                "action": "query",
+                "list": "random",
+                "rnnamespace": "0",
+                "rnlimit": "1",
+                "format": "json"
+            }
+            random_aesthetic = Helpers.GetWebPage(self, api_url, params)
+            if random_aesthetic:
+                aesthetic = random_aesthetic.json()["query"]["random"][0]
+                name = aesthetic["title"]
+                encoded_url = f'https://aesthetics.fandom.com/wiki/{urllib.parse.quote(name)}'
+                aesthetic_data = Helpers.GetWebPage(self, encoded_url)
+                if aesthetic_data:
+                    page_tree = html.fromstring(aesthetic_data.text)
+                    desc = page_tree.xpath('//meta[@name="description"]/@content')
+                    readable_url = urllib.parse.unquote(encoded_url).replace(" ", "_")
+                    if len(desc) > 0:
+                        response = f'{ctx.message.author.mention}: **Aesthetic:** {name}\n**Description:** {base_html.unescape(desc[0].strip())}\n<{readable_url}>'
+                    else:
+                        response = f'{ctx.message.author.mention}: **Aesthetic:**{name}\n<{readable_url}>'
+                else:
+                    response = f'{ctx.message.author.mention}: Couldn\'t get Aesthetic info.'
+            else:
+                response = f'{ctx.message.author.mention}: Couldn\'t get Aesthetic info.'
+            await ctx.send(response)
+        except Exception as ex:
+            logger.LogPrint(ex, logging.ERROR)
+
+    @commands.command(aliases=["rwiki", "rfandom"], help="By request - Get a random wiki page on any specified fandom wiki.")    
+    @commands.cooldown(rate=1, per=5, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def randomfandom(self, ctx):
+        try:
+            await ctx.trigger_typing()
+            query = Helpers.CommandStrip(self, ctx.message.content).split(' ')[0]
+            if len(query) <= 0:
+                response = f'{ctx.message.author.mention}: Please specify a fandom wiki.'
+            else:
+                api_url = f'https://{query}.fandom.com/api.php'
+                params = {
+                    "action": "query",
+                    "list": "random",
+                    "rnnamespace": "0",
+                    "rnlimit": "1",
+                    "format": "json"
+                }
+                random_aesthetic = Helpers.GetWebPage(self, api_url, params)
+                if random_aesthetic:
+                    try:
+                        power = random_aesthetic.json()["query"]["random"][0]
+                        name = power["title"]
+                        encoded_url = f'https://{query}.fandom.com/wiki/{urllib.parse.quote(name)}'
+                        power_data = Helpers.GetWebPage(self, encoded_url)
+                        if power_data:
+                            page_tree = html.fromstring(power_data.text)
+                            desc = page_tree.xpath('//meta[@name="description"]/@content')
+                            readable_url = urllib.parse.unquote(encoded_url).replace(" ", "_")
+                            if len(desc) > 0:
+                                response = f'{ctx.message.author.mention}: **{query.title()}:** {name}\n**Description:** {base_html.unescape(urllib.parse.unquote(desc[0].strip()))}\n<{readable_url}>'
+                            else:
+                                response = f'{ctx.message.author.mention}: **{query.title()}:**{name}\n<{readable_url}>'
+                        else:
+                            response = f'{ctx.message.author.mention}: Couldn\'t get info.'
+                    except Exception as ex:
+                        response = f'{ctx.message.author.mention}: Couldn\'t contact {query} wiki.\nCheck you entered a fandom wiki that actually exists!\nIf you\'re sure it exists, then they likely have the API turned off.'
+                else:
+                    response = f'{ctx.message.author.mention}: Couldn\'t contact {query} wiki.\nCheck you entered a fandom wiki that actually exists!'
+            await ctx.send(response)
+        except Exception as ex:
+            logger.LogPrint(ex, logging.ERROR)
 
 def setup(client):
     client.add_cog(Games(client))
