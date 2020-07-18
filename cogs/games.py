@@ -351,9 +351,9 @@ class Games(commands.Cog):
                             desc = page_tree.xpath('//meta[@name="description"]/@content')
                             readable_url = urllib.parse.unquote(encoded_url).replace(" ", "_")
                             if len(desc) > 0:
-                                response = f'{ctx.message.author.mention}: **{query.title()}:** {name}\n**Description:** {base_html.unescape(urllib.parse.unquote(desc[0].strip()))}\n<{readable_url}>'
+                                response = f'{ctx.message.author.mention}: **Title:** {name}\n**Description:** {base_html.unescape(urllib.parse.unquote(desc[0].strip()))}\n<{readable_url}>'
                             else:
-                                response = f'{ctx.message.author.mention}: **{query.title()}:**{name}\n<{readable_url}>'
+                                response = f'{ctx.message.author.mention}: **Title:**{name}\n<{readable_url}>'
                         else:
                             response = f'{ctx.message.author.mention}: Couldn\'t get info.'
                     except Exception as ex:
