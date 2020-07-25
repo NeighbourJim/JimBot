@@ -245,10 +245,35 @@ class Memes(commands.Cog):
                 await to_delete.delete(delay=3)
             else:
                 ctx.command.reset_cooldown(ctx)
-                await ctx.send(f'{ctx.message.author.mention}: No memes found that were added in the last 30 days.', delete_after=6)
+                await ctx.send(f'{ctx.message.author.mention}: No memes found that were added in the last 30 days.', delete_after=10)
                 await to_delete.delete(delay=3)
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t execute meme command: {ex}',logging.ERROR)     
+
+    @commands.command(help="Get a random meme from a given year.", aliases=["ym", "Yearmeme", "YM", "Ym"])
+    @commands.cooldown(rate=1, per=20, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def yearmeme(self, ctx):
+        try:
+            to_delete = ctx.message
+            year = Helpers.FuzzyIntegerSearch(self, Helpers.CommandStrip(self, ctx.message.content))
+            if year != None:
+                if type(year) == int and year >= 1900:
+                    yearlike = f'{year}%'
+                    meme = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', where=[("date_added", yearlike)], compare_type=CompareType.LIKE, rows_required=10000000)
+                    if len(meme) > 0:
+                        meme = random.choice(meme)
+                        self.last_meme_roll[f"{ctx.guild.id}"] = meme[0]
+                        await ctx.send(f'{ctx.message.author.mention}: **ID:{meme[0]}**\n {meme[1]}')
+                    else:
+                        await ctx.send(f'{ctx.message.author.mention}: No memes found that were added in {year}.', delete_after=10)
+                else:
+                    await ctx.send(f'{ctx.message.author.mention}: Please enter a valid year. Eg. ``!yearmeme 2017``.', delete_after=10)
+            else:
+                await ctx.send(f'{ctx.message.author.mention}: Please enter a valid year. Eg. ``!yearmeme 2017``.', delete_after=10)            
+        except Exception as ex:
+            logger.LogPrint(f'ERROR - Couldn\'t execute yearmeme command: {ex}',logging.ERROR) 
 
     @commands.command(help="Get a meme that has not yet been voted on.", aliases=["ur", "UR", "Ur"])
     @commands.cooldown(rate=1, per=20, type=BucketType.channel)
@@ -278,7 +303,7 @@ class Memes(commands.Cog):
                 await to_delete.delete(delay=3)
             else:
                 ctx.command.reset_cooldown(ctx)
-                await ctx.send(f'{ctx.message.author.mention}: No unrated memes found.', delete_after=6)
+                await ctx.send(f'{ctx.message.author.mention}: No unrated memes found.', delete_after=10)
                 await to_delete.delete(delay=3)
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t execute meme command: {ex}',logging.ERROR)     
@@ -316,7 +341,7 @@ class Memes(commands.Cog):
                     await to_delete.delete(delay=3)
             else:
                 ctx.command.reset_cooldown(ctx)
-                await ctx.send(f'{ctx.message.author.mention}: No meme to vote on. Either you specified a meme ID that doesn\'t exist or no meme was rolled since the last bot restart.', delete_after=6)
+                await ctx.send(f'{ctx.message.author.mention}: No meme to vote on. Either you specified a meme ID that doesn\'t exist or no meme was rolled since the last bot restart.', delete_after=10)
                 await to_delete.delete(delay=3)
 
         except Exception as ex:
@@ -353,7 +378,7 @@ class Memes(commands.Cog):
                     await ctx.send(f'{ctx.message.author.mention}: You already downvoted **ID:{m_id}**.')
             else:
                 ctx.command.reset_cooldown(ctx)
-                await ctx.send(f'{ctx.message.author.mention}: No meme to vote on.\nEither you specified a meme ID that doesn\'t exist or no meme was rolled since the last bot restart.', delete_after=6)
+                await ctx.send(f'{ctx.message.author.mention}: No meme to vote on.\nEither you specified a meme ID that doesn\'t exist or no meme was rolled since the last bot restart.', delete_after=10)
             await to_delete.delete(delay=3)
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t execute goodmeme command: {ex}', logging.ERROR)
@@ -524,10 +549,10 @@ class Memes(commands.Cog):
                     await ctx.send(f'{ctx.message.author.mention}: Meme #{m_id} deleted.')
                 else:
                     ctx.command.reset_cooldown(ctx)
-                    await ctx.send(f'{ctx.message.author.mention}: Couldn\'t delete Meme #{m_id}.\nProbably because there is no meme with that ID.', delete_after=6)
+                    await ctx.send(f'{ctx.message.author.mention}: Couldn\'t delete Meme #{m_id}.\nProbably because there is no meme with that ID.', delete_after=10)
             else:
                 ctx.command.reset_cooldown(ctx)
-                await ctx.send(f'{ctx.message.author.mention}: Specify a meme to delete.', delete_after=6)
+                await ctx.send(f'{ctx.message.author.mention}: Specify a meme to delete.', delete_after=10)
             await to_delete.delete(delay=3)
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t delete meme: {ex}', logging.ERROR)
@@ -547,13 +572,13 @@ class Memes(commands.Cog):
                     where = {"m_id": m_id}
                     dbm.Delete(f'memes{ctx.guild.id}', 'upvotes', where)
                     dbm.Delete(f'memes{ctx.guild.id}', 'downvotes', where)
-                    await ctx.send(f'{ctx.message.author.mention}: Meme #{m_id} deleted.', delete_after=6)
+                    await ctx.send(f'{ctx.message.author.mention}: Meme #{m_id} deleted.', delete_after=10)
                 else:
                     ctx.command.reset_cooldown(ctx)
-                    await ctx.send(f'{ctx.message.author.mention}: Couldn\'t delete Meme #{m_id}.\nEither because there is no meme with that ID or you didn\'t add that meme.', delete_after=6)
+                    await ctx.send(f'{ctx.message.author.mention}: Couldn\'t delete Meme #{m_id}.\nEither because there is no meme with that ID or you didn\'t add that meme.', delete_after=10)
             else: 
                 ctx.command.reset_cooldown(ctx)
-                await ctx.send(f'{ctx.message.author.mention}: Specify a meme to delete.', delete_after=6)
+                await ctx.send(f'{ctx.message.author.mention}: Specify a meme to delete.', delete_after=10)
             await to_delete.delete(delay=3)
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t delete meme: {ex}', logging.ERROR)
@@ -580,10 +605,10 @@ class Memes(commands.Cog):
             else:
                 if len(name) > 0:
                     ctx.command.reset_cooldown(ctx)
-                    await ctx.send(f'{ctx.message.author.mention}: No memes found for user {name}.', delete_after=6)
+                    await ctx.send(f'{ctx.message.author.mention}: No memes found for user {name}.', delete_after=10)
                 else:
                     ctx.command.reset_cooldown(ctx)
-                    await ctx.send(f'{ctx.message.author.mention}: No memes found.', delete_after=6)
+                    await ctx.send(f'{ctx.message.author.mention}: No memes found.', delete_after=10)
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t get best meme: {ex}', logging.ERROR)
 
@@ -609,10 +634,10 @@ class Memes(commands.Cog):
             else:
                 if len(name) > 0:
                     ctx.command.reset_cooldown(ctx)
-                    await ctx.send(f'{ctx.message.author.mention}: No memes found for user {name}.', delete_after=6)
+                    await ctx.send(f'{ctx.message.author.mention}: No memes found for user {name}.', delete_after=10)
                 else:
                     ctx.command.reset_cooldown(ctx)
-                    await ctx.send(f'{ctx.message.author.mention}: No memes found.', delete_after=6)
+                    await ctx.send(f'{ctx.message.author.mention}: No memes found.', delete_after=10)
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t get worst meme: {ex}', logging.ERROR)
 
@@ -648,7 +673,7 @@ class Memes(commands.Cog):
             await ctx.send(content=f'{ctx.message.author.mention}', file=discord.File(f'./internal/data/databases/memelist-{ctx.guild.id}.txt'))
         else:
             ctx.command.reset_cooldown(ctx)
-            await ctx.send(f'{ctx.message.author.mention}: No memes found.', delete_after=6)
+            await ctx.send(f'{ctx.message.author.mention}: No memes found.', delete_after=10)
 
     
     @commands.command(help="Get the meme stats for a specific user, or yourself.", aliases=["tms", "Tms", "TMS", "Totalmemestats"])
@@ -688,7 +713,7 @@ class Memes(commands.Cog):
             response = f'There are **{total_memes}** memes in the database.\n**{voted_count}** have been rated.\n**{good_count}** ({good_percent}%) are Good, **{neutral_count}** ({neutral_percent}%) are Neutral, and **{bad_count}** ({bad_percent}%) are Bad.\nThe average memescore is **{average}**.'
             await ctx.send(f'{ctx.message.author.mention}: {response}')
         else:
-            await ctx.send(f'{ctx.message.author.mention}: No memes found.', delete_after=6)
+            await ctx.send(f'{ctx.message.author.mention}: No memes found.', delete_after=10)
 
     @commands.command(help="Get the top or bottom of the rankings for average meme score. A threshold", aliases=["mb", "Mb", "MB", "Memerboard"])
     @commands.cooldown(rate=1, per=15, type=BucketType.channel)
@@ -727,7 +752,7 @@ class Memes(commands.Cog):
                 response += f'**#{i+1}** - {name}: **{round(results[i][2],2)}**.\n'
             await ctx.send(f'{ctx.message.author.mention}: {response}')
         else:
-            await ctx.send(f'{ctx.message.author.mention}: No memes found.', delete_after=6)
+            await ctx.send(f'{ctx.message.author.mention}: No memes found.', delete_after=10)
         
 
     @commands.command(help="Get the meme stats for a specific user, or yourself.", aliases=["ms", "Ms", "MS", "Memestats"])
@@ -776,9 +801,9 @@ class Memes(commands.Cog):
                 response = f'**{name}** has added **{user_count}** memes which is **{total_percent}%** of the total **{total_memes}** memes.\nOf their {voted_count} rated memes, **{good_count}** ({good_percent}%) are Good, **{neutral_count}** ({neutral_percent}%) are Neutral, and **{bad_count}** ({bad_percent}%) are Bad.\nTheir average memescore is **{average}**.'
                 await ctx.send(f'{ctx.message.author.mention}: {response}')
             else:
-                await ctx.send(f'{ctx.message.author.mention}: No memes found for {name}', delete_after=6)
+                await ctx.send(f'{ctx.message.author.mention}: No memes found for {name}', delete_after=10)
         else:
-                await ctx.send(f'{ctx.message.author.mention}: Something went wrong connecting to the database.', delete_after=6)
+                await ctx.send(f'{ctx.message.author.mention}: Something went wrong connecting to the database.', delete_after=10)
 
 
 

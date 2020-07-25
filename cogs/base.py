@@ -129,7 +129,7 @@ class Base(commands.Cog):
                     rolls = []
                     for i in range(dice_amount):
                         rolls.append(random.randint(1, dice_size))
-                    await ctx.send(f'{ctx.message.author.mention}: Your rolls: **{", ".join(rolls)}**.\n**Total:** {sum(rolls)}.')
+                    await ctx.send(f'{ctx.message.author.mention}: Your rolls: **{", ".join(str(roll) for roll in rolls)}**.\n**Total:** {sum(rolls)}.')
                 else:
                     await ctx.send(f'{ctx.message.author.mention}: Invalid dice. Correct usage eg: ``!dice 2d20``')
         else:
