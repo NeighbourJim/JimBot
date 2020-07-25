@@ -439,7 +439,6 @@ class Memes(commands.Cog):
             if m_id != None:
                 voter_dict = self.GetVoters(ctx, m_id)
                 for a_id, name in voter_dict["ups"]:
-                    print(f'{a_id}, {name}')
                     member_id = int(Helpers.FuzzyIntegerSearch(self, a_id))
                     member = ctx.guild.get_member(member_id)
                     if member != None:
@@ -455,7 +454,6 @@ class Memes(commands.Cog):
                         downvoters.append(name)
                 if len(upvoters) > 0:
                     i = 0
-                    print(upvoters)
                     for member in upvoters:
                         if member != None:
                             upvoter_message += f'{member}, '
@@ -697,7 +695,6 @@ class Memes(commands.Cog):
         results = dbm.ExecuteRawQuery(f'memes{ctx.guild.id}', query)
         
         if results != None:
-            print(results)
             total_memes = results[0]
             good_count = results[1]
             bad_count = results[2]
@@ -735,7 +732,6 @@ class Memes(commands.Cog):
                 table = 'top_five'
         results = dbm.Retrieve(f'memes{ctx.guild.id}', table, rows_required=10)
         if results != None:
-            print(results)
             if msg == 'bottom' or msg == 'bot':
                 response = 'The bottom 10 average memescore holders are:\n'
             else:

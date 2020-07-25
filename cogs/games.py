@@ -203,7 +203,6 @@ class Games(commands.Cog):
             music_name = music_name.split('List of ')[0]
             music_name = music_name.split('(')[0]
             if len(music_name.split(':')) > 1:
-                print(music_name.split(':'))
                 r = random.randint(0,10)
                 if r >= 3:
                     music_name = music_name.split(':')[1]

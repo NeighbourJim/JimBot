@@ -80,7 +80,6 @@ class Google(commands.Cog):
             else:
                 await ctx.send(f'{ctx.message.author.mention}: No results found for that query.')
         except Exception as ex:
-            print(ex)
             await self.client.close()
 
             
@@ -98,7 +97,6 @@ class Google(commands.Cog):
                 valid = True
                 for term in forbidden:
                     if result["link"].find(term) > -1:
-                        print("poopoo")
                         valid = False
                 if valid:
                     break
@@ -119,7 +117,6 @@ class Google(commands.Cog):
                 valid = True
                 for term in forbidden:
                     if result["link"].find(term) > -1:
-                        print("poopoo")
                         valid = False
                 if valid:
                     break
