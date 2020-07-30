@@ -257,11 +257,24 @@ class Memes(commands.Cog):
     async def yearmeme(self, ctx):
         try:
             to_delete = ctx.message
-            year = Helpers.FuzzyIntegerSearch(self, Helpers.CommandStrip(self, ctx.message.content))
+            split_message = Helpers.CommandStrip(self, ctx.message.content).split(' ')
+            if len(split_message) > 0:
+                year = Helpers.FuzzyIntegerSearch(self, split_message.pop(0))
+            if len(split_message) > 0:
+                user = ' '.join(split_message)
+            else:
+                user = None
             if year != None:
                 if type(year) == int and year >= 1900:
-                    yearlike = f'{year}%'
-                    meme = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', where=[("date_added", yearlike)], compare_type=CompareType.LIKE, rows_required=10000000)
+                    values_to_find = [("date_added", f'{year}%')]
+                    if user != None:
+                        member = ctx.guild.get_member_named(user)
+                        if member is not None:
+                            t = ("author_id", f'<@{member.id}>')
+                        else:
+                            t = ("author_username", user)
+                        values_to_find.append(t)
+                    meme = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', where=values_to_find, compare_type=CompareType.LIKE, rows_required=10000000)
                     if len(meme) > 0:
                         meme = random.choice(meme)
                         self.last_meme_roll[f"{ctx.guild.id}"] = meme[0]
