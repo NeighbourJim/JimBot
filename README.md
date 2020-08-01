@@ -14,14 +14,16 @@
  These are:
  * Google Cog - Requires a Google API key, and a Google Custom Search Engine key.
  * Weather Cog - Requires an OpenWeatherMap.org API key.
- * Food Cog - Requires a Spoonacular.com API key.
+ * Food Cog - Requires a Spoonacular.com API key.  
+ 
  You need not provide these keys if you plan on disabling the above cogs.
  
  Once that is configured you need only run bot.py in the root directory.
  
 ## Dependencies
 Several python packages outside of those included with Python are required for this to run. Install these with ``pip install packagename``.
-* discord
+* discord.py
+* requests
 * gspread
 * oauth2client
 * pandas
@@ -29,8 +31,9 @@ Several python packages outside of those included with Python are required for t
 * googleapiclient
 * googletrans
 * emoji
-* PIL
+* Pillow
 * pycountry
+* beautifulsoup4
 
 
 ## Made With
