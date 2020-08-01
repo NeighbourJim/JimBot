@@ -22,6 +22,7 @@
 ## Dependencies
 Several python packages outside of those included with Python are required for this to run. Install these with ``pip install packagename``.
 * discord.py
+* requests
 * gspread
 * oauth2client
 * pandas
@@ -31,6 +32,7 @@ Several python packages outside of those included with Python are required for t
 * emoji
 * PIL
 * pycountry
+* beautifulsoup4
 
 
 ## Made With
