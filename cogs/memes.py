@@ -20,30 +20,27 @@ class Memes(commands.Cog):
         self.client = client
         self.db_folder = "./internal/data/databases/"
         self.last_meme_roll = {}
-        self.CheckAndCreateDatabase()
 
 #region Non-Command Methods - General Helpers Methods specific to this cog
-    def CheckAndCreateDatabase(self):
-        """Check if a meme database has been made for each server the bot is connected to, and create it if not.
+    def CheckAndCreateDatabase(self, ctx):
+        """Check if a meme database has been made, and create it if not.
         """
         try:
-            guilds = self.client.guilds
-            for g in guilds:
-                filename = f"memes{g.id}"
-                if not path.exists(f'{self.db_folder}{filename}.db'):
-                    # Create the required tables
-                    columns = {"id": "integer PRIMARY KEY AUTOINCREMENT", "meme": "text NOT NULL", "score": "integer NOT NULL", "author_username": "varchar(255) NOT NULL", "author_nickname": "varchar(255) NOT NULL", "date_added": "text NOT NULL"}
-                    dbm.CreateTable(filename, "memes", columns)
-                    columns = {"m_id": "integer NOT NULL", "author_id": "varchar(255) NOT NULL", "author_username": "varchar(255)"}
-                    dbm.CreateTable(filename, "downvotes", columns)
-                    dbm.CreateTable(filename, "upvotes", columns)
+            filename = f"memes{ctx.guild.id}"
+            if not path.exists(f'{self.db_folder}{filename}.db'):
+                # Create the required tables
+                columns = {"id": "integer PRIMARY KEY AUTOINCREMENT", "meme": "text NOT NULL", "score": "integer NOT NULL", "author_username": "varchar(255) NOT NULL", "author_nickname": "varchar(255) NOT NULL", "author_id": "varchar(255) NOT NULL", "date_added": "text NOT NULL"}
+                dbm.CreateTable(filename, "memes", columns)
+                columns = {"m_id": "integer NOT NULL", "author_id": "varchar(255) NOT NULL", "author_username": "varchar(255)"}
+                dbm.CreateTable(filename, "downvotes", columns)
+                dbm.CreateTable(filename, "upvotes", columns)
 
-                    # Create the required views
-                    for view in meme_views:
-                        dbm.ExecuteRawQuery(filename, view)
-                    
+                # Create the required views
+                for view in meme_views:
+                    dbm.ExecuteRawQuery(filename, view)       
         except Exception as ex:
             logger.LogPrint(f'ERROR - Could not create table or view: {ex}',logging.ERROR)     
+            return False
 
     def GetMemeScore(self, ctx, m_id):
         """Get the score of a specific meme. Calls GetUpvoteCount() and GetDownvoteCount().
@@ -188,6 +185,8 @@ class Memes(commands.Cog):
     @commands.guild_only()
     async def meme(self, ctx):
         try:
+            self.CheckAndCreateDatabase(ctx)
+
             to_delete = ctx.message
             message = Helpers.CommandStrip(self, ctx.message.content)
             values_to_find = []
@@ -223,6 +222,8 @@ class Memes(commands.Cog):
     @commands.guild_only()
     async def newmeme(self, ctx):
         try:
+            self.CheckAndCreateDatabase(ctx)
+
             to_delete = ctx.message
             message = Helpers.CommandStrip(self, ctx.message.content)
             values_to_find = []
@@ -256,6 +257,8 @@ class Memes(commands.Cog):
     @commands.guild_only()
     async def yearmeme(self, ctx):
         try:
+            self.CheckAndCreateDatabase(ctx)
+
             to_delete = ctx.message
             split_message = Helpers.CommandStrip(self, ctx.message.content).split(' ')
             if len(split_message) > 0:
@@ -294,6 +297,8 @@ class Memes(commands.Cog):
     @commands.guild_only()
     async def unratedmeme(self, ctx):
         try:
+            self.CheckAndCreateDatabase(ctx)
+            
             to_delete = ctx.message
             message = Helpers.CommandStrip(self, ctx.message.content)
             values_to_find = []
@@ -329,6 +334,8 @@ class Memes(commands.Cog):
         m_id = None
         values_to_find = []
         try:
+            self.CheckAndCreateDatabase(ctx)
+
             to_delete = ctx.message
             message = Helpers.CommandStrip(self, ctx.message.content)
             if f"{ctx.guild.id}" in self.last_meme_roll:
@@ -368,6 +375,8 @@ class Memes(commands.Cog):
         m_id = None
         values_to_find = []
         try:
+            self.CheckAndCreateDatabase(ctx)
+
             to_delete = ctx.message
             message = Helpers.CommandStrip(self, ctx.message.content)
             if f"{ctx.guild.id}" in self.last_meme_roll:
@@ -404,6 +413,8 @@ class Memes(commands.Cog):
         m_id = None
         values_to_find = []
         try:
+            self.CheckAndCreateDatabase(ctx)
+
             to_delete = ctx.message
             message = Helpers.CommandStrip(self, ctx.message.content)
             if f"{ctx.guild.id}" in self.last_meme_roll:
@@ -437,6 +448,8 @@ class Memes(commands.Cog):
     @commands.guild_only()
     async def voters(self, ctx):
         try:
+            self.CheckAndCreateDatabase(ctx)
+
             upvoters = []
             upvoter_message = ""
             downvoters = []
@@ -511,6 +524,8 @@ class Memes(commands.Cog):
     @commands.guild_only()
     async def addmeme(self, ctx):
         try:
+            self.CheckAndCreateDatabase(ctx)
+
             to_delete = ctx.message
             forbidden = ["@everyone", "@here", "puu.sh", "twimg.com", "i.4cdn.org", "4chan.org", "mixtape.moe"]
             message = Helpers.CommandStrip(self, ctx.message.content)
@@ -549,6 +564,8 @@ class Memes(commands.Cog):
     @commands.guild_only()
     async def deletememe(self, ctx):
         try:
+            self.CheckAndCreateDatabase(ctx)
+
             to_delete = ctx.message
             m_id = int(Helpers.FuzzyIntegerSearch(self, Helpers.CommandStrip(self, ctx.message.content)))
             if m_id != None:
@@ -574,6 +591,8 @@ class Memes(commands.Cog):
     @commands.guild_only()
     async def selfdeletememe(self, ctx):
         try:
+            self.CheckAndCreateDatabase(ctx)
+
             to_delete = ctx.message
             m_id = int(Helpers.FuzzyIntegerSearch(self, Helpers.CommandStrip(self, ctx.message.content)))
             if m_id != None:
@@ -600,6 +619,8 @@ class Memes(commands.Cog):
     @commands.guild_only()
     async def bestmeme(self, ctx):
         try:
+            self.CheckAndCreateDatabase(ctx)
+
             name = Helpers.CommandStrip(self, ctx.message.content)
             where = None
             if len(name) > 0:
@@ -629,6 +650,8 @@ class Memes(commands.Cog):
     @commands.guild_only()
     async def worstmeme(self, ctx):
         try:
+            self.CheckAndCreateDatabase(ctx)
+
             name = Helpers.CommandStrip(self, ctx.message.content)
             where = None
             if len(name) > 0:
@@ -657,6 +680,8 @@ class Memes(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def memelist(self, ctx):
+        self.CheckAndCreateDatabase(ctx)
+
         msg = Helpers.CommandStrip(self, ctx.message.content)
         if len(msg) > 0:
             names = msg.split(',')
@@ -699,6 +724,8 @@ class Memes(commands.Cog):
         voted_count = 0
         average = 0
 
+        self.CheckAndCreateDatabase(ctx)
+
         query = '''SELECT * FROM 
 			(SELECT COUNT(DISTINCT m_id) as totalcount FROM memes),
 			(SELECT COUNT(DISTINCT m_id) as good FROM memes WHERE score > 0), 
@@ -730,6 +757,8 @@ class Memes(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def memerboard(self, ctx):
+        self.CheckAndCreateDatabase(ctx)
+
         msg = Helpers.CommandStrip(self, ctx.message.content)
         if len(msg) > 0:
             msg = msg.split()[0].lower()
@@ -776,6 +805,8 @@ class Memes(commands.Cog):
         bad_count = 0
         voted_count = 0
         average = 0
+
+        self.CheckAndCreateDatabase(ctx)
 
         msg = Helpers.CommandStrip(self, ctx.message.content)
         if len(msg) > 0:

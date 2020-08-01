@@ -14,17 +14,14 @@ class Tags(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.db_folder = "./internal/data/databases/"
-        self.CheckAndCreateDatabase()
 
-    def CheckAndCreateDatabase(self):
+    def CheckAndCreateDatabase(self, ctx):
         try:
-            guilds = self.client.guilds
-            for g in guilds:
-                filename = f"tags{g.id}"
-                if not path.exists(f'{self.db_folder}{filename}.db'):
-                    # Create the required tables
-                    columns = {"tag_name": "text PRIMARY KEY", "tag_content": "text NOT NULL", "author_id": "integer NOT NULL"}
-                    dbm.CreateTable(filename, "tags", columns)
+            filename = f"tags{ctx.guild.id}"
+            if not path.exists(f'{self.db_folder}{filename}.db'):
+                # Create the required tables
+                columns = {"tag_name": "text PRIMARY KEY", "tag_content": "text NOT NULL", "author_id": "integer NOT NULL"}
+                dbm.CreateTable(filename, "tags", columns)
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t create database: {ex}',logging.ERROR)
 
@@ -34,6 +31,8 @@ class Tags(commands.Cog):
     @commands.guild_only()
     async def tag(self, ctx):
         try:
+            self.CheckAndCreateDatabase(ctx)
+
             to_delete = ctx.message
             where = ("tag_name", Helpers.CommandStrip(self, ctx.message.content))
             tag = dbm.Retrieve(f"tags{ctx.guild.id}", "tags", [where])
@@ -52,6 +51,8 @@ class Tags(commands.Cog):
     @commands.guild_only()
     async def createtag(self, ctx):
         try:
+            self.CheckAndCreateDatabase(ctx)
+
             to_delete = ctx.message
             split_message = Helpers.CommandStrip(self, ctx.message.content).split(' ')
             if len(split_message) > 1 and len(split_message) < 400:
@@ -78,6 +79,8 @@ class Tags(commands.Cog):
     @commands.guild_only()
     async def deletetag(self, ctx):
         try:
+            self.CheckAndCreateDatabase(ctx)
+
             to_delete = ctx.message
             tag_name = Helpers.CommandStrip(self, ctx.message.content)
             where = ("tag_name", tag_name)
@@ -104,6 +107,8 @@ class Tags(commands.Cog):
     @commands.guild_only()
     async def taglist(self, ctx):
         try:
+            self.CheckAndCreateDatabase(ctx)
+
             filename = f"{self.db_folder}taglist-{ctx.guild.id}.txt"
             tags = dbm.Retrieve(f"tags{ctx.guild.id}", "tags", rows_required=100000, order_by=("tag_name", "asc"))
             if len(tags) > 0:

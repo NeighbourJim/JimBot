@@ -17,19 +17,16 @@ class Weather(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.db_folder = "./internal/data/databases/"
-        self.CheckAndCreateDatabase()
 
-    def CheckAndCreateDatabase(self):
+    def CheckAndCreateDatabase(self, ctx):
         """Check if a meme database has been made for each server the bot is connected to, and create it if not.
         """
         try:
-            guilds = self.client.guilds
-            for g in guilds:
-                filename = f"weather{g.id}"
-                if not path.exists(f'{self.db_folder}{filename}.db'):
-                    # Create the required tables
-                    columns = {"uid": "integer", "location": "text NOT NULL"}
-                    dbm.CreateTable(filename, "w_locs", columns)
+            filename = f"weather{ctx.guild.id}"
+            if not path.exists(f'{self.db_folder}{filename}.db'):
+                # Create the required tables
+                columns = {"uid": "integer", "location": "text NOT NULL"}
+                dbm.CreateTable(filename, "w_locs", columns)
                     
         except Exception as ex:
             logger.LogPrint(f'ERROR - Could not create table or view: {ex}',logging.ERROR)    
@@ -70,6 +67,8 @@ class Weather(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def Weather(self, ctx):
+        self.CheckAndCreateDatabase(ctx)
+
         filename = f"weather{ctx.guild.id}"        
 
         await ctx.trigger_typing()
@@ -115,6 +114,8 @@ class Weather(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def WeatherForecast(self, ctx):
+        self.CheckAndCreateDatabase(ctx)
+
         filename = f"weather{ctx.guild.id}"       
 
         await ctx.trigger_typing()
@@ -182,6 +183,8 @@ class Weather(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def SetWeatherLocation(self, ctx):
+        self.CheckAndCreateDatabase(ctx)
+
         filename = f"weather{ctx.guild.id}"
         location = Helpers.CommandStrip(self, ctx.message.content)
         data = {"uid": ctx.message.author.id, "location": location}
