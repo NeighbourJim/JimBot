@@ -30,7 +30,7 @@ Several python packages outside of those included with Python are required for t
 * googleapiclient
 * googletrans
 * emoji
-* PIL
+* Pillow
 * pycountry
 * beautifulsoup4
 
