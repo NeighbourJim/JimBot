@@ -21,7 +21,7 @@
  
 ## Dependencies
 Several python packages outside of those included with Python are required for this to run. Install these with ``pip install packagename``.
-* discord
+* discord.py
 * gspread
 * oauth2client
 * pandas
