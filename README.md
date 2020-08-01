@@ -14,7 +14,8 @@
  These are:
  * Google Cog - Requires a Google API key, and a Google Custom Search Engine key.
  * Weather Cog - Requires an OpenWeatherMap.org API key.
- * Food Cog - Requires a Spoonacular.com API key.
+ * Food Cog - Requires a Spoonacular.com API key.  
+ 
  You need not provide these keys if you plan on disabling the above cogs.
  
  Once that is configured you need only run bot.py in the root directory.
