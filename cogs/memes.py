@@ -29,7 +29,7 @@ class Memes(commands.Cog):
             filename = f"memes{ctx.guild.id}"
             if not path.exists(f'{self.db_folder}{filename}.db'):
                 # Create the required tables
-                columns = {"id": "integer PRIMARY KEY AUTOINCREMENT", "meme": "text NOT NULL", "score": "integer NOT NULL", "author_username": "varchar(255) NOT NULL", "author_nickname": "varchar(255) NOT NULL", "author_id": "varchar(255) NOT NULL", "date_added": "text NOT NULL"}
+                columns = {"id": "integer PRIMARY KEY AUTOINCREMENT", "meme": "text NOT NULL", "score": "integer NOT NULL", "author_username": "varchar(255) NOT NULL", "author_nickname": "varchar(255)", "author_id": "varchar(255) NOT NULL", "date_added": "text NOT NULL"}
                 dbm.CreateTable(filename, "memes", columns)
                 columns = {"m_id": "integer NOT NULL", "author_id": "varchar(255) NOT NULL", "author_username": "varchar(255)"}
                 dbm.CreateTable(filename, "downvotes", columns)
