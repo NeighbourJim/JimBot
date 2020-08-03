@@ -28,7 +28,7 @@ Several python packages outside of those included with Python are required for t
 * oauth2client
 * pandas
 * lxml
-* googleapiclient
+* google-api-python-client
 * googletrans
 * emoji
 * Pillow
