@@ -10,14 +10,18 @@ import asyncio
 import time
 import re
 import os.path
+from os import path
 from discord.ext import commands
 from discord.ext.commands import BucketType
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
+from matplotlib import pyplot
 
 from internal.logs import logger
 from internal.helpers import Helpers
+from internal.databasemanager import dbm
+from internal.enums import WhereType, CompareType
 
 class cliffnet(commands.Cog):
 
@@ -173,99 +177,281 @@ class cliffnet(commands.Cog):
             except ValueError:
                 await ctx.send('{ctx.message.author.mention}:You have to enter a number, for example: 5')
 
-    @commands.command(aliases=["Days"], help="View or add long term timers. To add a timer it is !days [entry]. To reset is !days zero [entry]. To delete is !days delete [entry].")  
+    @commands.command(aliases=["Days"], help="Long term timers. Add a timer with \"!days [entry]\". Reset \"!days zero [entry]\". Delete \"!days delete [entry]\".")  
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def days(self, ctx):
-        try:
+        filename = f"days{ctx.guild.id}"
+
+        async def CheckAndCreateDatabase(self, ctx):
+            #most of it shamelessly lifted from meme.py
             try:
-                keyWords = ["ZERO","DELETE","RESET"]
-                #daysDict dictionary format = {"Entry1": ["StartTime1","LastLength1","LongestLength1"],}
-                daysDict = {}
-                daysFile = f"./internal/data/databases/days{ctx.guild.id}.pk"
-                fileExists = os.path.isfile(daysFile)
-                contentExists = os.path.getsize(daysFile) > 0
+                filename = f"days{ctx.guild.id}"
+                daysPickleFile = f"./internal/data/databases/days{ctx.guild.id}.pk"
+                pickleFileExists = os.path.isfile(daysPickleFile)
+                if not path.exists(f'{"./internal/data/databases/"}{filename}.db'):
+                    # Create days table
+                    columns={
+                    "Id":"INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT",
+                    "EntryName":"varchar(255) NOT NULL",
+                    "CreationDate":"varchar(255) NOT NULL",
+                    "CreatorId":"varchar(255)",
+                    "LastDuration":"varchar(255)",
+                    "LastResetDate":"varchar(255)",
+                    "LastResetByName":"varchar(255)",
+                    "RecordDuration":"varchar(255)",
+                    "TimesReset":"INTEGER",}
+                    dbm.CreateTable(filename, "days", columns)
+                    # Create Creators table
+                    columns ={
+                        "Id":"INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT",
+                        "CreatorName":"varchar(255)",
+                        "CreatorId":"varchar(255)",
+                    }
+                    dbm.CreateTable(filename, "creator", columns)
+                    # Create durations table
+                    columns ={
+                        "Id":"INTEGER",
+                        "Duration":"varchar(255)",
+                        "ResetDate":"varchar(255)",
+                    }
+                    dbm.CreateTable(filename, "durations", columns)
 
-                if contentExists:
-                    with open(daysFile,"rb") as daysFileReader:           
-                        daysDict = pickle.load(daysFileReader)
+                if pickleFileExists:
+                    await ConvertPickleToDatabase(self,ctx)
 
-            except IOError as ex:
-                with open(daysFile,"ab+") as daysFileWriter:
-                    pickle.dump(daysDict,daysFileWriter)
             except Exception as ex:
-                logger.LogPrint(f'Error during initial file read / creation: {ex}',logging.ERROR)
-        
-            #return all entries
-            userInput = Helpers.CommandStrip(self, ctx.message.content).upper()
-            if userInput == "": 
-                response = f"**Days Since:**\n>>> "
-                for x in daysDict:
-                    timeDeltaDif = datetime.datetime.utcnow() - daysDict[x][0]
-                    recordLength = daysDict[x][2]
-                    if recordLength == datetime.timedelta(0):
-                        response += f"**{x.title()}** - {Helpers.timeDeltaFormat(self, timeDeltaDif)[0]} days and {Helpers.timeDeltaFormat(self, timeDeltaDif)[1]} hours.\n"
-                    else:
-                        response += (f"**{x.title()}** - {Helpers.timeDeltaFormat(self, timeDeltaDif)[0]} days and {Helpers.timeDeltaFormat(self, timeDeltaDif)[1]} hours." 
-                        f" Record: {Helpers.timeDeltaFormat(self, recordLength)[0]} days and {Helpers.timeDeltaFormat(self, recordLength)[1]} hours.\n")
-                await ctx.send(response)
-            
-            #add new timer
-            elif userInput.split(' ')[0].upper() not in keyWords: 
-                
-                if userInput in daysDict:
-                    timeDeltaDif = datetime.datetime.utcnow() - daysDict[userInput][0]
-                    return await ctx.send(f">>> It has been {Helpers.timeDeltaFormat(self, timeDeltaDif)[0]} days and {Helpers.timeDeltaFormat(self, timeDeltaDif)[1]} hours since the last **{userInput}**.")
+                logger.LogPrint(f'ERROR - Could not create table: {ex}',logging.ERROR)     
+                return False
+        async def ConvertPickleToDatabase(self, ctx):
+
+            filename = f"days{ctx.guild.id}"
+            try:
+                daysPickleFile = f"./internal/data/databases/days{ctx.guild.id}.pk"
+                daysDict = {}
+                fileExists = os.path.isfile(daysPickleFile)
+                contentExists = os.path.getsize(daysPickleFile) > 0
+                if fileExists is False:
+                    logger.LogPrint(f'ERROR ConvertPickleToDatabase - pickle file does not exist, conversion cancelled.', logging.ERROR)
+                    return False
                 else:
-                    daysDict[userInput.upper()] = [datetime.datetime.utcnow(),datetime.timedelta(0),datetime.timedelta(0)]
-                    with open(daysFile,"wb") as daysFileWriter:
-                        pickle.dump(daysDict, daysFileWriter)
-                        return await ctx.send(f">>> Successfully added to the list!")
-            
-            #reset an existing timer
-            elif userInput.startswith("ZERO") or userInput.startswith("RESET"): 
+                    if contentExists:
+                        legacyCreatorName = "Some Chunk"
+                        legacyCreatorId = "<@676693645155631124>" #jimbot
+                        legacyResetCount = 1
+
+                        #fill creator table with legacy creator
+                        dictForInsert = {
+                        "CreatorId": legacyCreatorId,
+                        "CreatorName": legacyCreatorName,}
+                        dbm.Insert(f"{filename}","creator",dictForInsert)
+                        
+                        #populate database with pickle data
+                        with open(daysPickleFile,"rb") as daysFileReader:           
+                            daysDict = pickle.load(daysFileReader)
+                        
+                        #find legacy creator id
+                        creatorId = dbm.Retrieve(f'{filename}', 'creator', [("CreatorName", legacyCreatorName)], where_type=WhereType.AND, column_data=["id"])
+
+                        for key in daysDict.keys():
+                            #convert timedelta objects to days / hours
+                            lastDurationDays = Helpers.timeDeltaFormat(self, daysDict[key][1])[0]
+                            lastDurationHours = Helpers.timeDeltaFormat(self, daysDict[key][1])[1]
+                            recordDurationDays = Helpers.timeDeltaFormat(self, daysDict[key][2])[0]
+                            recordDurationHours = Helpers.timeDeltaFormat(self, daysDict[key][2])[1]
+
+                            #convert datetime objects to readable string dates + hours
+                            creationDate = str(daysDict[key][0].strftime("%m/%d/%Y, %H:%M:%S"))
+                            lastResetDate = str(daysDict[key][0].strftime("%m/%d/%Y, %H:%M:%S"))
+                            lastDuration = str([lastDurationDays,lastDurationHours])
+                            recordDuration = str([recordDurationDays,recordDurationHours])
+                            
+                            #set legacyresetcount to 0 if entry has never been reset
+                            if lastDurationDays == 0 and lastDurationHours == 0:
+                                legacyResetCount = 0
+                            else:
+                                legacyResetCount = 1
+
+                            dictForInsert = {
+                            "EntryName": key,
+                            "CreationDate": creationDate,
+                            "CreatorId": creatorId[0][0],
+                            "LastResetDate": lastResetDate,
+                            "LastDuration": lastDuration,
+                            "TimesReset": legacyResetCount,
+                            "LastResetByName": legacyCreatorName,
+                            "RecordDuration": recordDuration,}
+                            dbm.Insert(f"{filename}","days",dictForInsert)
+
+                            #prevent 0 duration entries into the durations table
+                            if legacyResetCount > 0: 
+                                dictForInsert = {
+                                "Id": dbm.Retrieve(f'{filename}', 'days', [("EntryName", key)], where_type=WhereType.AND, column_data=["id"])[0][0],
+                                "Duration": lastDuration,
+                                "ResetDate": lastResetDate,}
+                                dbm.Insert(f"{filename}","durations",dictForInsert)
+                            
+                        #rename pickle file so it is not called anymore for imports maybe delete? jim would probably yell at me for deleting files on his server
+                        os.rename(f"./internal/data/databases/days{ctx.guild.id}.pk",f"./internal/data/databases/days{ctx.guild.id}BACKUP.pk")
+                    else: 
+                        os.rename(f"./internal/data/databases/days{ctx.guild.id}.pk",f"./internal/data/databases/days{ctx.guild.id}BACKUP.pk")
+                        logger.LogPrint(f'ERROR ConvertPickleToDatabase - pickle is empty, pickle renamed, conversion ended.', logging.ERROR)
+                        return False
+            except Exception as ex:
+                logger.LogPrint(f"Error converting: {ex}",logging.ERROR)
+        async def PrintDays(self,ctx):
+            try:
+                output = "```ini\n"
+                tableImport = dbm.Retrieve(filename,"days",rows_required=1000)
+                #days table -ID|ENTRYNAME|CREATIONDATE|CREATORID|LASTDURATION|LASTRESETDATE|LASTRESETBY|RECORDDURATION|TIMESRESET
+                #creator table - ID|CREATORNAME|CREATORID
+                #durations table - ID|DURATION|RESETDATE
+                for row in tableImport:
+                    newEntry = row[5] if row[5] is not None else row[2]
+                    lastReset_DT_Object = datetime.datetime.strptime(newEntry, "%m/%d/%Y, %H:%M:%S")
+                    timeDeltaDif = datetime.datetime.utcnow() - lastReset_DT_Object
+                    currentLength = Helpers.timeDeltaFormat(self,timeDeltaDif)
+                    #because the table cointains a str and not a list
+
+                    if row[8] > 0:
+                        recList = row[7].strip('][').split(', ')
+                        output+=f"[{row[1].title()}] - {currentLength[0]}d {currentLength[1]}h | Record: {recList[0]}d {recList[1]}h \n"
+                    else:
+                        output+=f"[{row[1].title()}] - {currentLength[0]}d {currentLength[1]}h \n"
+                output+="```"
+                await ctx.send(output)
+
+            except Exception as ex:
+                logger.LogPrint(f"Print Days Error: {ex}",logging.ERROR)   
+        async def DaysAdd(self,ctx,userInput):
+            try:
+                userName = ctx.message.author.name
+                userId = (f"<@{ctx.message.author.id}>")
+                creationDate = datetime.datetime.utcnow().strftime("%m/%d/%Y, %H:%M:%S")
+                
+                duplicateDays = dbm.Retrieve(filename,"days",[("EntryName",userInput)])
+                duplicateCreator = dbm.Retrieve(filename,"creator",[("CreatorId",userId)])
+
+                #if not found e.g. not exist e.g. not duplicate
+                if len(duplicateDays) == 0:
+
+                    if len(duplicateCreator) == 0:
+                        dbm.Insert(filename,"creator",{"CreatorName":userName,"CreatorId":userId})
+                        tableId = dbm.Retrieve(filename,"creator",["CreatorId",userId])
+                    else:
+                        tableId = duplicateCreator[0][0]
+
+                    columns = {"EntryName":userInput, "CreationDate":creationDate, "CreatorId":tableId,"TimesReset":0}
+                    dbm.Insert(filename,"days",columns)
+                    await ctx.send(f"**{userInput}** added!")
+
+                else:
+                   await ctx.send("Duplicate Entry.")
+                   #calls daysStats when that's done with the info of the duplicate
+
+            except Exception as ex:
+                logger.LogPrint(f"Error adding new Days entry: {ex}",logging.ERROR)   
+        async def DaysDelete(self,ctx,userInput):
+            try:
+                pattern = "DELETE "
+                userInput = re.split(pattern, userInput, 1)[1]
+                tableImport = dbm.Retrieve(filename,"days",[("EntryName",userInput)])
+                requester = ctx.message.author.id #check if format is same for elif statement
+                isAdmin = ctx.message.author.permissions_in(ctx.channel).administrator == True
+                isCreator = dbm.Retrieve(filename,"creator",[("Id",tableImport[0][3])]) == requester
+                if not tableImport:
+                    await ctx.send("Timer for deletion not found.")
+                #check if creator and delete
+                #i this will just find an entry with the requested id??
+                elif isCreator or isAdmin:
+                    deletionId = {"Id":tableImport[0][0]}
+                    dbm.Delete(filename,"days", deletionId) 
+                    dbm.Delete(filename,"durations", deletionId)
+                    await ctx.send(f"**{userInput}** - Deleted")
+                else:
+                    await ctx.send("Can't delete entry - not creator or admin.")
+                  
+                
+            except Exception as ex:
+                logger.LogPrint(f"Days Delete Error: {ex}",logging.ERROR)
+        async def DaysStats(self,ctx,userInput):
+            await ctx.send(f"Coming Soon(tm)")
+
+        async def DaysReset(self,ctx,id):
+            try:
+                userInput = Helpers.CommandStrip(self, ctx.message.content).upper()
+                
                 if userInput.startswith("ZERO"):
                     pattern = "ZERO "
                 else:
                     pattern = "RESET "
-                userInput = userInput.upper()
-                userInput = re.split(pattern, userInput, 1)[1]
-                if userInput in daysDict:
-                    lastDate=daysDict[userInput][0]
-                    recordLength=daysDict[userInput][2]
-                    currentDate=datetime.datetime.utcnow()
-                    lastLength=currentDate-lastDate
 
-                    if daysDict[userInput][2] == None or daysDict[userInput][2] == 0 or daysDict[userInput][2] < lastLength: 
-                        recordLength = lastLength
-                    daysDict[userInput]=[currentDate,lastLength,recordLength]
-                    await ctx.send(f">>> Clock reset on **{userInput}**. Time was: {Helpers.timeDeltaFormat(self, lastLength)[0]} days and {Helpers.timeDeltaFormat(self, lastLength)[1]} hours." 
-                    f"\nLongest record {Helpers.timeDeltaFormat(self, recordLength)[0]} days and {Helpers.timeDeltaFormat(self, recordLength)[1]} hours.")
+                userInput = re.split(pattern, userInput, 1)[1]
+                tableImport = dbm.Retrieve(filename,"days",[("EntryName",userInput)])
+                if not tableImport:
+                    await ctx.send("Timer for reset not found.")
+                else:
+                    #if entry has never been reset before pick creation date as last reset date and set record to 0
+                    if tableImport[0][8] == 0:
+                        lastReset = datetime.datetime.strptime(tableImport[0][2], "%m/%d/%Y, %H:%M:%S")
+                        recordDuration = [0,0.0]
                     
-                    with open(daysFile,"wb") as daysFileWriter:
-                        pickle.dump(daysDict, daysFileWriter)
-                else:
-                    return await ctx.send(f">>> Entry for timer reset not found.")
+                    else:
+                        lastReset = datetime.datetime.strptime(tableImport[0][5], "%m/%d/%Y, %H:%M:%S")
+                        recordDuration = tableImport[0][7].strip('][').split(', ')
 
-            elif userInput.startswith("DELETE"): #delete an existing timer
-                pattern = "DELETE "
-                userInput = re.split(pattern, userInput, 1)[1]
+                    currentDate = datetime.datetime.utcnow()
+                    lastLength=currentDate-lastReset
+                    lastLength = Helpers.timeDeltaFormat(self,lastLength)
+                    #check if new record
+                    if (int(lastLength[0])+float(lastLength[1])/24) >= (int(recordDuration[0])+float(recordDuration[1])/24):
+                        recordDuration = lastLength
+                        dbm.Update(filename, "days",{"RecordDuration": str(lastLength)}, {"id": tableImport[0][0]})
+                    #check if LastResetByName is the same as current reset guy
+                    currentResetter = ctx.message.author.name
+                    if tableImport[0][6] is not currentResetter:
+                        dbm.Update(filename, "days",{"LastResetByName": currentResetter}, {"id": tableImport[0][0]})
+                    #update LastDuration and last reset date and insert new reset dates :^)
+                    currentDate = currentDate.strftime("%m/%d/%Y, %H:%M:%S")
+                    dbm.Update(filename, "days",{"LastResetDate": currentDate}, {"id": tableImport[0][0]})
+                    dbm.Update(filename, "days",{"LastDuration": str(lastLength)}, {"id": tableImport[0][0]})
+                    dictForInsert = {
+                        "Id": tableImport[0][0],
+                        "Duration": str(lastLength),
+                        "ResetDate": currentDate,}
+                    dbm.Insert(filename,"durations",dictForInsert)
+                    dbm.Update(filename,"days", {"TimesReset": (tableImport[0][8]+1)}, {"id": tableImport[0][0]})
+                    await ctx.send(f"```ini\n[{userInput}] - timer reset. {lastLength[0]}d {lastLength[1]}h. Record - {recordDuration[0]}d {recordDuration[1]}h.```")
 
-                if userInput in daysDict:
-                    daysDict.pop(userInput)
-                    with open(daysFile,"wb") as daysFileWriter:
-                        pickle.dump(daysDict, daysFileWriter)
-                        return await ctx.send(f">>> **{userInput}** - Deleted from list")
-                else:
-                    return await ctx.send(f">>> **{userInput}** - Not found for deletion.")        
+            except Exception as ex:
+                logger.LogPrint(f"Days Reset Error: {ex}",logging.ERROR) 
 
-        except FileNotFoundError as ex:
-            logger.LogPrint(f'ERROR - Days file not found - {ex}', logging.ERROR)
-        except EOFError as ex:
-            logger.LogPrint(f"ERROR - File's empty, this shouldn't happen haha :) - {ex}", logging.ERROR)
+        try:
+            
+            await CheckAndCreateDatabase(self,ctx)
+
+            userInput = Helpers.CommandStrip(self, ctx.message.content).upper()
+            #print all entries
+            if userInput == "":
+               await PrintDays(self,ctx)
+            #reset a timer
+            elif userInput.startswith("ZERO") or userInput.startswith("RESET"):
+                await DaysReset(self,ctx,userInput)
+            #delete a timer and all connected entries except in creator
+            elif userInput.startswith("DELETE"):
+                await DaysDelete(self,ctx,userInput)            
+            #print one entry with expanded stats
+            elif userInput.startswith("STATS"):
+                await DaysStats(self,ctx,userInput)
+            #add new entry
+            elif len(userInput) > 0:
+                await DaysAdd(self,ctx,userInput) 
+            else:
+                await ctx.send(f"Ha Ha this must never be printed, if you see this yell at Jim")  
+
         except Exception as ex:
-            logger.LogPrint(f"ERROR - {ex}", logging.ERROR)
+            logger.LogPrint(f"General Days Error: {ex}",logging.ERROR)    
 
 
 def setup(client):
