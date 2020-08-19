@@ -357,9 +357,9 @@ class cliffnet(commands.Cog):
                 pattern = "DELETE "
                 userInput = re.split(pattern, userInput, 1)[1]
                 tableImport = dbm.Retrieve(filename,"days",[("EntryName",userInput)])
-                requester = ctx.message.author.id #check if format is same for elif statement
+                requester = (f"<@{ctx.message.author.id}>") #check if format is same for elif statement
                 isAdmin = ctx.message.author.permissions_in(ctx.channel).administrator == True
-                isCreator = dbm.Retrieve(filename,"creator",[("Id",tableImport[0][3])]) == requester
+                isCreator = dbm.Retrieve(filename,"creator",[("Id",tableImport[0][3])])[0][2] == requester
                 if not tableImport:
                     await ctx.send("Timer for deletion not found.")
                 #check if creator and delete
