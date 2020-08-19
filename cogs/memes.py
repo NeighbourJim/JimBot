@@ -429,7 +429,7 @@ class Memes(commands.Cog):
             if len(meme) > 0:
                 meme_dict = {
                     "author": {"name": f'Meme #{m_id} Info'},
-                    "description": f'Created by {meme[0][3]} on {meme[0][6]}\nScore: **{meme[0][2]}** (+{self.GetUpvoteCount(ctx, m_id)} / -{self.GetDownvoteCount(ctx, m_id)})',
+                    "description": f'Created by {meme[0][3]} on {meme[0][6]}\nScore: **{self.GetMemeScore(ctx, m_id)}** (+{self.GetUpvoteCount(ctx, m_id)} / -{self.GetDownvoteCount(ctx, m_id)})',
                     "thumbnail": {"url": f'{self.GetGradeUrl(ctx, meme[0][2])}'},
                     "footer": {"text": f'Requested by {ctx.message.author.display_name}'}
                 }
