@@ -338,7 +338,7 @@ class cliffnet(commands.Cog):
 
                     if len(duplicateCreator) == 0:
                         dbm.Insert(filename,"creator",{"CreatorName":userName,"CreatorId":userId})
-                        tableId = dbm.Retrieve(filename,"creator",["CreatorId",userId])
+                        tableId = dbm.Retrieve(filename,"creator",[("CreatorId",userId)])[0][0]
                     else:
                         tableId = duplicateCreator[0][0]
 
