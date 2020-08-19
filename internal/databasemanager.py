@@ -188,7 +188,7 @@ class DB_Manager():
             db_name (str): Database name to access.
             table_name (str): Table name to access.
             where (list of tuples, optional): List containing where clause(s) tuples to restrict by. First half should be column and second half should be data.
-                                    For example: [("id", 42), ("name", "John)] would equate to the clause 'WHERE id = 42 AND/OR name = "John"'. Defaults to None.
+            For example: [("id", 42), ("name", "John)] would equate to the clause 'WHERE id = 42 AND/OR name = "John"'. Defaults to None.
             where_type (internal.enums.WhereType, optional): Whether to use AND clause or OR clause. Defaults to AND.
             column_data (list, optional): List of columns to retrieve. Defaults to ["*"].
             rows_required (int, optional): How many records to retrieve. Defaults to 1.

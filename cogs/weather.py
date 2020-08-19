@@ -138,7 +138,7 @@ class Weather(commands.Cog):
                 today = datetime.date.today()
                 for t_period in data_list:
                     date = datetime.datetime.strptime(t_period["dt_txt"].split(" ")[0], '%Y-%m-%d').date()
-                    if date > today:
+                    if date >= today:
                         if len(day_periods) > 0:
                             if date == datetime.datetime.strptime(day_periods[0]["dt_txt"].split(" ")[0], '%Y-%m-%d').date():
                                 day_periods.append(t_period)
@@ -166,7 +166,7 @@ class Weather(commands.Cog):
                     day_data = {"min": minC, "max": maxC, "weather_icon": weather_icon, "weather_type": weather_type, "date": date, "humidity": humidity, "wind": wind}
                     days_formatted.append(day_data)
                 weather_embed = discord.Embed()
-                weather_embed.title = f'4-Day Forecast for {name}, {country}'
+                weather_embed.title = f'5-Day Forecast for {name}, {country}'
                 for day in days_formatted:
                     weather_embed.add_field(name=f'__{day["date"].strftime("%d/%m")}__', value=f'**{day["weather_type"]}** {self.IconToEmoji(day["weather_icon"])}\n**Min:** {day["min"]}°C ({self.ConvertCtoF(day["min"])}°F)\n**Max:** {day["max"]}°C ({self.ConvertCtoF(day["max"])}°F)\n**Wind:** {day["wind"]} km/h\n**Humidity:** {day["humidity"]}%', inline=True)
                 weather_embed.set_footer(text=f'Retrieved from OpenWeatherMap.org for {ctx.message.author.name}')
