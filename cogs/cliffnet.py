@@ -446,7 +446,10 @@ class cliffnet(commands.Cog):
                 await DaysStats(self,ctx,userInput)
             #add new entry
             elif len(userInput) > 0:
-                await DaysAdd(self,ctx,userInput) 
+                if len(userInput) >= 50:
+                    await ctx.send("Entry too long, max 50 characters")
+                else:
+                    await DaysAdd(self,ctx,userInput) 
             else:
                 await ctx.send(f"Ha Ha this must never be printed, if you see this yell at Jim")  
 
