@@ -33,6 +33,8 @@ class StandImageGenerator():
             # Font is the font for the text
             # Txt is the text itself
             # Poly is for the actual rating graphs
+            sizeratio = 0.5
+
             base = Image.open('./internal/data/images/statsbg.png').convert('RGBA')
             background = Image.new('RGBA', base.size, (255,255,255,255))
             font = ImageFont.truetype("arial.ttf", 40)
@@ -66,8 +68,7 @@ class StandImageGenerator():
             out = Image.alpha_composite(background, poly)
             out = Image.alpha_composite(out,base)
             out = Image.alpha_composite(out,txt)
-
-            out.thumbnail(base.size, Image.ANTIALIAS)
+            out.thumbnail((base.size[0]*sizeratio, base.size[1]*sizeratio), Image.BICUBIC)
             out.save('./internal/data/images/stand.png')
             return True
         except Exception as ex:

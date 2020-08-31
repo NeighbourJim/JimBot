@@ -26,7 +26,7 @@ class Tags(commands.Cog):
             logger.LogPrint(f'ERROR - Couldn\'t create database: {ex}',logging.ERROR)
 
     @commands.command(help="Get a tag specified by name.", aliases=["t", "T", "Tag"])    
-    @commands.cooldown(rate=1, per=15, type=BucketType.channel)
+    @commands.cooldown(rate=1, per=5, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def tag(self, ctx):

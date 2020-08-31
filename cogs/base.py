@@ -81,6 +81,10 @@ class Base(commands.Cog):
                     max = min
                     min = tmp
                 # Generate the number and form the response
+                if max > 100000000:
+                    max = 100000000
+                if min < -100000000:
+                    min = -100000000
                 number = random.randint(min, max)
                 response = f'{ctx.message.author.mention}: Your number between {min} and {max} was: **{number}**.'
                 # If 2 or more of the trailing digits are the same, and the server has an appropriate emoji, append it to the message - An in-joke on our server
@@ -124,6 +128,9 @@ class Base(commands.Cog):
             dice_size = Helpers.FuzzyIntegerSearch(self, split_message[1])
             if dice_amount != None and dice_size != None:
                 if dice_amount > 0 and dice_size > 0:
+                    if dice_amount > 10 and dice_size > 100:
+                        await ctx.send(f'{ctx.message.author.mention}: Invalid dice size. Max amount 10, max size 100.')
+                        return
                     # If both variables have appropriate values, roll the dice the specified number of times
                     # Append each roll to the rolls list, then provide them + the total
                     rolls = []
@@ -145,7 +152,7 @@ class Base(commands.Cog):
         response = ''
         members = ctx.guild.members
         # Get the amount of requested users
-        amount = Helpers.FuzzyIntegerSearch(self, Helpers.CommandStrip(self, ctx.message.content))
+        amount = Helpers.FuzzyIntegerSearch(self, Helpers.CommandStrip(self, ctx.message.content).split(' ')[0])
         # Set the amount to 1 if the user did not specify, and 10 if they requested more than 10
         if amount == None:
             amount = 1
@@ -183,7 +190,7 @@ class Base(commands.Cog):
         response = ''
         members = ctx.guild.members
         # Get the amount of requested users
-        amount = Helpers.FuzzyIntegerSearch(self, Helpers.CommandStrip(self, ctx.message.content))
+        amount = Helpers.FuzzyIntegerSearch(self, Helpers.CommandStrip(self, ctx.message.content).split(' ')[0])
         # Set the amount to 1 if the user did not specify, and 10 if they requested more than 10
         if amount == None:
             amount = 1

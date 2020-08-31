@@ -17,7 +17,8 @@ current_settings = configmanager.cm.GetConfig()
 client = commands.Bot(
     command_prefix = current_settings["settings"]["prefix"], 
     owner_id = current_settings["settings"]["owner"],
-    help_command=discord.ext.commands.DefaultHelpCommand(dm_help=True))
+    help_command=discord.ext.commands.DefaultHelpCommand(dm_help=True),
+    allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=True))
 
 #region ---------------- Event Listeners ----------------
 @client.event
