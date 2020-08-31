@@ -17,6 +17,8 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 from matplotlib import pyplot
+import matplotlib.dates as mdates
+import numpy
 
 from internal.logs import logger
 from internal.helpers import Helpers
@@ -326,6 +328,11 @@ class cliffnet(commands.Cog):
                 logger.LogPrint(f"Print Days Error: {ex}",logging.ERROR)   
         async def DaysAdd(self,ctx,userInput):
             try:
+                #people mistakingly keep adding "ADD" when adding a new command even 
+                #though that was never a thing, so it strips that
+                if userInput.startswith("ADD"):
+                    pattern = "ADD "
+                    userInput = re.split(pattern, userInput, 1)[1]
                 userName = ctx.message.author.name
                 userId = (f"<@{ctx.message.author.id}>")
                 creationDate = datetime.datetime.utcnow().strftime("%m/%d/%Y, %H:%M:%S")
@@ -347,8 +354,7 @@ class cliffnet(commands.Cog):
                     await ctx.send(f"**{userInput}** added!")
 
                 else:
-                   await ctx.send("Duplicate Entry.")
-                   #calls daysStats when that's done with the info of the duplicate
+                    await DaysStats(self,ctx,userInput)
 
             except Exception as ex:
                 logger.LogPrint(f"Error adding new Days entry: {ex}",logging.ERROR)   
@@ -376,7 +382,111 @@ class cliffnet(commands.Cog):
             except Exception as ex:
                 logger.LogPrint(f"Days Delete Error: {ex}",logging.ERROR)
         async def DaysStats(self,ctx,userInput):
-            await ctx.send(f"Coming Soon(tm)")
+            try:
+                #import data from database
+                if userInput.startswith("STATS"):
+                    pattern = "STATS "
+                    userInput = re.split(pattern, userInput, 1)[1]
+                tableImport = dbm.Retrieve(filename,"days",[("EntryName",userInput)])
+                if not tableImport:
+                    await ctx.send("Timer for reset not found.")
+                #check creation and last reset date
+                if tableImport[0][8] == 0:
+                    lastReset = datetime.datetime.strptime(tableImport[0][2], "%m/%d/%Y, %H:%M:%S")
+                    recordDuration = [0,0.0]
+                else:
+                    lastReset = datetime.datetime.strptime(tableImport[0][5], "%m/%d/%Y, %H:%M:%S")
+                    recordDuration = tableImport[0][7].strip('][').split(', ')
+
+                #get current running timer length
+                creatorId = tableImport[0][3]
+                currentDate = datetime.datetime.utcnow()
+                currentLength = currentDate-lastReset
+                currentLength = Helpers.timeDeltaFormat(self,currentLength)
+                currentLength = (f"{currentLength[0]} days and {currentLength[1]} hours")
+                recordDuration = (f"{recordDuration[0]} days and {recordDuration[1]} hours")
+                creatinDate = tableImport[0][2]
+                #haha im using the computar
+                creatinDate = (tableImport[0][2].split(", "))[0]
+                creatinDate = (f"{creatinDate[3:5]}/{creatinDate[0:2]}/{creatinDate[6:]}")
+                #get all entry durations and calculate average 
+                durationsTableImport = dbm.Retrieve(filename,"durations",[("Id",tableImport[0][0])],rows_required=100000)
+                creatorTableImport = dbm.Retrieve(filename,"creator",[("Id",creatorId)])
+                creatorName = creatorTableImport[0][1] 
+
+                #if new entry skip charting and average calculation
+                if not durationsTableImport:
+                    stats = discord.Embed()
+                    stats.title = userInput
+                    stats.description = (f"""Current Length - {currentLength}
+                    Record Length - {recordDuration}
+                    Reset Count - 0
+                    Creation Date - {creatinDate}""")
+                    stats.set_footer(text=f"Created by {creatorName}")
+                    await ctx.send(embed=stats)
+
+                averageDays = 0
+                averageHours = 0
+                #went with actual reset count over the calculated one on days page
+                resetCount = len(durationsTableImport)
+                plotDates = []
+                plotDurations = []
+                #dont forget to cast those string numbers into actual number formats while doing maths :^)
+                for x in durationsTableImport:
+                    averageDays += int((x[1].strip("[]").split(", "))[0])
+                    averageHours += float((x[1].strip("[]").split(", "))[1])
+                    plotDates.append(x[2])
+                    plotDurations.append(x[1])
+                averageTime = (averageDays*24+averageHours)/resetCount
+                averageDays = int(averageTime/24)
+                averageHours = float("{:.1f}".format(averageTime%24))
+                
+                #get all x and y values and convert X to datetime for numpy.arange and Y into days
+                x_values = [datetime.datetime.strptime(d,"%m/%d/%Y, %H:%M:%S").date() for d in plotDates]
+                y_values = [float("{:.1f}".format((((float((t.strip("[]").split(", "))[0]))*24+(float((t.strip("[]").split(", "))[1])))/24))) for t in plotDurations]
+                #turn dates into numpy so they can be compared and aranged later
+                y_values = numpy.array(y_values)
+                ax = pyplot.gca()
+                #witchcraft arranging and fitting in dates from x_values to the x axis
+                formatter = mdates.ConciseDateFormatter("%d-%m")
+                ax.xaxis.set_major_formatter(formatter)
+                locator = mdates.AutoDateLocator(minticks=3, maxticks=7)
+                ax.xaxis.set_major_locator(locator)
+                #y axis values aranged by the smallest to the largest value found in the durations list
+                pyplot.yticks(numpy.arange(y_values.min(),y_values.max()))
+                #labels
+                ax.set(ylabel="Duration(Days)", xlabel="Reset Date")
+                #plot (b)lue b(o)lls
+                pyplot.plot(x_values, y_values, "bo")
+                #chart grid and outter spines
+                pyplot.grid(alpha=0.4)
+                pyplot.gca().spines["top"].set_alpha(0)
+                pyplot.gca().spines["bottom"].set_alpha(.3)
+                pyplot.gca().spines["right"].set_alpha(0)
+                pyplot.gca().spines["left"].set_alpha(.3)
+                #save plot to file and prepare to send
+                pyplot.savefig("./internal/data/images/chart.png")
+                pyplot.close()
+                image_file = discord.File('./internal/data/images/chart.png', filename='chart.png')
+
+                #do the embed and send it           
+                stats = discord.Embed()
+                stats.title = userInput
+                #tripple quotation marks are more fun and readable than \n
+                stats.description = (f"""Current Length - {currentLength}
+                Record Length - {recordDuration}
+                Average Length - {averageDays} days and {averageHours} hours
+                Reset Count - {resetCount}
+                Creation Date - {creatinDate}""")
+                #the url has to be an actual url... unless its an attachment
+                stats.set_thumbnail(url="attachment://chart.png")
+                stats.set_footer(text=f"Created by {creatorName}")
+
+                await ctx.send(file=image_file,embed=stats)
+
+            except Exception as ex:
+                logger.LogPrint(f"Days Reset Error: {ex}",logging.ERROR) 
+
 
         async def DaysReset(self,ctx,id):
             try:
