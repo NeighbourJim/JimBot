@@ -236,7 +236,7 @@ class Games(commands.Cog):
                 if stand_gen.GenerateImage(stats_dict,user_colour) == True:
                     image_file = discord.File('./internal/data/images/stand.png', filename='stand.png')
                     stand_embed = discord.Embed()
-                    if len(ctx.guild.members) > 75:
+                    if len(ctx.guild.members) >= 200:
                         stand_embed.set_thumbnail(url="attachment://stand.png")
                     else:
                         stand_embed.set_image(url="attachment://stand.png")
@@ -247,8 +247,8 @@ class Games(commands.Cog):
                     else:
                         stand_embed.description = f"It has the ability: **[{pow_name}]({pow_url})**"
                     sent = await ctx.send(file=image_file, embed=stand_embed)
-                    if len(ctx.guild.members) <= 0: # temporarily disabled as it isnt necessary
-                        await asyncio.sleep(7)
+                    if len(ctx.guild.members) <= 200: # temporarily disabled as it isnt necessary
+                        await asyncio.sleep(10)
                         stand_embed.set_thumbnail(url="attachment://stand.png")
                         stand_embed.set_image(url='')
                         await sent.edit(embed=stand_embed)
@@ -261,6 +261,39 @@ class Games(commands.Cog):
         else:
             response = f"Couldn't generate Stand."
             await ctx.send(response)
+
+    @commands.command(help="Fuse two user's names.", aliases=['nf', 'NF', 'Nf'])
+    @commands.cooldown(rate=1, per=2, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def namefuse(self, ctx):
+        members = ctx.guild.members
+        name1 = random.choice(members)
+        while True:
+            name2 = random.choice(members)
+            if name1 != name2:
+                break
+        
+        if random.randint(0,1) == 0:
+            name1 = name1.name.lower()
+        else:
+            name1 = name1.display_name.lower()
+
+        if random.randint(0,1) == 0:
+            name2 = name2.name.lower()
+        else:
+            name2 = name2.display_name.lower()
+
+        name1parts = [name1[:len(name1)//2],name1[len(name1)//2:]]
+        name2parts = [name2[:len(name2)//2],name2[len(name2)//2:]]
+        roll = random.randint(0,1)
+        if roll == 0:
+            
+            name = name1parts[0] + name2parts[1]
+        else:
+            name = name2parts[0] + name1parts[1]
+
+        await ctx.send(f'{ctx.message.author.mention}: {name.title()}')
 
     @commands.command(aliases=["tvt", "TVT"], help="Get a random TVTropes page.")    
     @commands.cooldown(rate=1, per=7, type=BucketType.channel)
