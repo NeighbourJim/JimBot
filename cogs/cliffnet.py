@@ -389,7 +389,8 @@ class cliffnet(commands.Cog):
                     userInput = re.split(pattern, userInput, 1)[1]
                 tableImport = dbm.Retrieve(filename,"days",[("EntryName",userInput)])
                 if not tableImport:
-                    await ctx.send("Timer for reset not found.")
+                    await ctx.send("Timer for stats not found.")
+                    return False
                 #check creation and last reset date
                 if tableImport[0][8] == 0:
                     lastReset = datetime.datetime.strptime(tableImport[0][2], "%m/%d/%Y, %H:%M:%S")
@@ -485,7 +486,7 @@ class cliffnet(commands.Cog):
                 await ctx.send(file=image_file,embed=stats)
 
             except Exception as ex:
-                logger.LogPrint(f"Days Reset Error: {ex}",logging.ERROR) 
+                logger.LogPrint(f"Days Stats Error: {ex}",logging.ERROR) 
 
 
         async def DaysReset(self,ctx,id):
