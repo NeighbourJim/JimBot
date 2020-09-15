@@ -66,6 +66,13 @@ class Translate(commands.Cog):
         message_to_translate = Helpers.CommandStrip(self, ctx.message.content)
         message_to_translate = Helpers.EmojiConvert(self, message_to_translate)
         if len(message_to_translate) <= self.btr_char_limit:
+            if len(message_to_translate) < 1:
+                task = asyncio.create_task(Helpers.GetLastTextMessage(self, ctx))
+                await task
+                message_to_translate = task.result()
+                if message_to_translate == None:
+                    await ctx.send(f'{ctx.message.author.mention}: Invalid message.')
+                    return
             await ctx.trigger_typing()
             try:
                 current_message = message_to_translate
@@ -89,7 +96,7 @@ class Translate(commands.Cog):
                 logger.LogPrint(f'BTR: BadTranslate complete.', logging.DEBUG)
             except Exception as ex:
                 logger.LogPrint("BAD TRANSLATE ERROR", logging.CRITICAL, ex)
-                await ctx.send(f'ERROR: {ex}.\nThis usually means Google didnt respond properly. Trying to find a way to prevent it!')
+                await ctx.send(f'ERROR: {ex}.\nThis means Google didnt respond properly, or you provided no message and the last message in the channel could not be retrieved.')
         else:
             await ctx.send(f'{ctx.message.author.mention}: Message too long. Maximum length for BTR is {self.btr_char_limit} characters.', delete_after=10)
 

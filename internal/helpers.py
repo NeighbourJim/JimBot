@@ -1,9 +1,11 @@
 import discord
+from discord.utils import escape_markdown, escape_mentions
 import re
 import requests
 import logging
 import emoji
 import datetime
+import asyncio
 
 import internal.configmanager as configmanager
 from internal.logs import logger
@@ -24,6 +26,28 @@ class Helpers():
         """
         regex = r'^(\{}\w*)'.format(configmanager.cm.GetConfig()["settings"]["prefix"])
         return re.sub(r'{}'.format(regex), '', f'{message}').strip()
+
+    @staticmethod
+    def StripMentions(self, message:str):
+        regex = r'<@[0-9]*>'
+        message = re.sub(r'{}'.format(regex), '', f'{message}').strip()
+        regex = r'<@![0-9]*>'
+        message = re.sub(r'{}'.format(regex), '', f'{message}').strip()
+        return message
+
+    @staticmethod
+    async def GetLastTextMessage(self, ctx, search_limit=10):
+        last_message_id = ctx.channel.last_message_id
+        if last_message_id != None:
+            task = asyncio.create_task(ctx.channel.history(limit=search_limit).flatten())
+            await task
+            message_list = task.result()
+            for message in message_list:
+                stripped = Helpers.CommandStrip(self, message.content)
+                stripped = Helpers.StripMentions(self, stripped)
+                if len(stripped) > 1:
+                    return stripped.strip()
+        return None
 
     @staticmethod
     def GetFirstEmojiID(self, message: str):
