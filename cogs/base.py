@@ -122,14 +122,16 @@ class Base(commands.Cog):
     @commands.guild_only()
     async def dice(self, ctx):
         # Split the message at 'd' to get both number of dice and dice size
+        max_count = 50
+        max_size = 100000
         split_message = Helpers.CommandStrip(self, ctx.message.content).lower().split('d')
         if len(split_message) > 1:
             dice_amount = Helpers.FuzzyIntegerSearch(self, split_message[0])
             dice_size = Helpers.FuzzyIntegerSearch(self, split_message[1])
             if dice_amount != None and dice_size != None:
                 if dice_amount > 0 and dice_size > 0:
-                    if dice_amount > 10 and dice_size > 100:
-                        await ctx.send(f'{ctx.message.author.mention}: Invalid dice size. Max amount 10, max size 100.')
+                    if dice_amount > max_count or dice_size > max_size:
+                        await ctx.send(f'{ctx.message.author.mention}: Invalid dice size. Max amount {max_count}, max size {max_size}.')
                         return
                     # If both variables have appropriate values, roll the dice the specified number of times
                     # Append each roll to the rolls list, then provide them + the total
