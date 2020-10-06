@@ -57,7 +57,7 @@ class Translate(commands.Cog):
             logger.LogPrint("TRANSLATE ERROR", logging.ERROR, ex)
             await self.client.close()
 
-    @commands.command(aliases=["btr"], help="Translates a message into many other languages in succession.\nUsage: !BadTranslate funny dog")    
+    @commands.command(aliases=["btr", "Btr", "BTR"], help="Translates a message into many other languages in succession.\nUsage: !BadTranslate funny dog")    
     @commands.cooldown(rate=1, per=10, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
