@@ -108,8 +108,8 @@ class Games(commands.Cog):
         elif split_message[0] == '':
             split_message = [f"{ctx.message.author.display_name}"]
         if amount > 0:
-            if amount > 5:
-                amount = 5
+            if amount > 10:
+                amount = 10
             for i in range(0,amount):
                 selected_adj = random.choice(adjectives)
                 if selected_adj in adjs:
@@ -268,32 +268,59 @@ class Games(commands.Cog):
     @commands.guild_only()
     async def namefuse(self, ctx):
         members = ctx.guild.members
-        name1 = random.choice(members)
-        while True:
-            name2 = random.choice(members)
-            if name1 != name2:
-                break
-        
-        if random.randint(0,1) == 0:
-            name1 = name1.name.lower()
-        else:
-            name1 = name1.display_name.lower()
+        if len(members) > 1:
+            if Helpers.CommandStrip(self, ctx.message.content).split(' ')[0].lower() == 'online':
+                depth = 0
+                while True:                
+                    name1 = random.choice(members)
+                    if name1.status != discord.Status.offline:
+                        depth = 0
+                        break
+                    depth += 1
+                    if depth > 100:
+                        await ctx.send(f'{ctx.message.author.mention}: Could not find enough valid members.')
+                        return
+                while True:
+                    name2 = random.choice(members)
+                    if name1 != name2 and name2.status != discord.Status.offline:
+                        depth = 0
+                        break
+                    depth += 1
+                    if depth > 100:
+                        await ctx.send(f'{ctx.message.author.mention}: Could not find enough valid members.')
+                        return
+            else:            
+                name1 = random.choice(members)
+                while True:
+                    name2 = random.choice(members)
+                    if name1 != name2:
+                        depth = 0
+                        break
+                    depth += 1
+                    if depth > 100:
+                        await ctx.send(f'{ctx.message.author.mention}: Could not find enough valid members.')
+                        return
+                    
+            if random.randint(0,1) == 0:
+                name1 = name1.name.lower()
+            else:
+                name1 = name1.display_name.lower()
 
-        if random.randint(0,1) == 0:
-            name2 = name2.name.lower()
-        else:
-            name2 = name2.display_name.lower()
-
-        name1parts = [name1[:len(name1)//2],name1[len(name1)//2:]]
-        name2parts = [name2[:len(name2)//2],name2[len(name2)//2:]]
-        roll = random.randint(0,1)
-        if roll == 0:
+            if random.randint(0,1) == 0:
+                name2 = name2.name.lower()
+            else:
+                name2 = name2.display_name.lower()
             
-            name = name1parts[0] + name2parts[1]
-        else:
-            name = name2parts[0] + name1parts[1]
+            name1parts = [name1[:len(name1)//2],name1[len(name1)//2:]]
+            name2parts = [name2[:len(name2)//2],name2[len(name2)//2:]]
+            roll = random.randint(0,1)
+            if roll == 0:
 
-        await ctx.send(f'{ctx.message.author.mention}: {name.title()}')
+                name = name1parts[0] + name2parts[1]
+            else:
+                name = name2parts[0] + name1parts[1]
+
+            await ctx.send(f'{ctx.message.author.mention}: {name.title()}')
 
     @commands.command(aliases=["tvt", "TVT"], help="Get a random TVTropes page.")    
     @commands.cooldown(rate=1, per=7, type=BucketType.channel)
