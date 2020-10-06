@@ -1,5 +1,6 @@
 import sqlite3
 import logging
+import pandas as pd
 
 from internal.helpers import Helper
 from internal.logs import logger
@@ -280,5 +281,13 @@ class DB_Manager():
         except Exception as ex:
             logger.LogPrint(f'Failed to execute query. DB:{db_name} - Q:{query}. - {ex}', logging.ERROR)
 
+    def ConvertTableToCSV(self, db_name, table_name):
+        try:
+            if self.ConnectToDB(db_name):
+                df = pd.read_sql(f'SELECT * FROM {table_name}', self.connection)
+                df.to_csv(f'{self.path}ss-{db_name}.csv')
+                return True            
+        except Exception as ex:
+            logger.LogPrint(f'Failed to write spreadsheet. DB:{db_name} - Q:{query}. - {ex}', logging.ERROR)
 
 dbm = DB_Manager()

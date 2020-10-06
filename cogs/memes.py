@@ -3,6 +3,8 @@ import sqlite3
 import random
 import discord
 import logging
+import csv
+import pandas as pd
 from discord.ext import commands
 from discord.ext.commands import BucketType
 from os import path
@@ -405,6 +407,47 @@ class Memes(commands.Cog):
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t execute goodmeme command: {ex}', logging.ERROR)
 
+    @commands.command(help="Remove your vote on a meme.", aliases=["rv", "RV", "Rv"])
+    @commands.cooldown(rate=1, per=1, type=BucketType.member)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def removevote(self, ctx):
+        m_id = None
+        values_to_find = []
+        try:
+            self.CheckAndCreateDatabase(ctx)
+
+            to_delete = ctx.message
+            message = Helpers.CommandStrip(self, ctx.message.content)
+            if f"{ctx.guild.id}" in self.last_meme_roll:
+                m_id = self.last_meme_roll[f"{ctx.guild.id}"]
+            else:
+                m_id = None
+            if len(message) > 0 and Helpers.FuzzyIntegerSearch(self, message) is not None:
+                m_id = int(Helpers.FuzzyIntegerSearch(self, message))
+            t = ("m_id", m_id)
+            values_to_find.append(t)
+            meme = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', values_to_find)
+            if len(meme) > 0:
+                uvote = dbm.Retrieve(f'memes{ctx.guild.id}', 'upvotes', [("author_id", f'<@{ctx.message.author.id}>'), ("m_id", m_id)])
+                dvote = dbm.Retrieve(f'memes{ctx.guild.id}', 'downvotes', [("author_id", f'<@{ctx.message.author.id}>'), ("m_id", m_id)])
+                if len(uvote) != 0 or len(dvote) != 0:
+                    dbm.Delete(f'memes{ctx.guild.id}', "upvotes", {"m_id": m_id, "author_id": f'<@{ctx.message.author.id}>'})
+                    dbm.Delete(f'memes{ctx.guild.id}', "downvotes", {"m_id": m_id, "author_id": f'<@{ctx.message.author.id}>'})
+                    dbm.Update(f'memes{ctx.guild.id}', 'memes', {"score": self.GetMemeScore(ctx, m_id)}, {"m_id": m_id})
+                    await ctx.send(f'{ctx.message.author.mention}: **ID:{m_id}** - :arrow_up_down: **{self.GetMemeScore(ctx, m_id)}**')
+                    await to_delete.delete(delay=3)
+                else:
+                    await ctx.send(f'{ctx.message.author.mention}: You haven\'t voted on **ID:{m_id}**.')
+                    await to_delete.delete(delay=3)
+            else:
+                ctx.command.reset_cooldown(ctx)
+                await ctx.send(f'{ctx.message.author.mention}: No meme to vote on. Either you specified a meme ID that doesn\'t exist or no meme was rolled since the last bot restart.', delete_after=10)
+                await to_delete.delete(delay=3)
+
+        except Exception as ex:
+            logger.LogPrint(f'ERROR - Couldn\'t execute goodmeme command: {ex}', logging.ERROR)
+
     @commands.command(help="Get a meme's information.", aliases=["mi", "MI", "Mi"])
     @commands.cooldown(rate=1, per=10, type=BucketType.channel)
     @commands.has_role("Bot Use")
@@ -695,9 +738,9 @@ class Memes(commands.Cog):
             where = []
             for name in names:
                 where.append(("author_username", name.strip()))
-            memes = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', where=where, where_type=WhereType.OR, compare_type=CompareType.LIKE, rows_required=99999)
+            memes = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', where=where, where_type=WhereType.OR, compare_type=CompareType.LIKE, rows_required=999999)
         else:
-            memes = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', rows_required=99999)
+            memes = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', rows_required=999999)
         if len(memes) > 0:
             for meme in memes:
                 meme_string = f'ID: {meme[0]}\nAuthor: {meme[3]}\nDate Added: {meme[6]}\nScore: {meme[2]}\nMeme: {meme[1]}\n\n'
@@ -711,6 +754,22 @@ class Memes(commands.Cog):
             ctx.command.reset_cooldown(ctx)
             await ctx.send(f'{ctx.message.author.mention}: No memes found.', delete_after=10)
 
+    @commands.command(help="Get the meme list as a .csv", aliases=["mcsv", "MCSV", "Mcsv"])
+    @commands.cooldown(rate=1, per=120, type=BucketType.guild)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def memespreadsheet(self, ctx):        
+        self.CheckAndCreateDatabase(ctx)
+        
+        await ctx.trigger_typing()
+        memes = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', rows_required=1)
+        if len(memes) > 0:
+            if dbm.ConvertTableToCSV(f'memes{ctx.guild.id}', 'memes'):
+                await ctx.send(content=f'{ctx.message.author.mention}', file=discord.File(f'./internal/data/databases/ss-memes{ctx.guild.id}.csv'))
+            else:
+                await ctx.send(f'{ctx.message.author.mention}: Could not form .csv.', delete_after=10)
+        else:
+            await ctx.send(f'{ctx.message.author.mention}: No memes found.', delete_after=10)
     
     @commands.command(help="Get the meme stats for a specific user, or yourself.", aliases=["tms", "Tms", "TMS", "Totalmemestats"])
     @commands.cooldown(rate=1, per=10, type=BucketType.channel)
