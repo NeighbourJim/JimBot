@@ -2,6 +2,7 @@ import discord
 import random
 import logging
 import re
+import json
 from discord.ext import commands
 from discord.ext.commands import BucketType
 from discord.ext.commands import EmojiConverter
@@ -9,6 +10,7 @@ from discord.ext.commands import EmojiConverter
 from internal.helpers import Helpers
 from internal.command_blacklist_manager import BLM
 from internal.logs import logger
+from bot import current_settings
 
 
 class Base(commands.Cog):
@@ -254,6 +256,29 @@ class Base(commands.Cog):
                     }
         info_embed = discord.Embed.from_dict(embed_dict)
         await ctx.send(embed=info_embed)
+
+    @commands.command(aliases=["cc", "Cc"], help="Convert a value between two currencies.")    
+    @commands.cooldown(rate=1, per=10, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def currencyconvert(self, ctx):
+        split_message = Helpers.CommandStrip(self, ctx.message.content).split(' ')
+        if len(split_message) >= 3:
+            input_value = Helpers.FuzzyNumberSearch_OLD(self, split_message[0])
+            input_value = float(input_value)
+            if input_value and input_value > 0 and input_value < 1000000000000:
+                currency_one = split_message[1].strip(',')
+                currency_two = split_message[2].strip(',')
+                url = f'https://free.currconv.com/api/v7/convert?q={currency_one}_{currency_two}&compact=ultra&apiKey={current_settings["keys"]["currencyconverter_key"]}'
+                response = Helpers.GetWebPage(self, url).json()
+                if len(response) > 0:
+                    result = input_value * list(response.values())[0]
+                    formatted_value = "{:,.2f}".format(input_value)
+                    formatted_result = "{:,.2f}".format(result)
+                    await ctx.send(f'{ctx.message.author.mention}: ``{formatted_value} {currency_one.upper()} = {formatted_result} {currency_two.upper()}.``')
+                    return
+        await ctx.send(f'{ctx.message.author.mention}: Invalid input. Correct input eg. ``!cc 2.5, USD, EUR``\n You must provide the 3 letter currency codes: <https://www.iban.com/currency-codes>')
+
 
 def setup(client):
     client.add_cog(Base(client))
