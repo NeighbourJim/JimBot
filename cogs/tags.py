@@ -6,6 +6,7 @@ from os import path
 
 from internal.logs import logger
 from internal.helpers import Helpers
+from internal.command_blacklist_manager import BLM
 from internal.enums import WhereType
 from internal.databasemanager import dbm
 
@@ -15,6 +16,9 @@ class Tags(commands.Cog):
         self.client = client
         self.db_folder = "./internal/data/databases/"
 
+    async def cog_check(self, ctx):
+        return BLM.CheckIfCommandAllowed(ctx)
+        
     def CheckAndCreateDatabase(self, ctx):
         try:
             filename = f"tags{ctx.guild.id}"

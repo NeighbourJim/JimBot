@@ -8,12 +8,18 @@ from discord.ext.commands import BucketType
 
 from internal.logs import logger
 from internal.helpers import Helpers
+from internal.command_blacklist_manager import BLM
+from internal.databasemanager import dbm
 from bot import current_settings
 
-class Food(commands.Cog):
+
+class Food(commands.Cog):    
 
     def __init__(self, client):
         self.client = client
+
+    async def cog_check(self, ctx):
+        return BLM.CheckIfCommandAllowed(ctx)
 
     @commands.command(aliases=["rrecipe", "Randomrecipe", "rfood", "rr"], help="Get a random recipe.")    
     @commands.cooldown(rate=1, per=10, type=BucketType.channel)

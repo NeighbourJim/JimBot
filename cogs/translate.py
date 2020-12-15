@@ -10,6 +10,7 @@ from googletrans import Translator
 from internal.logs import logger
 from internal.data.trans_languages import language_dictionary, bad_trans_languages, bad_trans_languages_old
 from internal.helpers import Helpers
+from internal.command_blacklist_manager import BLM
 from bot import current_settings
 
 
@@ -20,9 +21,12 @@ class Translate(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-        self.btr_char_limit = 400
+        self.btr_char_limit = 300
         self.translator = Translator()
 
+    async def cog_check(self, ctx):
+        return BLM.CheckIfCommandAllowed(ctx)
+        
     async def GetTranslation(self, message, target_lang='en'):
         if target_lang in language_dictionary:
             result = self.translator.translate(message, src='auto', dest=target_lang)

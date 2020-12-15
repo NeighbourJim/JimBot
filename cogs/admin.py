@@ -4,8 +4,10 @@ import logging
 from discord.ext import commands
 from discord.ext.commands import BucketType
 
+from internal.command_blacklist_manager import BLM
 from internal.logs import logger
 from internal.helpers import Helpers
+
 
 
 class Admin(commands.Cog):
@@ -51,6 +53,32 @@ class Admin(commands.Cog):
         logger.LogPrint(f'Bot forced to shut down via command.')
         await ctx.send("Bot shutting down...")
         await self.client.close()
+
+    # Toggle whether a command is blacklisted in the current channel
+    @commands.command(aliases=["toggle"], help="Toggle whether a command is blacklisted in the current channel.", hidden=True)
+    @commands.cooldown(rate=1, per=1, type=BucketType.channel)
+    @commands.has_guild_permissions(administrator=True)
+    @commands.guild_only()
+    async def togglecommand(self, ctx):
+        command_to_toggle = Helpers.CommandStrip(self, ctx.message.content).lower().strip().split(' ')[0]
+        if len(ctx.message.channel_mentions) > 0:
+            channel = ctx.message.channel_mentions[0]
+        else:
+            channel = ctx.channel
+        print(channel)
+        valid_command = False
+        for command in self.client.commands:
+            if command.name.lower() == command_to_toggle:
+                valid_command = True
+        if valid_command:
+            result = BLM.ToggleCommandInChannel(command_to_toggle, ctx.guild.id, channel.id)
+            if result == True:
+                await ctx.send(f'{ctx.message.author.mention}: Command ``{command_to_toggle}`` enabled in channel ``{channel.name}``.')
+            else:
+                await ctx.send(f'{ctx.message.author.mention}: Command ``{command_to_toggle}`` disabled in channel ``{channel.name}``.')
+        else:
+            await ctx.send(f'{ctx.message.author.mention}: The command ``{command_to_toggle}`` does not exist.')
+        await ctx.message.delete()
 
     # Deletes a specified number of messages.
     @commands.command(help="Deletes a specified number of messages from the channel.\nCan be used to target only one specific user.\nUsage: !purge 5 / !purge @user 5")

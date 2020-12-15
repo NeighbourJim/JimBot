@@ -7,6 +7,7 @@ from discord.ext.commands import BucketType
 from discord.ext.commands import EmojiConverter
 
 from internal.helpers import Helpers
+from internal.command_blacklist_manager import BLM
 from internal.logs import logger
 
 
@@ -14,6 +15,9 @@ class Base(commands.Cog):
 
     def __init__(self, client):
         self.client = client    
+
+    async def cog_check(self, ctx):
+        return BLM.CheckIfCommandAllowed(ctx)
 
     @commands.command(help="Ping!")    
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)

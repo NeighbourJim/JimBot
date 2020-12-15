@@ -12,6 +12,7 @@ from discord.ext.commands import BucketType
 
 from internal.logs import logger
 from internal.helpers import Helpers
+from internal.command_blacklist_manager import BLM
 from internal.data.adjectives import adjectives
 from internal.stand_image_generator import stand_gen
 
@@ -20,6 +21,9 @@ class Games(commands.Cog):
     def __init__(self, client):
         self.client = client
 
+    async def cog_check(self, ctx):
+        return BLM.CheckIfCommandAllowed(ctx)
+        
     # Generate Stats for the Stand command
     def GetStandStats(self):
         stats = []

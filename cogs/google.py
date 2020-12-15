@@ -10,6 +10,7 @@ from googleapiclient.errors import HttpError
 # Internal Imports
 from internal.logs import logger
 from internal.helpers import Helpers
+from internal.command_blacklist_manager import BLM
 from bot import current_settings
 
 
@@ -20,6 +21,9 @@ class Google(commands.Cog):
         self.client = client
         self.cse_service = build('customsearch', 'v1', developerKey=current_settings["keys"]["google"])
         self.yt_service = build('youtube', 'v3', developerKey=current_settings["keys"]["google"])
+
+    async def cog_check(self, ctx):
+        return BLM.CheckIfCommandAllowed(ctx)
 
     #region --------------- Google Search ---------------
     async def GetSearchResult(self, message):
@@ -128,7 +132,7 @@ class Google(commands.Cog):
             return None
 
     @commands.command(aliases=["i", "gi", "I", "GI", "Image", "IMAGE"], help="Searches Google for an image from a query.\nGives a random result from the front page. Safe-Search is enabled for SFW channels, and disabled for NSFW ones.\nUsage: !image funny dog\n")    
-    @commands.cooldown(rate=1, per=15, type=BucketType.channel)
+    @commands.cooldown(rate=1, per=60, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def image(self, ctx):
@@ -144,7 +148,11 @@ class Google(commands.Cog):
                 image_embed.title = task.result()["title"]
                 if len(task.result()["link"]) <= 200:
                     image_embed.description = task.result()["link"]
-                image_embed.set_image(url=task.result()["link"])
+                if len(ctx.guild.members) < 75:
+                    image_embed.set_image(url=task.result()["link"])
+                    ctx.command.reset_cooldown(ctx)
+                else:
+                    image_embed.set_thumbnail(url=task.result()["link"])
                 image_embed.set_footer(text=f'{ctx.message.author} searched for \'{Helpers.CommandStrip(self, ctx.message.content)}\'')
                 await ctx.send(embed=image_embed)
             else:

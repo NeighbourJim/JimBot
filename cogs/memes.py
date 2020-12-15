@@ -12,6 +12,7 @@ from datetime import datetime
 
 from internal.logs import logger
 from internal.helpers import Helpers
+from internal.command_blacklist_manager import BLM
 from internal.enums import WhereType, CompareType
 from internal.databasemanager import dbm
 from internal.data.meme_views import meme_views
@@ -22,6 +23,9 @@ class Memes(commands.Cog):
         self.client = client
         self.db_folder = "./internal/data/databases/"
         self.last_meme_roll = {}
+
+    async def cog_check(self, ctx):
+        return BLM.CheckIfCommandAllowed(ctx)
 
 #region Non-Command Methods - General Helpers Methods specific to this cog
     def CheckAndCreateDatabase(self, ctx):

@@ -8,6 +8,7 @@ from discord.ext.commands import BucketType
 
 from internal.logs import logger
 from internal.helpers import Helpers
+from internal.command_blacklist_manager import BLM
 from internal.data.pokemon_names import pokemon_names
 
 class Pokemon(commands.Cog):
@@ -15,6 +16,9 @@ class Pokemon(commands.Cog):
     def __init__(self, client):
         self.client = client
 
+    async def cog_check(self, ctx):
+        return BLM.CheckIfCommandAllowed(ctx)
+        
     def GenerateName(self):
         name1 = random.choice(pokemon_names).lower()
         while True:

@@ -8,6 +8,7 @@ from discord.ext.commands import BucketType
 from os import path
 
 from internal.helpers import Helpers
+from internal.command_blacklist_manager import BLM
 from internal.databasemanager import dbm
 from internal.logs import logger
 from bot import current_settings
@@ -18,6 +19,9 @@ class Weather(commands.Cog):
         self.client = client
         self.db_folder = "./internal/data/databases/"
 
+    async def cog_check(self, ctx):
+        return BLM.CheckIfCommandAllowed(ctx)
+        
     def CheckAndCreateDatabase(self, ctx):
         """Check if a meme database has been made for each server the bot is connected to, and create it if not.
         """

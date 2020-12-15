@@ -23,13 +23,17 @@ import numpy
 from internal.logs import logger
 from internal.helpers import Helpers
 from internal.databasemanager import dbm
+from internal.command_blacklist_manager import BLM
 from internal.enums import WhereType, CompareType
 
 class cliffnet(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-              
+
+    async def cog_check(self, ctx):
+        return BLM.CheckIfCommandAllowed(ctx)
+
     @commands.command(aliases=["Scramble"], help="scrambles word order")
     @commands.cooldown(rate=1, per=1, type=BucketType.channel)
     @commands.has_role("Bot Use")

@@ -2,7 +2,6 @@ import sqlite3
 import logging
 import pandas as pd
 
-from internal.helpers import Helper
 from internal.logs import logger
 from internal.enums import WhereType, CompareType
 
