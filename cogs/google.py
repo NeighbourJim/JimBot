@@ -92,7 +92,7 @@ class Google(commands.Cog):
 
     #region --------------- Image Search ---------------
     async def GetImageResult(self, message):
-        forbidden = ["fbsbx.com", "i.kym-cdn.com"]
+        forbidden = ["fbsbx.com", "i.kym-cdn.com", "x-raw-image"]
         query = Helpers.CommandStrip(self, message)
         results = self.cse_service.cse().list(q=query, cx=current_settings["keys"]["cse"], searchType="image").execute()
         if "items" in results:
