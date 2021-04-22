@@ -105,13 +105,12 @@ class Weather(commands.Cog):
                 weather_embed.add_field(name='Weather Type', value=f'{weather}', inline=True)
                 weather_embed.add_field(name='Humidity', value=f"{humidity}%", inline=True)
                 weather_embed.add_field(name='Wind Speed', value=f"{wind_speed} km/h", inline=True)
-                weather_embed.set_footer(text=f'Retrieved from OpenWeatherMap.org for {ctx.message.author.name}')
-                await ctx.send(embed=weather_embed)
+                await ctx.reply(embed=weather_embed)
             else:
                 logger.LogPrint(f"Error contacting OpenWeather API. - API Results:{api_results}", logging.ERROR)
-                await ctx.send(f'{ctx.message.author.mention}: API Error.\nCould not find weather for \'{city}\'.')
+                await ctx.reply(f'API Error.\nCould not find weather for \'{city}\'.')
         else:
-            await ctx.send(f'{ctx.message.author.mention}: Please specify a City. Eg ``!weather London`` or ``!weather London,UK``.\nAlternatively, set your default location with ``!setweatherlocation city``.')
+            await ctx.reply(f'Please specify a City. Eg `!weather London` or `!weather London,UK`.\nAlternatively, set your default location with `!setweatherlocation city`.')
 
     @commands.command(aliases=["forecast", "weatherforecast", "wf"], help="Get the 4 day forecast for a location.")
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
@@ -173,13 +172,12 @@ class Weather(commands.Cog):
                 weather_embed.title = f'{len(days_formatted)}-Day Forecast for {name}, {country}'
                 for day in days_formatted:
                     weather_embed.add_field(name=f'__{day["date"].strftime("%d/%m")}__', value=f'**{day["weather_type"]}** {self.IconToEmoji(day["weather_icon"])}\n**Min:** {day["min"]}°C ({self.ConvertCtoF(day["min"])}°F)\n**Max:** {day["max"]}°C ({self.ConvertCtoF(day["max"])}°F)\n**Wind:** {day["wind"]} km/h\n**Humidity:** {day["humidity"]}%', inline=True)
-                weather_embed.set_footer(text=f'Retrieved from OpenWeatherMap.org for {ctx.message.author.name}')
-                await ctx.send(embed=weather_embed)
+                await ctx.reply(embed=weather_embed)
             else:
                 logger.LogPrint(f"Error contacting OpenWeather API. - API Results:{api_results}", logging.ERROR)
-                await ctx.send(f'{ctx.message.author.mention}: API Error.\nCould not find forecast for \'{city}\'.')
+                await ctx.reply(f'API Error.\nCould not find forecast for \'{city}\'.')
         else:
-            await ctx.send(f'{ctx.message.author.mention}: Please specify a City. Eg ``!forecast London`` or ``!forecast London,UK``.\nAlternatively, set your default location with ``!setweatherlocation city``.')
+            await ctx.reply(f'Please specify a City. Eg `!forecast London` or `!forecast London,UK`.\nAlternatively, set your default location with `!setweatherlocation city`.')
 
 
     @commands.command(aliases=["setweatherlocation"], help="Set your location for the !weather command.\nDO NOT USE IF YOU DO NOT WANT YOUR LOCATION TIED TO YOUR DISCORD ID\nUsage: !setweatherlocation location. For example !setweatherlocation London or !setweatherlocation London,uk")    
@@ -195,7 +193,7 @@ class Weather(commands.Cog):
         try:
             dbm.Delete(filename, "w_locs", where={"uid": ctx.message.author.id})
             dbm.Insert(filename, "w_locs", data)
-            await ctx.send(f'{ctx.message.author.mention}: Set your default location to {location}')
+            await ctx.reply(f'Set your default location to {location}')
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t execute SetWeatherLocation command: {ex}',logging.ERROR)     
 

@@ -67,8 +67,7 @@ class Pokemon(commands.Cog):
         poke_embed = discord.Embed()
         poke_embed.title = f'{message}'
         poke_embed.set_image(url=url)
-        poke_embed.set_footer(text=f'Rolled by {ctx.message.author.name}')
-        sent = await ctx.send(embed=poke_embed)
+        sent = await ctx.reply(embed=poke_embed)
         await asyncio.sleep(10)
         poke_embed.set_thumbnail(url=url)
         poke_embed.set_image(url='')
@@ -83,9 +82,9 @@ class Pokemon(commands.Cog):
         if api_results:
             move = random.choice(api_results.json()['results'])['name']
             move = move.title().replace("-", " ")
-            await ctx.send(f'{ctx.message.author.mention}: {move}')
+            await ctx.reply(f'{move}')
         else:
-            await ctx.send(f'{ctx.message.author.mention}: Something went wrong when contacting the API.')
+            await ctx.reply(f'Something went wrong when contacting the API.')
 
     @commands.command(help="Get a random Pokemon ability.", aliases=['rability', 'Rability', 'RAbility', 'RABILITY'])
     @commands.cooldown(rate=1, per=4, type=BucketType.channel)
@@ -96,9 +95,9 @@ class Pokemon(commands.Cog):
         if api_results:
             ability = random.choice(api_results.json()['results'])['name']
             ability = ability.title().replace("-", " ")
-            await ctx.send(f'{ctx.message.author.mention}: {ability}')
+            await ctx.reply(f'{ability}')
         else:
-            await ctx.send(f'{ctx.message.author.mention}: Something went wrong when contacting the API.')
+            await ctx.reply(f'Something went wrong when contacting the API.')
 
     @commands.command(help="Get a random Pokemon item.", aliases=['ritem', 'Ritem', 'RItem', 'RITEM'])
     @commands.cooldown(rate=1, per=4, type=BucketType.channel)
@@ -109,9 +108,9 @@ class Pokemon(commands.Cog):
         if api_results:
             item = random.choice(api_results.json()['results'])['name']
             item = item.title().replace("-", " ")
-            await ctx.send(f'{ctx.message.author.mention}: {item}')
+            await ctx.reply(f'{item}')
         else:
-            await ctx.send(f'{ctx.message.author.mention}: Something went wrong when contacting the API.')
+            await ctx.reply(f'Something went wrong when contacting the API.')
 
     @commands.command(help="Get information about a Pokemon (Gen 1 - 7).", aliases=['pdt', 'Pdt', 'PDT', 'pdata', 'pd'])
     @commands.cooldown(rate=1, per=4, type=BucketType.channel)
@@ -162,10 +161,10 @@ class Pokemon(commands.Cog):
                 f"**SPE:** {stats[0]['base_stat']}\n"
             ), inline=True)
             poke_embed.set_footer(text=f'More info: https://pokemondb.net/pokedex/{poke}')
-            await ctx.send(embed=poke_embed)
+            await ctx.reply(embed=poke_embed)
             
         else:
-            await ctx.send(f'{ctx.message.author.mention}: No pokemon with that name or number found.')
+            await ctx.reply(f'No pokemon with that name or number found.')
     
     @commands.command(help="Generate a Pokemon name.", aliases=['rname', 'RName', 'Rname'])
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
@@ -184,7 +183,7 @@ class Pokemon(commands.Cog):
         for i in range(number):
             names.append(self.GenerateName())
         name_string =  ', '.join(names)
-        await ctx.send(f'{ctx.message.author.mention}: {name_string}')
+        await ctx.reply(f'{name_string}')
 
     @commands.command(help="Generate an entirely random new Pokemon.", aliases=['gpoke', 'genpoke', 'GPoke', 'Genpoke', 'gmon'])
     @commands.cooldown(rate=1, per=5, type=BucketType.channel)
@@ -258,7 +257,7 @@ class Pokemon(commands.Cog):
                 if ability1 != ability2 and ability1 != ability3 and ability2 != ability3:
                     break
         else:
-            await ctx.send(f'{ctx.message.author.mention}: Something went wrong when contacting the API.')
+            await ctx.reply(f'Something went wrong when contacting the API.')
             return
 
         poke_embed = discord.Embed()
@@ -275,8 +274,7 @@ class Pokemon(commands.Cog):
             f"**SP.DEF:** {stats[4]}\n"
             f"**SPE:** {stats[5]}\n"
         ), inline=True)
-        poke_embed.set_footer(text=f'Generated for {ctx.message.author.name}')
-        await ctx.send(embed=poke_embed)
+        await ctx.reply(embed=poke_embed)
         
 
         

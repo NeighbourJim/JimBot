@@ -23,7 +23,7 @@ class Admin(commands.Cog):
     async def load(self, ctx: discord.ext.commands.Context, extension: str):
         self.client.load_extension(f'cogs.{extension}')
         logger.LogPrint(f'Loaded extension {extension}')
-        await ctx.send(f'Loaded extension {extension}')
+        await ctx.reply(f'Loaded extension {extension}')
 
     # Unload extensions - Obviously!
     @commands.command(help="Unloads a command module.", hidden=True)
@@ -32,7 +32,7 @@ class Admin(commands.Cog):
     async def unload(self, ctx: discord.ext.commands.Context, extension: str):
         self.client.unload_extension(f'cogs.{extension}')
         logger.LogPrint(f'Unloaded extension {extension}')
-        await ctx.send(f'Unloaded extension {extension}')
+        await ctx.reply(f'Unloaded extension {extension}')
 
     # Reload a cog - Useful for working on cogs without having to restart the bot constantly
     @commands.command(help="Reloads a command module.", hidden=True)
@@ -42,7 +42,7 @@ class Admin(commands.Cog):
         self.client.unload_extension(f'cogs.{extension}')
         self.client.load_extension(f'cogs.{extension}')
         logger.LogPrint(f'Reloaded extension {extension}')
-        await ctx.send(f'Reloaded extension {extension}')
+        await ctx.reply(f'Reloaded extension {extension}')
     
     #endregion
     
@@ -51,7 +51,7 @@ class Admin(commands.Cog):
     @commands.is_owner()
     async def quit(self, ctx):
         logger.LogPrint(f'Bot forced to shut down via command.')
-        await ctx.send("Bot shutting down...")
+        await ctx.reply("Bot shutting down...")
         await self.client.close()
 
     # Toggle whether a command is blacklisted in the current channel
@@ -73,11 +73,11 @@ class Admin(commands.Cog):
         if valid_command:
             result = BLM.ToggleCommandInChannel(command_to_toggle, ctx.guild.id, channel.id)
             if result == True:
-                await ctx.send(f'{ctx.message.author.mention}: Command ``{command_to_toggle}`` enabled in channel ``{channel.name}``.')
+                await ctx.reply(f'Command `{command_to_toggle}` enabled in channel `{channel.name}`.')
             else:
-                await ctx.send(f'{ctx.message.author.mention}: Command ``{command_to_toggle}`` disabled in channel ``{channel.name}``.')
+                await ctx.reply(f'Command `{command_to_toggle}` disabled in channel `{channel.name}`.')
         else:
-            await ctx.send(f'{ctx.message.author.mention}: The command ``{command_to_toggle}`` does not exist.')
+            await ctx.reply(f'The command `{command_to_toggle}` does not exist.')
         await ctx.message.delete()
 
     # Deletes a specified number of messages.
@@ -98,17 +98,17 @@ class Admin(commands.Cog):
             if amount > 0 and amount <= 50:
                 if len(mentions) == 0:
                     deleted = await ctx.channel.purge(limit=amount)
-                    await ctx.send(f'{ctx.message.author.mention}: Deleted {len(deleted)} messages.')                    
+                    await ctx.reply(f'Deleted {len(deleted)} messages.')                    
                 elif len(mentions) == 1:
                     deleted = await ctx.channel.purge(limit=amount, check=compare_users)                
-                    await ctx.send(f'{ctx.message.author.mention}: Deleted {len(deleted)} messages.') 
+                    await ctx.reply(f'Deleted {len(deleted)} messages.') 
                 else:
-                    await ctx.send(f'{ctx.message.author.mention}: Can only delete messages from 1 user at a time.')
+                    await ctx.reply(f'Can only delete messages from 1 user at a time.')
             else:
-                    await ctx.send(f'{ctx.message.author.mention}: Can only delete between 1 and 50 messages.')
+                    await ctx.reply(f'Can only delete between 1 and 50 messages.')
         except Exception as ex:
             logger.LogPrint(f'ERROR - {ctx.command}:{ex}',logging.ERROR)  
-            await ctx.send(f'{ctx.message.author.mention}: You didn\'t enter a number of messages.')      
+            await ctx.reply(f'You didn\'t enter a number of messages.')      
 
 
 def setup(client):

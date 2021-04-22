@@ -2,6 +2,7 @@ import discord
 import random
 import logging
 import re
+import d20
 import json
 from discord.ext import commands
 from discord.ext.commands import BucketType
@@ -26,7 +27,7 @@ class Base(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def ping(self, ctx):
-        await ctx.send(':sparkles:')
+        await ctx.reply(':sparkles:')
 
     @commands.command(aliases=["8ball", "8b"], help="Roll the Magic 8-Ball!\nUsage: !magic8ball question?")
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
@@ -58,9 +59,9 @@ class Base(commands.Cog):
 					'Never, ever, ever.'
 				]
         if len(Helpers.CommandStrip(self, ctx.message.content)) > 0:
-            await ctx.send(f'{ctx.message.author.mention}: **{random.choice(answers)}**')
+            await ctx.reply(f'**{random.choice(answers)}**')
         else:
-            await ctx.send(f'{ctx.message.author.mention}: What are you asking?')
+            await ctx.reply(f'What are you asking?')
 
     @commands.command(aliases=["r", "R"], help="Rolls a random number between 2 other numbers.\nIf provided with 1 number, will roll between 0 and that number.\nIf provided with 2 separated by a comma, will take the first as the min and the second as the max.\nUsage: !roll 100 / !roll 10,20.")
     @commands.has_role("Bot Use")
@@ -92,7 +93,7 @@ class Base(commands.Cog):
                 if min < -100000000:
                     min = -100000000
                 number = random.randint(min, max)
-                response = f'{ctx.message.author.mention}: Your number between {min} and {max} was: **{number}**.'
+                response = f'Your number between {min} and {max} was: **{number}**.'
                 # If 2 or more of the trailing digits are the same, and the server has an appropriate emoji, append it to the message - An in-joke on our server
                 if len(str(number)) >= 2:
                     if str(number)[-1] == str(number)[-2]:
@@ -102,9 +103,9 @@ class Base(commands.Cog):
                 # If the number is 7, append the zap emoji - Another in-joke
                 if number == 7:
                     response += ' :zap:'
-                await ctx.send(response)
+                await ctx.reply(response)
             else:
-                await ctx.send(f'{ctx.message.author.mention}: That\'s not a number.')
+                await ctx.reply(f'That\'s not a number.')
         except Exception as ex:
             logger.LogPrint(f'ROLL command failed. - {ex}', logging.ERROR)
 
@@ -118,37 +119,24 @@ class Base(commands.Cog):
         if len(split_message) > 1:
             # Select a random element and respond with it
             result = random.choice(split_message)
-            await ctx.send(f'{ctx.message.author.mention}: {result}')
+            await ctx.reply(f'{result}')
         else:
-            await ctx.send(f'{ctx.message.author.mention}: You only gave one option.')
+            await ctx.reply(f'You only gave one option.')
+
+
 
     @commands.command(aliases=["Dice"], help="Rolls a die of specified size a specified numer of times.\nUsage: !dice 2d20")
     @commands.cooldown(rate=1, per=1, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def dice(self, ctx):
-        # Split the message at 'd' to get both number of dice and dice size
-        max_count = 50
-        max_size = 100000
-        split_message = Helpers.CommandStrip(self, ctx.message.content).lower().split('d')
-        if len(split_message) > 1:
-            dice_amount = Helpers.FuzzyIntegerSearch(self, split_message[0])
-            dice_size = Helpers.FuzzyIntegerSearch(self, split_message[1])
-            if dice_amount != None and dice_size != None:
-                if dice_amount > 0 and dice_size > 0:
-                    if dice_amount > max_count or dice_size > max_size:
-                        await ctx.send(f'{ctx.message.author.mention}: Invalid dice size. Max amount {max_count}, max size {max_size}.')
-                        return
-                    # If both variables have appropriate values, roll the dice the specified number of times
-                    # Append each roll to the rolls list, then provide them + the total
-                    rolls = []
-                    for i in range(dice_amount):
-                        rolls.append(random.randint(1, dice_size))
-                    await ctx.send(f'{ctx.message.author.mention}: Your rolls: **{", ".join(str(roll) for roll in rolls)}**.\n**Total:** {sum(rolls)}.')
-                else:
-                    await ctx.send(f'{ctx.message.author.mention}: Invalid dice. Correct usage eg: ``!dice 2d20``')
-        else:
-            await ctx.send(f'{ctx.message.author.mention}: Invalid dice. Correct usage eg: ``!dice 2d20``')
+        try:
+            result = d20.roll(Helpers.CommandStrip(self, ctx.message.content))
+            await ctx.reply(f'{result}')
+        except d20.RollSyntaxError as e:
+            await ctx.reply(f'Invalid input.', delete_after=6.0)
+            await ctx.message.delete(delay=7)
+        
 
     @commands.command(aliases=["ru", "RU", "Ru"], help="Gives up to 10 random ONLINE users on the server.")    
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
@@ -173,7 +161,8 @@ class Base(commands.Cog):
         while i < amount:
             if len(members) > 0:
                 r_member = members.pop()
-                if r_member.status != discord.Status.offline and r_member.bot == False:                 
+                if r_member.status != discord.Status.offline and r_member.bot == False: 
+            
                     selected_members.append(r_member)
                     i += 1
             else:
@@ -186,7 +175,7 @@ class Base(commands.Cog):
             else:
                 name = f'{member.display_name} ({member.name})'
             response += f'{name}\n'
-        await ctx.send(f'{ctx.message.author.mention}: {response}')
+        await ctx.reply(f'{response}')
 
     @commands.command(aliases=["rua", "RUA", "Rua"], help="Gives up to 10 random users on the server, both online and offline.")    
     @commands.cooldown(rate=1, per=5, type=BucketType.channel)
@@ -224,7 +213,7 @@ class Base(commands.Cog):
             else:
                 name = f'{member.display_name} ({member.name})'
             response += f'{name}\n'
-        await ctx.send(f'{ctx.message.author.mention}: {response}')
+        await ctx.reply(f'{response}')
 
     @commands.command(aliases=["e", "E"], help="Get the image link for an emote.")    
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
@@ -234,9 +223,9 @@ class Base(commands.Cog):
         # Get the ID of the first emoji in the user's message - If there is one, provide a link to the full image as stored on discord's servers.
         e_id = Helpers.GetFirstEmojiID(self, Helpers.CommandStrip(self, ctx.message.content))
         if e_id:
-            await ctx.send(f'{ctx.message.author.mention}: https://cdn.discordapp.com/emojis/{e_id.group()}.png')
+            await ctx.reply(f'https://cdn.discordapp.com/emojis/{e_id.group()}.png')
         else:            
-            await ctx.send(f'{ctx.message.author.mention}: You didn\'t provide an emoji.')
+            await ctx.reply(f'You didn\'t provide an emoji.')
 
 
     @commands.command(help="Print some info about the bot.")    
@@ -255,7 +244,7 @@ class Base(commands.Cog):
                     "thumbnail": {"url": f'{self.client.user.avatar_url}'}
                     }
         info_embed = discord.Embed.from_dict(embed_dict)
-        await ctx.send(embed=info_embed)
+        await ctx.reply(embed=info_embed)
 
     @commands.command(aliases=["cc", "Cc"], help="Convert a value between two currencies.")    
     @commands.cooldown(rate=1, per=10, type=BucketType.channel)
@@ -275,9 +264,9 @@ class Base(commands.Cog):
                     result = input_value * list(response.values())[0]
                     formatted_value = "{:,.2f}".format(input_value)
                     formatted_result = "{:,.2f}".format(result)
-                    await ctx.send(f'{ctx.message.author.mention}: ``{formatted_value} {currency_one.upper()} = {formatted_result} {currency_two.upper()}.``')
+                    await ctx.reply(f'`{formatted_value} {currency_one.upper()} = {formatted_result} {currency_two.upper()}.`')
                     return
-        await ctx.send(f'{ctx.message.author.mention}: Invalid input. Correct input eg. ``!cc 2.5, USD, EUR``\n You must provide the 3 letter currency codes: <https://www.iban.com/currency-codes>')
+        await ctx.reply(f'Invalid input. Correct input eg. `!cc 2.5, USD, EUR`\n You must provide the 3 letter currency codes: <https://www.iban.com/currency-codes>')
 
 
 def setup(client):

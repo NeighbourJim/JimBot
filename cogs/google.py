@@ -75,14 +75,13 @@ class Google(commands.Cog):
                     fields.append({"name": item['title'], "value": item['link'], "inline": False })        
                 result_dict = {
                     "author": {"name": "Search Results for '{}'".format(Helpers.CommandStrip(self, ctx.message.content))}, 
-                    "footer": {"text": "Searched for by {}".format(ctx.message.author)}, 
                     "fields": fields,
                     "thumbnail": {"url": "https://cdn.discordapp.com/attachments/144073497939935232/677385165462568970/500px-Google_G_Logo.svg.png"}
                     }
                 result_embed = discord.Embed.from_dict(result_dict)
-                await ctx.send(embed=result_embed)
+                await ctx.reply(embed=result_embed)
             else:
-                await ctx.send(f'{ctx.message.author.mention}: No results found for that query.')
+                await ctx.reply(f'No results found for that query.')
         except Exception as ex:
             await self.client.close()
 
@@ -137,7 +136,6 @@ class Google(commands.Cog):
     @commands.guild_only()
     async def image(self, ctx):
         try:
-            to_delete = ctx.message
             if ctx.message.channel.is_nsfw():
                 task = asyncio.create_task(self.GetImageResult(ctx.message.content))
             else:
@@ -153,19 +151,19 @@ class Google(commands.Cog):
                     ctx.command.reset_cooldown(ctx)
                 else:
                     image_embed.set_thumbnail(url=task.result()["link"])
-                image_embed.set_footer(text=f'{ctx.message.author} searched for \'{Helpers.CommandStrip(self, ctx.message.content)}\'')
-                await ctx.send(embed=image_embed)
+                await ctx.reply(embed=image_embed)
             else:
-                await ctx.send(f'{ctx.message.author.mention}: No results found for \'{Helpers.CommandStrip(self, ctx.message.content)}\'. Note that Safe Search is on if the channel is not marked as NSFW!', delete_after=10)
-            await to_delete.delete(delay=2)
+                await ctx.reply(f'No results found for \'{Helpers.CommandStrip(self, ctx.message.content)}\'. Note that Safe Search is on if the channel is not marked as NSFW!', delete_after=10)
         except Exception as ex:
             logger.LogPrint("IMAGE ERROR", logging.CRITICAL, ex)
             if str(ex).find('Invalid Form Body') != -1:
-                await ctx.send(f'{ctx.message.author.mention}: {task.result()["link"]}')
+                await ctx.reply(f'{task.result()["link"]}')
             if str(ex).find('HttpError 429') != -1:
-                await ctx.send(f'ERROR: Quota exceeded. Resets at Midnight PST.')
+                await ctx.reply(f'ERROR: Quota exceeded. Resets at Midnight PST.')
+            if str(ex).find('HttpError 503') != -1:
+                await ctx.reply(f'ERROR: The service is currently unavailable.')
             else:
-                await ctx.send(f'ERROR: {ex}.')
+                await ctx.reply(f'ERROR: Something went wrong.')
     #endregion
 
     #region --------------- Youtube Search ---------------
@@ -193,15 +191,15 @@ class Google(commands.Cog):
             task = asyncio.create_task(self.GetYoutubeVideo(ctx.message.content))
             await task
             if task.result() != None:
-                await ctx.send(f'{ctx.message.author.mention}: http://youtu.be/{task.result()["id"]["videoId"]}')
+                await ctx.reply(f'http://youtu.be/{task.result()["id"]["videoId"]}')
             else:
-                await ctx.send(f'{ctx.message.author.mention}: No results found.')
+                await ctx.reply(f'No results found.')
         except Exception as ex:
             logger.LogPrint(f"ERROR: {ctx.command} - {ex}", logging.CRITICAL, ex)
             if str(ex).find('Daily Limit Exceeded'):
-                await ctx.send(f'ERROR: Daily Search Limit Exceeded. The limit resets at midnight Pacific Time.')
+                await ctx.reply(f'ERROR: Daily Search Limit Exceeded. The limit resets at midnight Pacific Time.')
             else:
-                await ctx.send(f'ERROR: {ex}.')
+                await ctx.reply(f'ERROR: Something went wrong.')
             
     #endregion
 

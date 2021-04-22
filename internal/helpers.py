@@ -51,8 +51,10 @@ class Helpers():
                 stripped = Helpers.CommandStrip(self, message.content)
                 stripped = Helpers.StripMentions(self, stripped)
                 if len(stripped) > 1:
-                    return stripped.strip()
+                    return message
         return None
+
+    
 
     @staticmethod
     def GetFirstEmojiID(self, message: str):

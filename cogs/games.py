@@ -3,6 +3,7 @@ import logging
 import random
 import asyncio
 import json
+import re
 import html as base_html
 import urllib.parse
 from bs4 import BeautifulSoup as BS
@@ -45,6 +46,32 @@ class Games(commands.Cog):
                 stats.append("E")
         return stats
 
+    def GetNonsenseWord(self):
+        import string
+        letters = ""
+        converted = ""    
+        p = re.compile('[aeiou0-9]')  
+        length = random.randint(3,8)
+        for i in range(length):
+            letter = random.choice(string.ascii_lowercase)
+            if i % 2 == 0:
+                letter = random.choice(['a','e','i','o','u'])
+            letters += letter
+        if not p.findall(letters):
+            letters += random.choice(['a','e','i','o','u'])
+                
+        
+        vowelsAndNumbers = p.findall(letters)
+        letters = p.sub("",letters)
+
+        j = 0
+        for c in letters:    
+            converted += c + ''.join(vowelsAndNumbers[j:j+1])
+            j+=1
+        # if remaining vowels, add to convertedString
+        converted += ''.join(vowelsAndNumbers[i:])
+        return converted
+
     # This command is very server specific. 
     # It will basically only run for the server I'm building the bot for.
     # It will play an animation of an emoji splitting apart to reveal a random other emoji
@@ -54,43 +81,40 @@ class Games(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def trollbox(self, ctx):
-        left_side = Helpers.FindEmoji(self,ctx, "longtroll3")
-        right_side = Helpers.FindEmoji(self,ctx, "longtroll1")
         try:
-            # If the server has appropriately named emoji
-            if left_side is not None and right_side is not None:
-                # Select a prize
+            # Select a prize
+            valid = False
+            while not valid:
                 prize = random.choice(ctx.guild.emojis)
-                # Prepare the formatted emoji strings
-                left_side_string = f'<:{left_side.name}:{left_side.id}>'
-                right_side_string = f'<:{right_side.name}:{right_side.id}>'                                
-                if prize.animated == True:
-                    prize_string = f'<a:{prize.name}:{prize.id}>'
-                else:
-                    prize_string = f'<:{prize.name}:{prize.id}>'
-                # Prepare each of the messages - The first will be sent, and then the message will be edited to each subsequent message in order
-                message_one = f'{left_side_string}{right_side_string}'
-                message_two = f'{left_side_string}    {right_side_string}'
-                message_three = f'{left_side_string} :sparkles: {right_side_string}'
-                message_four = f'{left_side_string} {prize_string} {right_side_string}'
-                # Create a task to send the first message
-                task_one = asyncio.create_task(ctx.send(message_one))
-                # Await the message send completion, and then sleep for 1 second
-                await task_one
-                await asyncio.sleep(1)
-                # Create a new task to edit the result of the first task with the content of message two
-                task_two = asyncio.create_task(task_one.result().edit(content=message_two))
-                # Await and then sleep for 0.2 seconds
-                await task_two
-                await asyncio.sleep(0.2)
-                # Repeat as above for messages three and four
-                task_three = asyncio.create_task(task_one.result().edit(content=message_three))
-                await task_three
-                await asyncio.sleep(1.2)
-                task_four = asyncio.create_task(task_one.result().edit(content=message_four))
-                await task_four
+                valid = prize.available
+            # Prepare the formatted emoji strings
+            left_side_string = f'<:trollbox1:791189066351116309>'
+            right_side_string = f'<:trollbox2:791189083279327242>'
+            if prize.animated == True:
+                prize_string = f'<a:{prize.name}:{prize.id}>'
             else:
-                await ctx.send(f'{ctx.message.author.mention}: Could not find the required emoji.', delete_after=6)
+                prize_string = f'<:{prize.name}:{prize.id}>'
+            # Prepare each of the messages - The first will be sent, and then the message will be edited to each subsequent message in order
+            message_one = f'{left_side_string}{right_side_string}'
+            message_two = f'{left_side_string}    {right_side_string}'
+            message_three = f'{left_side_string} :sparkles: {right_side_string}'
+            message_four = f'{left_side_string} {prize_string} {right_side_string}'
+            # Create a task to send the first message
+            task_one = asyncio.create_task(ctx.reply(message_one))
+            # Await the message send completion, and then sleep for 1 second
+            await task_one
+            await asyncio.sleep(1)
+            # Create a new task to edit the result of the first task with the content of message two
+            task_two = asyncio.create_task(task_one.result().edit(content=message_two))
+            # Await and then sleep for 0.2 seconds
+            await task_two
+            await asyncio.sleep(0.2)
+            # Repeat as above for messages three and four
+            task_three = asyncio.create_task(task_one.result().edit(content=message_three))
+            await task_three
+            await asyncio.sleep(1.2)
+            task_four = asyncio.create_task(task_one.result().edit(content=message_four))
+            await task_four
         except Exception as ex:
             logger.LogPrint(ex, logging.ERROR)
 
@@ -141,7 +165,41 @@ class Games(commands.Cog):
         else:
             ctx.command.reset_cooldown(ctx)
             response = f'Invalid number of adjectives requested.'        
-        await ctx.send(f'{ctx.message.author.mention}: ``{response}``')
+        await ctx.reply(f'`{response}`')
+
+
+    @commands.command(help="Randomly crap.", aliases=["annie"])
+    @commands.cooldown(rate=1, per=2, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def nonsense(self, ctx):
+        words = []
+        sentences = ""
+        mid_sentence = [" ", " ", " ", " ", " ", ", ", ". ", "! ", "? "]
+        end_sentence = [".", "?", "!"]
+        for i in range(random.randint(3, 8)):
+            words.append(self.GetNonsenseWord())
+        for i in range(len(words)):
+            if i != len(words)-1:
+                sentences += f"{words[i]}{random.choice(mid_sentence)}"
+            else:
+                sentences += f"{words[i]}{random.choice(end_sentence)}"
+
+        sentence_split = re.split('([.!?] *)', sentences)
+        response = ''.join([i.capitalize() for i in sentence_split])
+        
+        await ctx.reply(f'{response}')
+
+    @commands.command(aliases=["gdq"])
+    @commands.cooldown(rate=1, per=3, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def agdq(self, ctx):
+        await ctx.trigger_typing()
+        api_url = 'https://taskinoz.com/gdq/api'
+        donation = Helpers.GetWebPage(self, api_url).text
+        await ctx.reply(f'{donation}')
+
 
     @commands.command(aliases=["Power"])
     @commands.cooldown(rate=1, per=10, type=BucketType.channel)
@@ -169,14 +227,14 @@ class Games(commands.Cog):
                     desc = page_tree.xpath('//meta[@name="description"]/@content')
                     readable_url = urllib.parse.unquote(encoded_url).replace(" ", "_")
                     if len(desc) > 0:
-                        response = f'{ctx.message.author.mention}: **Power:** {name}\n**Description:** {base_html.unescape(desc[0].strip())}\n<{readable_url}>'
+                        response = f'**Power:** {name}\n**Description:** {base_html.unescape(desc[0].strip())}\n<{readable_url}>'
                     else:
-                        response = f'{ctx.message.author.mention}: **Power:**{name}\n<{readable_url}>'
+                        response = f'**Power:**{name}\n<{readable_url}>'
                 else:
-                    response = f'{ctx.message.author.mention}: Couldn\'t get Power info.'
+                    response = f'Couldn\'t get Power info.'
             else:
-                response = f'{ctx.message.author.mention}: Couldn\'t get Power info.'
-            await ctx.send(response)
+                response = f'Couldn\'t get Power info.'
+            await ctx.reply(response)
         except Exception as ex:
             logger.LogPrint(ex, logging.ERROR)
 
@@ -186,6 +244,7 @@ class Games(commands.Cog):
     @commands.guild_only()
     async def stand(self, ctx):
         await ctx.trigger_typing()
+
         stats = self.GetStandStats()
         power_api_url = 'https://powerlisting.fandom.com/api.php'
         music_api_url = 'https://music.fandom.com/api.php'
@@ -196,12 +255,16 @@ class Games(commands.Cog):
             "rnlimit": "1",
             "format": "json"
         }
-        random_power = Helpers.GetWebPage(self, power_api_url, params)            
-        random_music = Helpers.GetWebPage(self, music_api_url, params)
-        if random_power and random_music:
+        power_valid = False
+        while not(power_valid):
+            random_power = Helpers.GetWebPage(self, power_api_url, params)        
             power = random_power.json()["query"]["random"][0]
             pow_name = power["title"]
             pow_url = f'https://powerlisting.fandom.com/wiki/{urllib.parse.quote(pow_name)}'
+            if "physiology" not in pow_name.lower() and "proficiency" not in pow_name.lower():
+                power_valid = True
+        random_music = Helpers.GetWebPage(self, music_api_url, params)
+        if random_power and random_music:            
             music = random_music.json()["query"]["random"][0]
             music_name = music["title"].split(',')[0]
             music_name = music_name.split('List of ')[0]
@@ -244,13 +307,12 @@ class Games(commands.Cog):
                         stand_embed.set_thumbnail(url="attachment://stand.png")
                     else:
                         stand_embed.set_image(url="attachment://stand.png")
-                    stand_embed.set_author(name=f'{ctx.message.author.display_name}\'s Stand')
                     stand_embed.title = f'**「{music_name}」**'
                     if len(desc) > 0:
-                        stand_embed.description = f"It has the ability: **[{pow_name}]({pow_url})**\n{base_html.unescape('.'.join(desc[0].split('.')[0:2]))}"
+                        stand_embed.description = f"Ability: **[{pow_name}]({pow_url})**\n{base_html.unescape('.'.join(desc[0].split('.')[0:2]))}"
                     else:
-                        stand_embed.description = f"It has the ability: **[{pow_name}]({pow_url})**"
-                    sent = await ctx.send(file=image_file, embed=stand_embed)
+                        stand_embed.description = f"Ability: **[{pow_name}]({pow_url})**"
+                    sent = await ctx.reply(file=image_file, embed=stand_embed)
                     if len(ctx.guild.members) <= 200: # temporarily disabled as it isnt necessary
                         await asyncio.sleep(10)
                         stand_embed.set_thumbnail(url="attachment://stand.png")
@@ -258,20 +320,20 @@ class Games(commands.Cog):
                         await sent.edit(embed=stand_embed)
                 else:
                     response = f"Couldn't generate Stand."
-                    await ctx.send(response)
+                    await ctx.reply(response)
             else:
                 response = f"Couldn't generate Stand."
-                await ctx.send(response)
+                await ctx.reply(response)
         else:
             response = f"Couldn't generate Stand."
-            await ctx.send(response)
+            await ctx.reply(response)
 
     @commands.command(help="Fuse two user's names.", aliases=['nf', 'NF', 'Nf'])
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def namefuse(self, ctx):
-        members = ctx.guild.members
+        members = ctx.channel.members
         if len(members) > 1:
             if Helpers.CommandStrip(self, ctx.message.content).split(' ')[0].lower() == 'online':
                 depth = 0
@@ -282,7 +344,7 @@ class Games(commands.Cog):
                         break
                     depth += 1
                     if depth > 100:
-                        await ctx.send(f'{ctx.message.author.mention}: Could not find enough valid members.')
+                        await ctx.reply(f'{ctx.message.author.mention}: Could not find enough valid members.')
                         return
                 while True:
                     name2 = random.choice(members)
@@ -291,7 +353,7 @@ class Games(commands.Cog):
                         break
                     depth += 1
                     if depth > 100:
-                        await ctx.send(f'{ctx.message.author.mention}: Could not find enough valid members.')
+                        await ctx.reply(f'Could not find enough valid members.')
                         return
             else:            
                 name1 = random.choice(members)
@@ -302,7 +364,7 @@ class Games(commands.Cog):
                         break
                     depth += 1
                     if depth > 100:
-                        await ctx.send(f'{ctx.message.author.mention}: Could not find enough valid members.')
+                        await ctx.reply(f'Could not find enough valid members.')
                         return
                     
             if random.randint(0,1) == 0:
@@ -324,7 +386,9 @@ class Games(commands.Cog):
             else:
                 name = name2parts[0] + name1parts[1]
 
-            await ctx.send(f'{ctx.message.author.mention}: {name.title()}')
+            await ctx.reply(f'{name.title()}')
+        else:
+            await ctx.reply(f'Could not find enough valid members.')
 
     @commands.command(aliases=["tvt", "TVT"], help="Get a random TVTropes page.")    
     @commands.cooldown(rate=1, per=7, type=BucketType.channel)
@@ -337,13 +401,13 @@ class Games(commands.Cog):
             if page:
                 soup = BS(page.content, "lxml")
                 url = soup.find('meta', {"property":"og:url"})['content']
-                response = f'{ctx.message.author.mention}: {url}'
+                response = f'{url}'
             else:
-                response = f'{ctx.message.author.mention}: Couldn\'t get TVTropes page.'
-            await ctx.send(response)
+                response = f'Couldn\'t get TVTropes page.'
+            await ctx.reply(response)
         except Exception as ex:
             logger.LogPrint("IMAGE ERROR", logging.CRITICAL, ex)
-            await ctx.send(f'{ctx.message.author.mention}: Something went wrong getting TVTropes page.')
+            await ctx.reply(f'Something went wrong getting TVTropes page.')
 
     
     @commands.command(aliases=["ae", "aes", "Aesthetic"], help="By request - Get a random aesthetic wiki page.")    
@@ -372,14 +436,14 @@ class Games(commands.Cog):
                     desc = page_tree.xpath('//meta[@name="description"]/@content')
                     readable_url = urllib.parse.unquote(encoded_url).replace(" ", "_")
                     if len(desc) > 0:
-                        response = f'{ctx.message.author.mention}: **Aesthetic:** {name}\n**Description:** {base_html.unescape(desc[0].strip())}\n<{readable_url}>'
+                        response = f'**Aesthetic:** {name}\n**Description:** {base_html.unescape(desc[0].strip())}\n<{readable_url}>'
                     else:
-                        response = f'{ctx.message.author.mention}: **Aesthetic:**{name}\n<{readable_url}>'
+                        response = f'**Aesthetic:**{name}\n<{readable_url}>'
                 else:
-                    response = f'{ctx.message.author.mention}: Couldn\'t get Aesthetic info.'
+                    response = f'Couldn\'t get Aesthetic info.'
             else:
-                response = f'{ctx.message.author.mention}: Couldn\'t get Aesthetic info.'
-            await ctx.send(response)
+                response = f'Couldn\'t get Aesthetic info.'
+            await ctx.reply(response)
         except Exception as ex:
             logger.LogPrint(ex, logging.ERROR)
 
@@ -392,7 +456,7 @@ class Games(commands.Cog):
             await ctx.trigger_typing()
             query = Helpers.CommandStrip(self, ctx.message.content).split(' ')[0]
             if len(query) <= 0:
-                response = f'{ctx.message.author.mention}: Please specify a fandom wiki.'
+                response = f'Please specify a fandom wiki.'
             else:
                 api_url = f'https://{query}.fandom.com/api.php'
                 params = {
@@ -414,16 +478,16 @@ class Games(commands.Cog):
                             desc = page_tree.xpath('//meta[@name="description"]/@content')
                             readable_url = urllib.parse.unquote(encoded_url).replace(" ", "_")
                             if len(desc) > 0:
-                                response = f'{ctx.message.author.mention}: **Title:** {name}\n**Description:** {base_html.unescape(urllib.parse.unquote(desc[0].strip()))}\n<{readable_url}>'
+                                response = f'**Title:** {name}\n**Description:** {base_html.unescape(urllib.parse.unquote(desc[0].strip()))}\n<{readable_url}>'
                             else:
-                                response = f'{ctx.message.author.mention}: **Title:**{name}\n<{readable_url}>'
+                                response = f'**Title:**{name}\n<{readable_url}>'
                         else:
-                            response = f'{ctx.message.author.mention}: Couldn\'t get info.'
+                            response = f'Couldn\'t get info.'
                     except Exception as ex:
-                        response = f'{ctx.message.author.mention}: Couldn\'t contact {query} wiki.\nCheck you entered a fandom wiki that actually exists!\nIf you\'re sure it exists, then they likely have the API turned off.'
+                        response = f'Couldn\'t contact {query} wiki.\nCheck you entered a fandom wiki that actually exists!\nIf you\'re sure it exists, then they likely have the API turned off.'
                 else:
-                    response = f'{ctx.message.author.mention}: Couldn\'t contact {query} wiki.\nCheck you entered a fandom wiki that actually exists!'
-            await ctx.send(response)
+                    response = f'Couldn\'t contact {query} wiki.\nCheck you entered a fandom wiki that actually exists!'
+            await ctx.reply(response)
         except Exception as ex:
             logger.LogPrint(ex, logging.ERROR)
 
