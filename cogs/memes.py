@@ -555,6 +555,8 @@ class Memes(commands.Cog):
             mentions = ctx.message.mentions
             valid = True
             if len(message) > 0:
+                if message.count('\n') > 25:
+                    valid = False
                 for term in forbidden:
                     if message.find(term) != -1:
                         valid = False
@@ -573,7 +575,7 @@ class Memes(commands.Cog):
                         await ctx.reply(f'That\'s already a meme, you dip.', delete_after=10)
                 else:
                     ctx.command.reset_cooldown(ctx)
-                    await ctx.reply(f'That meme contains a forbidden term. Memes cannot highlight people or contain links that expire quickly.', delete_after=10)
+                    await ctx.reply(f'That meme contains a forbidden term. Memes cannot highlight people, contain links that expire quickly, or have more than 25 lines to avoid spam.', delete_after=10)
             else:
                 ctx.command.reset_cooldown(ctx)
                 await ctx.reply(f'Can\'t add a blank meme.', delete_after=10)

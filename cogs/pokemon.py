@@ -3,47 +3,191 @@ import json
 import logging
 import random
 import asyncio
+import requests
 from discord.ext import commands
 from discord.ext.commands import BucketType
 
 from internal.logs import logger
 from internal.helpers import Helpers
 from internal.command_blacklist_manager import BLM
-from internal.data.pokemon_names import pokemon_names
+from internal.data.pokemon_names import pokemon_names, pokemon_names_fusion
+from internal.data.pokemon_names_split import split_names, pokemon_names_split_fusion
 
 class Pokemon(commands.Cog):
 
+    
+
     def __init__(self, client):
         self.client = client
+        self.fusion_cache = dict()
 
     async def cog_check(self, ctx):
         return BLM.CheckIfCommandAllowed(ctx)
         
-    def GenerateName(self):
-        name1 = random.choice(pokemon_names).lower()
-        while True:
-            name2 = random.choice(pokemon_names).lower()
-            if name1 != name2:
-                break
+    def AddToFusionCache(self, key,value):
+        max_dict_size = 1000
+        if len(self.fusion_cache) >= max_dict_size:
+            self.fusion_cache.pop(next(iter(self.fusion_cache)))
+        self.fusion_cache[key] = value
 
-        name1parts = [name1[:len(name1)//2],name1[len(name1)//2:]]
-        name2parts = [name2[:len(name2)//2],name2[len(name2)//2:]]
-        roll = random.randint(0,1)
-        if roll == 0:
-            
-            name = random.choice(name1parts) + random.choice(name2parts)
+    def GenerateFusedName(self, id1, id2):
+        prefix_only = ['mr. ', 'regi', 'type: ', 'tapu ', 'iron ', "wo-", "ting-", "chi-", "chien-"]
+        suffix_only = [' jr.', 'ese', 'mo-o']      
+        n2_prefix_found = False
+        n1_suffix_found = False
+
+        name1pre = pokemon_names_split_fusion[id1][0].lower()
+        name1suf = pokemon_names_split_fusion[id1][1].lower()
+        name2pre = pokemon_names_split_fusion[id2][0].lower()
+        name2suf = pokemon_names_split_fusion[id2][1].lower()
+        
+        for i in prefix_only:
+            if i == name2pre:
+                n2_prefix_found = True
+        for i in suffix_only:
+            if i == name1suf:
+                n1_suffix_found = True
+
+        if n2_prefix_found or n1_suffix_found:
+            name = name2pre + name1suf
         else:
-            name = random.choice(name2parts) + random.choice(name1parts)
-        return name.title()
+            name = name1pre + name2suf
+
+        return name.title().strip()
+
+    def GetRandomFusion(self):
+        max_id = 420
+        p1 = random.randint(1,max_id)
+        p2 = random.randint(1,max_id)
+        if p1 == p2:
+            p2 = random.randint(1,max_id)
+        if (p1,p2) in self.fusion_cache:
+            image_url = self.fusion_cache[(p1,p2)]
+        else:
+            custom_url = f"https://raw.githubusercontent.com/Aegide/custom-fusion-sprites/main/CustomBattlers/{p1}.{p2}.png"
+            fallback_url = f"https://raw.githubusercontent.com/Aegide/autogen-fusion-sprites/master/Battlers/{p1}/{p1}.{p2}.png"
+            custom_request = requests.get(custom_url)
+            if custom_request.status_code != 404:
+                image_url = custom_url
+            else:
+                image_url = fallback_url
+            self.AddToFusionCache((p1,p2), image_url)
+        return (image_url, (p1,p2))
+
+    def GetCustomFusion(self, id):
+        max_id = 420
+        if random.randint(0,1) == 1:
+            p1 = id
+            p2 = random.randint(1, max_id)
+        else:
+            p1 = random.randint(1, max_id)
+            p2 = id
+        if (p1,p2) in self.fusion_cache:
+            image_url = self.fusion_cache[(p1,p2)]
+            if "CustomBattlers" in image_url:
+                return image_url
+        image_url = None
+        custom_url = f"https://raw.githubusercontent.com/Aegide/custom-fusion-sprites/main/CustomBattlers/{p1}.{p2}.png"
+        custom_request = requests.get(custom_url)
+        if custom_request.status_code != 404:
+            image_url = custom_url
+            self.AddToFusionCache((p1,p2), image_url)
+        else:
+            custom_url = f"https://raw.githubusercontent.com/Aegide/custom-fusion-sprites/main/CustomBattlers/{p2}.{p1}.png"
+            custom_request = requests.get(custom_url)
+            if custom_request.status_code != 404:
+                image_url = custom_url
+                self.AddToFusionCache((p1,p2), image_url)
+        return (image_url, (p1,p2))
+
+    def GenerateName(self):
+        prefix_only = ['mr. ', 'regi', 'type: ', 'tapu ', 'iron ', "wo-", "ting-", "chi-", "chien-"]
+        suffix_only = [' jr.', 'ese', 'mo-o']      
+        n2_prefix_found = False
+        n1_suffix_found = False
+
+        name1 = random.choice(split_names).lower()
+        name2 = random.choice(split_names).lower()
+        
+        for i in prefix_only:
+            if i == name2:
+                n2_prefix_found = True
+        for i in suffix_only:
+            if i == name1:
+                n1_suffix_found = True
+
+        if n2_prefix_found or n1_suffix_found:
+            name = name2 + name1
+        else:
+            name = name1 + name2
+
+        return name.title().strip()
+
+    def GenerateStats(self, type=0):
+
+        def stat_gen(type, min_base_bst, max_base_bst, soft_stat_min, soft_stat_max):
+            #i wrote this all and then kinda forgot what it does
+            stats = []
+            base_bst = random.randint(min_base_bst,max_base_bst)
+            for i in range(6):
+                #for the max stat, it takes the remaining BST from the max BST divided by how many stats are left to generate
+                max_stat = int((max_base_bst-sum(stats))/(6-i))
+                #if this is over the soft stat max, then we roll a random one between 20, and the soft stat max + 30
+                if max_stat >= soft_stat_max:
+                    max_stat = random.randint(20, soft_stat_max+30)
+                #for the min stat, we take the remaining BST from the min BST divided by how many stats are left to generate
+                min_stat = int((min_base_bst-sum(stats))/(6-i))
+                #if its under the soft stat min, we just set it to soft stat min minus 10
+                if (min_stat <= soft_stat_min):
+                    min_stat = soft_stat_min-10
+                #and if after that its still over the max stat somehow, we just set it to max stat minus 10
+                if (min_stat > max_stat):
+                    min_stat = max_stat-10
+                #and then it rolls an int between those two values, and appends it to the array
+                stat = random.randint(min_stat,max_stat)
+                stats.append(stat)
+            return stats
+
+        if type == 0:
+            type = random.randint(1, 4)
+            if type == 4:
+                type = random.randint(1, 4)
+        if type < 5:
+            types_bst_stuff = [200, 375, 20, 80, 300, 450, 40, 110, 450, 600, 50, 150, 570, 720, 70, 225]
+            min_base_bst = types_bst_stuff[(type*4) - 4]
+            max_base_bst = types_bst_stuff[(type*4) - 3]
+            soft_stat_min = types_bst_stuff[(type*4) - 2]
+            soft_stat_max = types_bst_stuff[(type*4) - 1]
+
+        if type < 5:
+            stats = stat_gen(type, min_base_bst, max_base_bst, soft_stat_min, soft_stat_max)
+            #40% chance to bump a stat up so that the BST is a multiple of 5
+            if ((sum(stats) % 5) != 5) and (random.randint(1,5) < 3):
+                stats[random.randint(0,5)] += (5-(sum(stats) % 5))
+        else:             
+            stats = [random.randint(1,255),random.randint(1,255),random.randint(1,255),random.randint(1,255),random.randint(1,255),random.randint(1,255)]
+        stat_total = sum(stats)
+        if type == 1:
+            stage = "Baby"
+        elif type == 2:
+            stage = "Middle"
+        elif type == 3:
+            stage = "Fully Evolved"
+        elif type == 4:
+            stage = "Legendary"
+        elif type == 5:
+            stage = "Unknown"
+        random.shuffle(stats)
+        return stats, stage, stat_total   
 
     @commands.command(help="Get a random Pokemon.", aliases=["rmon", "RMon", "Rmon", "RMON"])
-    @commands.cooldown(rate=1, per=1, type=BucketType.channel)
+    @commands.cooldown(rate=1, per=2, type=BucketType.user)
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def randompokemon(self, ctx):
         pokemon_count = len(pokemon_names)
         shiny_rarity = 1365
-        poke_num = random.randint(0, pokemon_count-1)
+        poke_num = random.randint(1, pokemon_count)
         shiny = random.randint(1,shiny_rarity)
         poke_name = pokemon_names[poke_num-1]
         if poke_num < 10:
@@ -52,26 +196,242 @@ class Pokemon(commands.Cog):
             poke_num_string = f'0{poke_num}'
         else:
             poke_num_string = str(poke_num)
-        if shiny == shiny_rarity:
-            if poke_num < 810:
+        if poke_num < 906:
+            if shiny == shiny_rarity:
                 url = f'https://www.serebii.net/Shiny/SWSH/{poke_num_string}.png'
+                message = f'**{poke_num} - :sparkles: {poke_name} :sparkles:**'
             else:
-                url = f'https://www.serebii.net/Shiny/SWSH/{poke_num_string}.png'
-            message = f'**{poke_num} - :sparkles:{poke_name}:sparkles:**'
+                url = f'https://www.serebii.net/swordshield/pokemon/{poke_num_string}.png'
+                message = f'**{poke_num_string} - {poke_name}**'
         else:
-            if poke_num < 810:
-                url = f'https://www.serebii.net/swordshield/pokemon/{poke_num_string}.png'
+            if shiny == shiny_rarity:
+                url = f'https://www.serebii.net/Shiny/SV/{poke_num_string}.png'
+                message = f'**{poke_num} - :sparkles: {poke_name} :sparkles:**'
             else:
-                url = f'https://www.serebii.net/swordshield/pokemon/{poke_num_string}.png'
-            message = f'**{poke_num_string} - {poke_name}**'
+                url = f'https://www.serebii.net/scarletviolet/pokemon/new/{poke_num_string}.png'
+                message = f'**{poke_num_string} - {poke_name}**'
         poke_embed = discord.Embed()
         poke_embed.title = f'{message}'
-        poke_embed.set_image(url=url)
-        sent = await ctx.reply(embed=poke_embed)
-        await asyncio.sleep(10)
         poke_embed.set_thumbnail(url=url)
-        poke_embed.set_image(url='')
-        await sent.edit(embed=poke_embed)
+        await ctx.reply(embed=poke_embed)
+        #await asyncio.sleep(10)
+        #poke_embed.set_thumbnail(url=url)
+        #poke_embed.set_image(url='')
+        #await sent.edit(embed=poke_embed)
+
+    @commands.command(help="Get a random fused Pokemon (custom only).", aliases=["rfc", "rfusec", "cfuse"])
+    @commands.cooldown(rate=1, per=15, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def randomfusedcustom(self, ctx):
+        query = Helpers.CommandStrip(self, ctx.message.content)
+        if not query.strip():
+            query = None
+        if query:
+            if query.lower() not in pokemon_names_fusion: 
+                await ctx.reply(f"{query} not available for fusion.")
+                return
+        sent = await ctx.reply(f"Searching for custom fusion...")
+        await ctx.trigger_typing()
+        if query:
+            index = pokemon_names_fusion.index(query.lower()) + 1
+        else:
+            index = random.randint(1,420)
+        fusion_result = None
+        i = 1
+        fusion_result = self.GetCustomFusion(index)
+        while fusion_result[0] == None:
+            fusion_result = self.GetCustomFusion(index)
+            i = i+1
+            if i >= 200:
+                await ctx.reply(f"No custom fusion found after {i} attempts.")
+                return
+            if i % 20 == 0:
+                await ctx.trigger_typing()
+            if i == 20:
+                await sent.edit(content="Still searching.......")
+            await asyncio.sleep(0.3)
+        image_url = fusion_result[0]
+        p1 = fusion_result[1][0]
+        p2 = fusion_result[1][1]
+        custom = "Custom Made"
+        if i != None:
+            roll_count = f" | Took {i} rolls."
+        else:
+            roll_count = ""
+        poke_embed = discord.Embed()
+
+        name = self.GenerateFusedName(p1-1,p2-1)
+        name1 = pokemon_names_fusion[p1-1]
+        name2 = pokemon_names_fusion[p2-1]
+        name = name.title()
+        poke_embed.title = f'{name.title()}'
+        poke_embed.set_footer(text=f"{name1.title()} + {name2.title()} | {custom}{roll_count}")
+        poke_embed.description = f"**[Image Link]({image_url})**"
+        if len(ctx.guild.members) >= 100:
+            poke_embed.set_thumbnail(url=image_url)
+        else:
+            poke_embed.set_image(url=image_url)
+        if sent is None:
+            sent = await ctx.reply(embed=poke_embed)
+        else:
+            await sent.edit(embed=poke_embed, content=None)
+        if len(ctx.guild.members) < 100:
+            poke_embed.set_thumbnail(url=image_url)
+            poke_embed.set_image(url="")
+            await asyncio.sleep(15)
+            await sent.edit(embed=poke_embed, content=None)
+        return
+                
+
+        
+
+        
+
+    @commands.command(help="Get a random fused Pokemon.", aliases=["rfuse", "RFuse", "Rfuse", "RFUSE", "rf"])
+    @commands.cooldown(rate=1, per=15, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def randomfused(self, ctx):
+        custom_requested = "custom" in Helpers.CommandStrip(self, ctx.message.content).lower()
+        fusion_result = self.GetRandomFusion()      
+        sent = None  
+        i = None
+        if custom_requested:
+            sent = await ctx.reply("Searching for custom fusion...")
+            await ctx.trigger_typing()
+            i = 1
+            while "custom" not in fusion_result[0]:
+                fusion_result = self.GetRandomFusion()
+                if i % 20 == 0:
+                    await ctx.trigger_typing()
+                if i == 20:
+                    await sent.edit(content="Still searching.......")
+                i += 1
+                await asyncio.sleep(0.3)
+        image_url = fusion_result[0]
+        p1 = fusion_result[1][0]
+        p2 = fusion_result[1][1]
+        if "Custom" in image_url:
+            custom = "Custom Made"
+        else:
+            custom = "Auto Generated"
+        if i != None:
+            roll_count = f" | Took {i} rolls."
+        else:
+            roll_count = ""
+        poke_embed = discord.Embed()
+        
+        name = self.GenerateFusedName(p1-1,p2-1)
+        name1 = pokemon_names_fusion[p1-1]
+        name2 = pokemon_names_fusion[p2-1]
+        name = name.title()
+        poke_embed.title = f'{name.title()}'
+        poke_embed.set_footer(text=f"{name1.title()} + {name2.title()} | {custom}{roll_count}")
+        poke_embed.description = f"**[Image Link]({image_url})**"
+        if len(ctx.guild.members) >= 100:
+            poke_embed.set_thumbnail(url=image_url)
+        else:
+            poke_embed.set_image(url=image_url)
+        if sent is None:
+            sent = await ctx.reply(embed=poke_embed)
+        else:
+            await sent.edit(embed=poke_embed, content=None)
+        if len(ctx.guild.members) < 100:
+            poke_embed.set_thumbnail(url=image_url)
+            poke_embed.set_image(url="")
+            await asyncio.sleep(15)
+            await sent.edit(embed=poke_embed, content=None)
+        return
+        
+    @commands.command(help="Get a fused Pokemon.", aliases=["fuse", "Fuse", "f", "pf", "Pf", "pfuse"])
+    @commands.cooldown(rate=1, per=15, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def pokefuse(self, ctx):
+
+        query = Helpers.CommandStrip(self, ctx.message.content)
+        if not query.strip():
+            ctx.command.reset_cooldown(ctx)
+            return
+        query = query.split(',')
+        if len(query) > 1:
+            mon1 = query[0].strip()
+            mon2 = query[1].strip()
+        else:
+            mon1 = query[0]
+            mon2 = None
+        if mon1.lower() == "something":
+            if mon2 == None or mon2.lower() == "something":
+                await ctx.reply(f"You're thinking of !rf.")
+                return
+            mon1 = random.choice(pokemon_names_fusion)   
+        if mon2 != None:
+            if mon2.lower() == "something":
+                mon2 = random.choice(pokemon_names_fusion)
+        if mon1.lower() in pokemon_names_fusion:            
+            index1 = pokemon_names_fusion.index(mon1.lower()) + 1
+            if mon2 == None:
+                index2 = random.randint(1,420)
+            elif mon2.lower() not in pokemon_names_fusion:
+                await ctx.reply(f"{mon2} is not available for fusion.")
+                ctx.command.reset_cooldown(ctx)
+                return
+            else:
+                index2 = pokemon_names_fusion.index(mon2.lower()) + 1
+            r = random.randint(0,1)
+            if r == 1 and mon2 == None:
+                t = index2
+                index2 = index1
+                index1 = t               
+            if (index1,index2) in self.fusion_cache:
+                image_url = self.fusion_cache[(index1,index2)]
+                print("Retrieved from cache!")
+            else:
+                custom_url = f"https://raw.githubusercontent.com/Aegide/custom-fusion-sprites/main/CustomBattlers/{index1}.{index2}.png"
+                fallback_url = f"https://raw.githubusercontent.com/Aegide/autogen-fusion-sprites/master/Battlers/{index1}/{index1}.{index2}.png"
+                custom_request = requests.get(custom_url)
+                if custom_request.status_code != 404:
+                    image_url = custom_url
+                else:
+                    image_url = fallback_url
+                self.AddToFusionCache((index1,index2), image_url)
+            if "Custom" in image_url:
+                custom = "Custom Made"
+            else:
+                custom = "Auto Generated"
+            if index1 == index2 and "custom" not in image_url:
+                await ctx.reply(f"No custom fusion for double {mon1.title()}s.")
+                ctx.command.reset_cooldown(ctx)
+                return 
+            poke_embed = discord.Embed()
+            name1 = pokemon_names_fusion[index1-1]
+            name2 = pokemon_names_fusion[index2-1]
+            if name1 == "genesect":
+                name = name2[:len(name2)//2] + "ese"
+            elif name2 == "genesect":
+                name = name1[:len(name1)//2] + "ese"
+            else:
+                name = name1[:len(name1)//2] + name2[len(name2)//2:]
+            poke_embed.title = f'{name.title()}'
+            poke_embed.set_footer(text=f"{name1.title()} + {name2.title()} | {custom}")
+            poke_embed.description = f"**[Image Link]({image_url})**"
+            if len(ctx.guild.members) >= 100:
+                poke_embed.set_thumbnail(url=image_url)
+            else:
+                poke_embed.set_image(url=image_url)
+            sent = await ctx.reply(embed=poke_embed)
+            if len(ctx.guild.members) < 100:
+                poke_embed.set_thumbnail(url=image_url)
+                poke_embed.set_image(url="")
+                await asyncio.sleep(15)
+                await sent.edit(embed=poke_embed)
+            return
+        else:
+            await ctx.reply(f"{mon1} is not available for fusion.")
+            ctx.command.reset_cooldown(ctx)
+            return
+
 
     @commands.command(help="Get a random Pokemon move.", aliases=['rmove', 'Rmove', 'RMove', 'RMOVE'])
     @commands.cooldown(rate=1, per=4, type=BucketType.channel)
@@ -111,6 +471,8 @@ class Pokemon(commands.Cog):
             await ctx.reply(f'{item}')
         else:
             await ctx.reply(f'Something went wrong when contacting the API.')
+
+        
 
     @commands.command(help="Get information about a Pokemon (Gen 1 - 7).", aliases=['pdt', 'Pdt', 'PDT', 'pdata', 'pd'])
     @commands.cooldown(rate=1, per=4, type=BucketType.channel)
@@ -191,7 +553,23 @@ class Pokemon(commands.Cog):
     @commands.guild_only()
     async def generatepokemon(self, ctx):
         types = ['normal','fire','water','grass','fighting','flying','poison','electric','ground','psychic','rock','ice','bug','dragon','ghost','dark','steel','fairy']
-        stats = []
+        
+
+        requested_stage = Helpers.CommandStrip(self, ctx.message.content).lower()
+        if 'bab' in requested_stage:
+            requested_stage = 1
+        elif 'mid' in requested_stage or 'nfe' in requested_stage:
+            requested_stage = 2
+        elif 'full' in requested_stage:
+            requested_stage = 3
+        elif 'legend' in requested_stage:
+            requested_stage = 4
+        elif 'random' in requested_stage:
+            requested_stage = 5
+        else:
+            requested_stage = 0
+
+        stats, stage, stat_total = self.GenerateStats(requested_stage)
 
         await ctx.trigger_typing()
 
@@ -210,40 +588,40 @@ class Pokemon(commands.Cog):
                     break
             typing = f'{t1}/{t2}'
 
-        # Generate Stats 
-        stats = []
-        min_base_bst = 500
-        max_base_bst = 720
-        # get a random base total to use
-        base_bst = random.randint(min_base_bst,max_base_bst)
-        # decide the stat weight
-        # clamped float value between 0.8 and 1.0, varying based on the base total
-        # higher base totals will tend to have higher stat weight
-        # On average (over 10000 runs) this process should result in an average BST of about 525, min 280, max 725.
-        stat_weight = round(max(min((base_bst / max_base_bst) * 1.5, 1.0), 0.8), 2)
-        for i in range(6):
-            stat = random.randint(100,200) + random.randint(-65,55)
-            if stat >= 150:
-                for s in stats:
-                    if s >= 150:
-                        stat -= random.randint(25,149)
-                        break
-            elif stat <= 70:
-                for s in stats:
-                    if s <= 70:
-                        stat += random.randint(15, 50)
-                        break
-            # subtract the stat from the remaining stat total, multiplying by stat weight
-            # doing this should get more relatively accurate stat spreads ON AVERAGE (you can still end up with absolutely pathetic stats)
-            base_bst -= round(stat * stat_weight)
-            if base_bst <= 80:
-                stat = random.randint(5,80)
-            stats.append(stat)
-        random.shuffle(stats)
-        stat_total = sum(stats)
+        ## Generate Stats 
+        #stats = []
+        #min_base_bst = 500
+        #max_base_bst = 720
+        ## get a random base total to use
+        #base_bst = random.randint(min_base_bst,max_base_bst)
+        ## decide the stat weight
+        ## clamped float value between 0.8 and 1.0, varying based on the base total
+        ## higher base totals will tend to have higher stat weight
+        ## On average (over 10000 runs) this process should result in an average BST of about 525, min 280, max 725.
+        #stat_weight = round(max(min((base_bst / max_base_bst) * 1.5, 1.0), 0.8), 2)
+        #for i in range(6):
+        #    stat = random.randint(100,200) + random.randint(-65,55)
+        #    if stat >= 150:
+        #        for s in stats:
+        #            if s >= 150:
+        #                stat -= random.randint(25,149)
+        #                break
+        #    elif stat <= 70:
+        #        for s in stats:
+        #            if s <= 70:
+        #                stat += random.randint(15, 50)
+        #                break
+        #    # subtract the stat from the remaining stat total, multiplying by stat weight
+        #    # doing this should get more relatively accurate stat spreads ON AVERAGE (you can still end up with absolutely pathetic stats)
+        #    base_bst -= round(stat * stat_weight)
+        #    if base_bst <= 80:
+        #        stat = random.randint(5,80)
+        #    stats.append(stat)
+        #random.shuffle(stats)
+        #stat_total = sum(stats)
 
         # Generate Abilities
-        api_results = Helpers.GetWebPage(self, 'https://pokeapi.co/api/v2/ability/?offset=0&limit=233')
+        api_results = Helpers.GetWebPage(self, 'https://pokeapi.co/api/v2/ability')
         if api_results:
             ability1 = random.choice(api_results.json()['results'])['name']
             ability1 = ability1.title().replace("-", " ")
@@ -263,6 +641,7 @@ class Pokemon(commands.Cog):
         poke_embed = discord.Embed()
         poke_embed.title = f'{name}'
         poke_embed.add_field(name='Type', value=typing, inline=True)
+        poke_embed.add_field(name='Stage', value=stage, inline=True)
         poke_embed.add_field(name='Abilities', value=f'{ability1}, {ability2}, {ability3} (Hidden)', inline=False)
         poke_embed.add_field(name=f'BST: {stat_total}', value=(
             f"**HP:** {stats[0]}\n"

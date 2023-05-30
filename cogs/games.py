@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup as BS
 from lxml import html
 from discord.ext import commands
 from discord.ext.commands import BucketType
+from datetime import datetime
 
 from internal.logs import logger
 from internal.helpers import Helpers
@@ -200,6 +201,40 @@ class Games(commands.Cog):
         donation = Helpers.GetWebPage(self, api_url).text
         await ctx.reply(f'{donation}')
 
+    @commands.command(aliases=["ais","lexica"])
+    @commands.cooldown(rate=1, per=20, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def aisearch(self, ctx):
+        await ctx.trigger_typing()
+        user_input = Helpers.CommandStrip(self, ctx.message.content)
+        if len(user_input) == 0:
+            await ctx.reply("Enter a search term.")
+            return
+        api_url = f'https://lexica.art/api/v1/search?q={user_input}'
+        results = Helpers.GetWebPage(self, api_url)
+        results = results.json()
+        if len(results) > 0:
+            rand = random.choice(results["images"])            
+            out_url = rand["srcSmall"]
+            out_gallery = rand["gallery"]
+            out_description = rand["prompt"]
+            ai_embed = discord.Embed()
+            if len(user_input) > 75:
+                cutoff = "(...)"
+            else:
+                cutoff = ""
+            ai_embed.title = f'Result for "{user_input[0:75]}{cutoff}"'           
+            ai_embed.set_image(url=out_url)
+            ai_embed.add_field(name='Prompt', value=f'{out_description}\n\n[Similar Results]({out_gallery})\n[Link To Image]({out_url})', inline=False)
+            sent = await ctx.reply(embed=ai_embed)
+            if len(ctx.guild.members) > 50:
+                ai_embed.set_thumbnail(url=out_url)
+                ai_embed.set_image(url="")
+                await asyncio.sleep(20)
+                await sent.edit(embed=ai_embed)
+        else:
+            await ctx.reply('No results.')
 
     @commands.command(aliases=["Power"])
     @commands.cooldown(rate=1, per=10, type=BucketType.channel)
@@ -227,7 +262,9 @@ class Games(commands.Cog):
                     desc = page_tree.xpath('//meta[@name="description"]/@content')
                     readable_url = urllib.parse.unquote(encoded_url).replace(" ", "_")
                     if len(desc) > 0:
-                        response = f'**Power:** {name}\n**Description:** {base_html.unescape(desc[0].strip())}\n<{readable_url}>'
+                        formatted_desc = base_html.unescape(desc[0].strip())
+                        formatted_desc = formatted_desc.split('.')[0]
+                        response = f'**Power:** {name}\n**Description:** {formatted_desc}.\n<{readable_url}>'
                     else:
                         response = f'**Power:**{name}\n<{readable_url}>'
                 else:
@@ -239,7 +276,7 @@ class Games(commands.Cog):
             logger.LogPrint(ex, logging.ERROR)
 
     @commands.command(aliases=["Stand"])
-    @commands.cooldown(rate=1, per=7, type=BucketType.channel)
+    @commands.cooldown(rate=1, per=15, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def stand(self, ctx):
@@ -333,62 +370,63 @@ class Games(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def namefuse(self, ctx):
-        members = ctx.channel.members
-        if len(members) > 1:
-            if Helpers.CommandStrip(self, ctx.message.content).split(' ')[0].lower() == 'online':
-                depth = 0
-                while True:                
-                    name1 = random.choice(members)
-                    if name1.status != discord.Status.offline:
-                        depth = 0
-                        break
-                    depth += 1
-                    if depth > 100:
-                        await ctx.reply(f'{ctx.message.author.mention}: Could not find enough valid members.')
-                        return
-                while True:
-                    name2 = random.choice(members)
-                    if name1 != name2 and name2.status != discord.Status.offline:
-                        depth = 0
-                        break
-                    depth += 1
-                    if depth > 100:
-                        await ctx.reply(f'Could not find enough valid members.')
-                        return
-            else:            
-                name1 = random.choice(members)
-                while True:
-                    name2 = random.choice(members)
-                    if name1 != name2:
-                        depth = 0
-                        break
-                    depth += 1
-                    if depth > 100:
-                        await ctx.reply(f'Could not find enough valid members.')
-                        return
-                    
-            if random.randint(0,1) == 0:
-                name1 = name1.name.lower()
+        def get_names(number, online=False):
+            names = []
+            members = ctx.channel.members
+            if number == None:
+                number = 1
+            if number > 6:
+                number = 6
+            print(len(members))
+            print(number)
+            if len(members) >= number:
+                for i in range(number):        
+                    depth = 0
+                    valid = False
+                    while not valid:
+                        depth += 1
+                        name1 = random.choice(members)
+                        name2 = random.choice(members)
+                        if online == True:
+                            if name1.status != discord.Status.offline and name2.status != discord.Status.offline:
+                                valid = True                                    
+                        else:
+                            valid = True
+                        if depth >= 50:
+                            return None
+                    depth = 0
+                    while name1 == name2:
+                        name2 = random.choice(members)
+                        depth += 1
+                        if depth >= 50:
+                            break
+                    if random.randint(0,1) == 0:
+                        name1 = name1.name.lower()
+                    else:
+                        name1 = name1.display_name.lower()
+                    if random.randint(0,1) == 0:
+                        name2 = name2.name.lower()
+                    else:
+                        name2 = name2.display_name.lower()
+                    name1parts = [name1[:len(name1)//2],name1[len(name1)//2:]]
+                    name2parts = [name2[:len(name2)//2],name2[len(name2)//2:]]
+                    roll = random.randint(0,1)
+                    if roll == 0:
+                        name = name1parts[0] + name2parts[1]
+                    else:
+                        name = name2parts[0] + name1parts[1]
+                    names.append(name.title())
+                return names
             else:
-                name1 = name1.display_name.lower()
-
-            if random.randint(0,1) == 0:
-                name2 = name2.name.lower()
-            else:
-                name2 = name2.display_name.lower()
-            
-            name1parts = [name1[:len(name1)//2],name1[len(name1)//2:]]
-            name2parts = [name2[:len(name2)//2],name2[len(name2)//2:]]
-            roll = random.randint(0,1)
-            if roll == 0:
-
-                name = name1parts[0] + name2parts[1]
-            else:
-                name = name2parts[0] + name1parts[1]
-
-            await ctx.reply(f'{name.title()}')
+                return None
+        number = Helpers.FuzzyIntegerSearch(self, Helpers.CommandStrip(self, ctx.message.content))
+        online = 'online' in ctx.message.content.lower()
+        names = get_names(number, online)
+        print(names)
+        if names:
+            await ctx.reply(f"{', '.join(names)}")
         else:
-            await ctx.reply(f'Could not find enough valid members.')
+            await ctx.reply("Could not find enough valid members.")
 
     @commands.command(aliases=["tvt", "TVT"], help="Get a random TVTropes page.")    
     @commands.cooldown(rate=1, per=7, type=BucketType.channel)
@@ -397,7 +435,7 @@ class Games(commands.Cog):
     async def tvtropes(self, ctx):
         try:            
             await ctx.trigger_typing()
-            page = Helpers.GetWebPage(self, "https://tvtropes.org/pmwiki/randomitem.php?p=1")
+            page = Helpers.GetWebPage(self, f"https://tvtropes.org/pmwiki/randomitem.php?p={random.randint(1,1000000)}")
             if page:
                 soup = BS(page.content, "lxml")
                 url = soup.find('meta', {"property":"og:url"})['content']
@@ -409,43 +447,6 @@ class Games(commands.Cog):
             logger.LogPrint("IMAGE ERROR", logging.CRITICAL, ex)
             await ctx.reply(f'Something went wrong getting TVTropes page.')
 
-    
-    @commands.command(aliases=["ae", "aes", "Aesthetic"], help="By request - Get a random aesthetic wiki page.")    
-    @commands.cooldown(rate=1, per=7, type=BucketType.channel)
-    @commands.has_role("Bot Use")
-    @commands.guild_only()
-    async def aesthetic(self, ctx):
-        try:
-            await ctx.trigger_typing()
-            api_url = 'https://aesthetics.fandom.com/api.php'
-            params = {
-                "action": "query",
-                "list": "random",
-                "rnnamespace": "0",
-                "rnlimit": "1",
-                "format": "json"
-            }
-            random_aesthetic = Helpers.GetWebPage(self, api_url, params)
-            if random_aesthetic:
-                aesthetic = random_aesthetic.json()["query"]["random"][0]
-                name = aesthetic["title"]
-                encoded_url = f'https://aesthetics.fandom.com/wiki/{urllib.parse.quote(name)}'
-                aesthetic_data = Helpers.GetWebPage(self, encoded_url)
-                if aesthetic_data:
-                    page_tree = html.fromstring(aesthetic_data.text)
-                    desc = page_tree.xpath('//meta[@name="description"]/@content')
-                    readable_url = urllib.parse.unquote(encoded_url).replace(" ", "_")
-                    if len(desc) > 0:
-                        response = f'**Aesthetic:** {name}\n**Description:** {base_html.unescape(desc[0].strip())}\n<{readable_url}>'
-                    else:
-                        response = f'**Aesthetic:**{name}\n<{readable_url}>'
-                else:
-                    response = f'Couldn\'t get Aesthetic info.'
-            else:
-                response = f'Couldn\'t get Aesthetic info.'
-            await ctx.reply(response)
-        except Exception as ex:
-            logger.LogPrint(ex, logging.ERROR)
 
     @commands.command(aliases=["rwiki", "rfandom"], help="By request - Get a random wiki page on any specified fandom wiki.")    
     @commands.cooldown(rate=1, per=5, type=BucketType.channel)

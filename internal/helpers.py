@@ -2,6 +2,7 @@ import discord
 from discord.utils import escape_markdown, escape_mentions
 import re
 import requests
+import html
 import logging
 import emoji
 import datetime
@@ -105,6 +106,25 @@ class Helpers():
             str: The message paramater but demojized.
         """
         return emoji.demojize(message)
+
+    @staticmethod
+    def DiscordEmoteConvert(self, message:str):
+        emotes = re.findall(r'<:.*?>', message)
+        if emotes:
+            for emote in emotes:
+                name = re.search(r':(.*?):', emote).group(0)
+                name = name.replace(':','')
+                message = message.replace(emote,f' {name} ')
+
+        emotes = re.findall(r'<:(.*?)>', message)
+        if emotes:
+            for emote in emotes:
+                name = re.search(r'a:(.*?):', emote).group(0)
+                name = name.replace(':','')
+                message = message.replace(emote,f' {name} ')
+        return message
+
+
 
     @staticmethod
     def FuzzyIntegerSearch(self, message: str):
@@ -226,6 +246,13 @@ class Helpers():
                 return None
         except Exception as ex:
             print(ex)
+
+    @staticmethod
+    def CleanHTML(self, input):
+        cleanr = re.compile('<.*?>')
+        cleantext = re.sub(cleanr, '', input)
+        cleantext = html.unescape(cleantext)
+        return cleantext
 
     @staticmethod
     def timeDeltaFormat(self, td: datetime.timedelta):

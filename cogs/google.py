@@ -146,7 +146,7 @@ class Google(commands.Cog):
                 image_embed.title = task.result()["title"]
                 if len(task.result()["link"]) <= 200:
                     image_embed.description = task.result()["link"]
-                if len(ctx.guild.members) < 75:
+                if len(ctx.guild.members) < 300:
                     image_embed.set_image(url=task.result()["link"])
                     ctx.command.reset_cooldown(ctx)
                 else:

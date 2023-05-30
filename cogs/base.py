@@ -4,9 +4,10 @@ import logging
 import re
 import d20
 import json
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.ext.commands import BucketType
 from discord.ext.commands import EmojiConverter
+from datetime import datetime
 
 from internal.helpers import Helpers
 from internal.command_blacklist_manager import BLM
@@ -18,9 +19,23 @@ class Base(commands.Cog):
 
     def __init__(self, client):
         self.client = client    
+        #self.eldencd.start()
 
     async def cog_check(self, ctx):
         return BLM.CheckIfCommandAllowed(ctx)
+
+    def cog_unload(self):
+        #self.eldencd.cancel()
+        return super().cog_unload()
+
+    #@tasks.loop(seconds=600)
+    #async def eldencd(self):
+    #    game = discord.Game("OOOHHH ELDEN RING")
+    #    await self.client.change_presence(status=discord.Status.online, activity=game)
+
+    #@eldencd.before_loop
+    #async def before_eldencd(self):
+    #    await self.client.wait_until_ready()
 
     @commands.command(help="Ping!")    
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)

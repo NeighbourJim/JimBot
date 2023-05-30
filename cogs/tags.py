@@ -48,23 +48,24 @@ class Tags(commands.Cog):
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t execute tag command: {ex}',logging.ERROR)
 
-    @commands.command(help="Create a tag.", aliases=["ct", "CT", "Ct", "Createtag", "addtag"])
+    @commands.command(help="Create a tag.", aliases=["ct", "CT", "Ct", "Createtag", "addtag", "tagcreate"])
     @commands.cooldown(rate=1, per=10, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def createtag(self, ctx):
         try:
             self.CheckAndCreateDatabase(ctx)
-            split_message = Helpers.CommandStrip(self, ctx.message.content).split(' ')
+            msg = Helpers.CommandStrip(self, ctx.message.clean_content)
+            split_message = msg.split(' ')
             if len(split_message) > 1 and len(split_message) < 400:
                 tag_name = split_message[0]
                 tag_content = ' '.join(split_message[1:])
 
                 links = re.findall("(?P<url>https?://[^\s]+)", tag_content)
-                if len(links) > 1:
-                    await ctx.reply(f'No more than one link in a tag.')
-                    return
-
+                if tag_name != "comics":
+                    if len(links) > 1 and tag_name.strip() is not "comics":
+                        await ctx.reply(f'No more than one link in a tag.')
+                        return
                 where = ("tag_name", tag_name)
                 existing = dbm.Retrieve(f"tags{ctx.guild.id}", "tags", [where])
                 if len(existing) == 0:

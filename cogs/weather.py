@@ -1,8 +1,10 @@
 import discord
 import logging
 import json
+import math
 import pycountry
 import datetime
+import pytz
 from discord.ext import commands
 from discord.ext.commands import BucketType
 from os import path
@@ -41,8 +43,20 @@ class Weather(commands.Cog):
     def ConvertKtoC(self, value):
         return round(value - 273.15)
 
+    def GetWetBulb(self, t, h):
+        #Tw = T * arctan[0.151977 * (rh% + 8.313659)^(1/2)] + arctan(T + rh%) - arctan(rh% - 1.676331) + 0.00391838 (rh%)^(3/2) arctan(0.023101 * rh%) - 4.686035
+        result = t * math.atan(0.151977 * math.pow((h + 8.313659),(1.0/2.0))) + math.atan(t + h) - math.atan(h - 1.676331) + 0.00391838 * math.pow(h, 3.0/2.0) * math.atan(0.023101*h) - 4.686035
+        result = round(result, 2)
+        return result
+
+
     def CountryCodeToName(self, ccode):
         return pycountry.countries.lookup(ccode).name
+
+    def GetLocalTime(self, timezone):
+        utc_time = datetime.datetime.utcnow()
+        converted = utc_time + datetime.timedelta(seconds=timezone)
+        return converted.strftime("%H:%M")
 
     def IconToEmoji(self, icon_code):
         if icon_code.startswith('01'):
@@ -65,6 +79,38 @@ class Weather(commands.Cog):
             return ":fog:"
         else:
             return ":person_shrugging:"
+
+    @commands.command(aliases=["tc", "TC"], help="Convert from C to F or vice versa")    
+    @commands.cooldown(rate=1, per=5, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def TempConvert(self, ctx):
+        split_message = Helpers.CommandStrip(self, ctx.message.content).split(' ')
+        t_in = Helpers.FuzzyIntegerSearch(self, split_message[0])
+        if len(split_message) > 1:  
+            unit = split_message[1].lower().strip()
+        else:
+            if "f" in split_message[0].lower():
+                unit = "f"
+            else:
+                unit = "c"
+        if unit is not "f":
+            unit = "c"
+        if t_in == None:
+            await ctx.reply("Please provide a value.")
+            return
+        if unit == "f":
+            t_out = (t_in - 32) * 5.0/9.0
+            t_out = round(t_out,1)
+            await ctx.reply(f'{t_in}°F = {t_out}°C')
+        if unit == "c":
+            t_out = 9.0/5.0*t_in+32
+            t_out = round(t_out,1)
+            await ctx.reply(f'{t_in}°C = {t_out}°F')
+        
+        
+        
+
 
     @commands.command(aliases=["weather", "w"], help="Get the current weather for a specific location.\nUsage: !weather location. For example !weather London or !weather London,uk")    
     @commands.cooldown(rate=1, per=5, type=BucketType.channel)
@@ -96,15 +142,23 @@ class Weather(commands.Cog):
                 minC = self.ConvertKtoC(api_results["main"]["temp_min"])
                 maxC = self.ConvertKtoC(api_results["main"]["temp_max"])
                 humidity = api_results["main"]["humidity"]
+                wet_bulb_c = self.GetWetBulb(tempC,humidity)
+                wet_bulb_f = self.ConvertCtoF(wet_bulb_c)
                 wind_speed = round(float(api_results["wind"]["speed"]) * 3.6, 2)
+                current_time = self.GetLocalTime(api_results["timezone"])
+                data_collected_time = datetime.datetime.fromtimestamp(api_results["dt"], tz=pytz.utc)
+                data_collected_time = data_collected_time + datetime.timedelta(seconds=api_results["timezone"])
+                data_collected_time = data_collected_time.strftime("%H:%M")
 
                 weather_embed = discord.Embed()
                 weather_embed.title = f'Current Weather in {name}, {country}'
                 weather_embed.set_thumbnail(url=icon)
-                weather_embed.add_field(name='Temperature', value=f'{tempC}°C ({self.ConvertCtoF(tempC)}°F)', inline=False)
+                weather_embed.add_field(name=f'Temperature', value=f'{tempC}°C ({self.ConvertCtoF(tempC)}°F)', inline=False)
+                weather_embed.add_field(name=f'Wet Bulb Temperature', value=f'{wet_bulb_c}°C ({wet_bulb_f}°F)', inline=False)
                 weather_embed.add_field(name='Weather Type', value=f'{weather}', inline=True)
                 weather_embed.add_field(name='Humidity', value=f"{humidity}%", inline=True)
                 weather_embed.add_field(name='Wind Speed', value=f"{wind_speed} km/h", inline=True)
+                weather_embed.set_footer(text=f'Local Time: {current_time}  |  Data collected at {data_collected_time}.')
                 await ctx.reply(embed=weather_embed)
             else:
                 logger.LogPrint(f"Error contacting OpenWeather API. - API Results:{api_results}", logging.ERROR)
