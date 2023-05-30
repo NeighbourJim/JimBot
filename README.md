@@ -8,7 +8,7 @@
  
  The bot is not specifically set up for public use on a large amount of servers, though theoretically it should support that - mostly.  
  If you want to run an instance of little baby nerd bot for yourself, then you need only to clone this repository and fill in the appropriate keys into config.json. An example file is provided, simply plug in your keys and remove EXAMPLE from the filename.  
- 
+ |\_)\_)=3
  You will require a Discord bot token, placed in the "token" field in config.json  
  Certain Cogs also require API keys, placed in their appropriate fields in config.json.  
  These are:
