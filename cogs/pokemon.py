@@ -31,7 +31,7 @@ class Pokemon(commands.Cog):
         self.fusion_cache[key] = value
 
     def GenerateFusedName(self, id1, id2):
-        prefix_only = ['mr. ', 'regi', 'type: ', 'tapu ', 'iron ', "wo-", "ting-", "chi-", "chien-"]
+        prefix_only = ['mr. ', 'regi', 'type: ', 'tapu ', 'iron ', "wo-", "ting-", "chi-", "chien-", "mimi"]
         suffix_only = [' jr.', 'ese', 'mo-o']      
         n2_prefix_found = False
         n1_suffix_found = False
@@ -64,8 +64,9 @@ class Pokemon(commands.Cog):
         if (p1,p2) in self.fusion_cache:
             image_url = self.fusion_cache[(p1,p2)]
         else:
-            custom_url = f"https://raw.githubusercontent.com/Aegide/custom-fusion-sprites/main/CustomBattlers/{p1}.{p2}.png"
-            fallback_url = f"https://raw.githubusercontent.com/Aegide/autogen-fusion-sprites/master/Battlers/{p1}/{p1}.{p2}.png"
+            #custom_url = f"https://raw.githubusercontent.com/Aegide/custom-fusion-sprites/main/CustomBattlers/{p1}.{p2}.png"
+            custom_url = f"https://raw.githubusercontent.com/infinitefusion/sprites/main/CustomBattlers/{p1}.{p2}.png"
+            fallback_url = f"https://raw.githubusercontent.com/infinitefusion/autogen-fusion-sprites/master/Battlers/{p1}/{p1}.{p2}.png"
             custom_request = requests.get(custom_url)
             if custom_request.status_code != 404:
                 image_url = custom_url
@@ -87,18 +88,24 @@ class Pokemon(commands.Cog):
             if "CustomBattlers" in image_url:
                 return image_url
         image_url = None
-        custom_url = f"https://raw.githubusercontent.com/Aegide/custom-fusion-sprites/main/CustomBattlers/{p1}.{p2}.png"
+        custom_url = f"https://raw.githubusercontent.com/infinitefusion/sprites/main/CustomBattlers/{p1}.{p2}.png"
         custom_request = requests.get(custom_url)
         if custom_request.status_code != 404:
             image_url = custom_url
             self.AddToFusionCache((p1,p2), image_url)
         else:
-            custom_url = f"https://raw.githubusercontent.com/Aegide/custom-fusion-sprites/main/CustomBattlers/{p2}.{p1}.png"
+            custom_url = f"https://raw.githubusercontent.com/infinitefusion/sprites/main/CustomBattlers/{p1}.{p2}.png"
             custom_request = requests.get(custom_url)
             if custom_request.status_code != 404:
                 image_url = custom_url
                 self.AddToFusionCache((p1,p2), image_url)
         return (image_url, (p1,p2))
+        
+    def GetTripleFusion(self):
+        #https://raw.githubusercontent.com/infinitefusion/autogen-fusion-sprites/master/Battlers/special/1.4.7.png
+        
+        triples = [("1.4.7","Bulbmantle"),("144.145.146","Zapmolticuno"),("150.348.380","Deoxese Two"),("151.251.381","Celemewchi"),("152.155.158","Totoritaquil"),("153.156.159","Baylavanaw"),("154.157.160","Megaligasion"),("2.5.8","Ivymelortle"),("243.244.245","Enraicune"),("276.279.282","Torkipcko"),("277.280.283","Gromarshken"),("278.281.284","Swamptiliken"),("3.6.9","Venustoizard"),("316.319.322","Turcharlup"),("317.320.323","Prinfernotle"),("318.321.324","Torterneon"),("340.341.342","Kyodonquaza"),("343.344.345","Paldiatina"),("349.350.351","Zekyushiram")]
+        return random.choice(triples)
 
     def GenerateName(self):
         prefix_only = ['mr. ', 'regi', 'type: ', 'tapu ', 'iron ', "wo-", "ting-", "chi-", "chien-"]
@@ -220,11 +227,12 @@ class Pokemon(commands.Cog):
         #await sent.edit(embed=poke_embed)
 
     @commands.command(help="Get a random fused Pokemon (custom only).", aliases=["rfc", "rfusec", "cfuse"])
-    @commands.cooldown(rate=1, per=15, type=BucketType.channel)
+    @commands.cooldown(rate=1, per=15, type=BucketType.user)
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def randomfusedcustom(self, ctx):
         query = Helpers.CommandStrip(self, ctx.message.content)
+        triplechance = 1000
         if not query.strip():
             query = None
         if query:
@@ -236,6 +244,35 @@ class Pokemon(commands.Cog):
         if query:
             index = pokemon_names_fusion.index(query.lower()) + 1
         else:
+            tripleroll = random.randint(1,triplechance)
+            if tripleroll == triplechance:
+                await asyncio.sleep(4)
+                fusion = self.GetTripleFusion()
+                image_url = f"https://raw.githubusercontent.com/infinitefusion/autogen-fusion-sprites/master/Battlers/special/{fusion[0]}.png"
+                name = fusion[1]
+                
+                poke_embed = discord.Embed()
+                poke_embed.title = f'WARNING: A Fusion Accident has occurred!'
+                poke_embed.set_thumbnail(url="https://i.imgur.com/KPHXUAl.png")  
+                poke_embed.description = f"Waiting for the smoke to clear..."
+                await sent.edit(embed=poke_embed, content=None)
+                await ctx.trigger_typing()
+                
+                poke_embed.title = f':sparkles: Triple Fusion: {name.title()} :sparkles:'
+                poke_embed.description = f"**[Image Link]({image_url})**"
+                if len(ctx.guild.members) >= 100:
+                    poke_embed.set_thumbnail(url=image_url)
+                else:
+                    poke_embed.set_image(url=image_url)
+                
+                await asyncio.sleep(6)
+                await sent.edit(embed=poke_embed, content=None)
+                if len(ctx.guild.members) < 100:
+                    poke_embed.set_thumbnail(url=image_url)
+                    poke_embed.set_image(url="")
+                    await asyncio.sleep(15)
+                    await sent.edit(embed=poke_embed, content=None)
+                return
             index = random.randint(1,420)
         fusion_result = None
         i = 1
@@ -289,7 +326,7 @@ class Pokemon(commands.Cog):
         
 
     @commands.command(help="Get a random fused Pokemon.", aliases=["rfuse", "RFuse", "Rfuse", "RFUSE", "rf"])
-    @commands.cooldown(rate=1, per=15, type=BucketType.channel)
+    @commands.cooldown(rate=1, per=15, type=BucketType.user)
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def randomfused(self, ctx):
@@ -345,7 +382,7 @@ class Pokemon(commands.Cog):
         return
         
     @commands.command(help="Get a fused Pokemon.", aliases=["fuse", "Fuse", "f", "pf", "Pf", "pfuse"])
-    @commands.cooldown(rate=1, per=15, type=BucketType.channel)
+    @commands.cooldown(rate=1, per=15, type=BucketType.user)
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def pokefuse(self, ctx):
@@ -388,8 +425,8 @@ class Pokemon(commands.Cog):
                 image_url = self.fusion_cache[(index1,index2)]
                 print("Retrieved from cache!")
             else:
-                custom_url = f"https://raw.githubusercontent.com/Aegide/custom-fusion-sprites/main/CustomBattlers/{index1}.{index2}.png"
-                fallback_url = f"https://raw.githubusercontent.com/Aegide/autogen-fusion-sprites/master/Battlers/{index1}/{index1}.{index2}.png"
+                custom_url = f"https://raw.githubusercontent.com/infinitefusion/sprites/main/CustomBattlers/{index1}.{index2}.png"
+                fallback_url = f"https://raw.githubusercontent.com/infinitefusion/autogen-fusion-sprites/master/Battlers/{index1}/{index1}.{index2}.png"
                 custom_request = requests.get(custom_url)
                 if custom_request.status_code != 404:
                     image_url = custom_url
@@ -405,14 +442,9 @@ class Pokemon(commands.Cog):
                 ctx.command.reset_cooldown(ctx)
                 return 
             poke_embed = discord.Embed()
+            name = self.GenerateFusedName(index1-1,index2-1)
             name1 = pokemon_names_fusion[index1-1]
             name2 = pokemon_names_fusion[index2-1]
-            if name1 == "genesect":
-                name = name2[:len(name2)//2] + "ese"
-            elif name2 == "genesect":
-                name = name1[:len(name1)//2] + "ese"
-            else:
-                name = name1[:len(name1)//2] + name2[len(name2)//2:]
             poke_embed.title = f'{name.title()}'
             poke_embed.set_footer(text=f"{name1.title()} + {name2.title()} | {custom}")
             poke_embed.description = f"**[Image Link]({image_url})**"
