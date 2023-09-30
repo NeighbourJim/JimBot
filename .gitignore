@@ -9,6 +9,7 @@ music.py
 *.bat
 .vscode/
 stand.png
+*.jpg
 chart.png
 
 # Byte-compiled / optimized / DLL files

@@ -20,6 +20,7 @@ class Pokemon(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.fusion_cache = dict()
+        self.triplechance = 500
 
     async def cog_check(self, ctx):
         return BLM.CheckIfCommandAllowed(ctx)
@@ -59,14 +60,21 @@ class Pokemon(commands.Cog):
         max_id = 420
         p1 = random.randint(1,max_id)
         p2 = random.randint(1,max_id)
+        #custom_url = f"https://raw.githubusercontent.com/infinitefusion/sprites/main/CustomBattlers/{p1}.{p2}.png"
+        #fallback_url = f"https://raw.githubusercontent.com/infinitefusion/autogen-fusion-sprites/master/Battlers/{p1}/{p1}.{p2}.png"
+        custom_url = f"https://gitlab.com/infinitefusion/sprites/-/raw/master/CustomBattlers/{p1}/{p1}.{p2}.png"
+        fallback_url = f"https://gitlab.com/infinitefusion/sprites/-/raw/master/Battlers/{p1}/{p1}.{p2}.png"
         if p1 == p2:
-            p2 = random.randint(1,max_id)
+            custom_request = requests.get(custom_url)
+            if custom_request.status_code == 404:
+                p2 = random.randint(1,max_id)
+                custom_url = f"https://gitlab.com/infinitefusion/sprites/-/raw/master/CustomBattlers/{p1}/{p1}.{p2}.png"
+                fallback_url = f"https://gitlab.com/infinitefusion/sprites/-/raw/master/Battlers/{p1}/{p1}.{p2}.png"
         if (p1,p2) in self.fusion_cache:
             image_url = self.fusion_cache[(p1,p2)]
         else:
             #custom_url = f"https://raw.githubusercontent.com/Aegide/custom-fusion-sprites/main/CustomBattlers/{p1}.{p2}.png"
-            custom_url = f"https://raw.githubusercontent.com/infinitefusion/sprites/main/CustomBattlers/{p1}.{p2}.png"
-            fallback_url = f"https://raw.githubusercontent.com/infinitefusion/autogen-fusion-sprites/master/Battlers/{p1}/{p1}.{p2}.png"
+            
             custom_request = requests.get(custom_url)
             if custom_request.status_code != 404:
                 image_url = custom_url
@@ -88,13 +96,13 @@ class Pokemon(commands.Cog):
             if "CustomBattlers" in image_url:
                 return image_url
         image_url = None
-        custom_url = f"https://raw.githubusercontent.com/infinitefusion/sprites/main/CustomBattlers/{p1}.{p2}.png"
+        custom_url = f"https://gitlab.com/infinitefusion/sprites/-/raw/master/CustomBattlers/{p1}/{p1}.{p2}.png"
         custom_request = requests.get(custom_url)
         if custom_request.status_code != 404:
             image_url = custom_url
             self.AddToFusionCache((p1,p2), image_url)
         else:
-            custom_url = f"https://raw.githubusercontent.com/infinitefusion/sprites/main/CustomBattlers/{p1}.{p2}.png"
+            custom_url = f"https://gitlab.com/infinitefusion/sprites/-/raw/master/CustomBattlers/{p1}/{p1}.{p2}.png"
             custom_request = requests.get(custom_url)
             if custom_request.status_code != 404:
                 image_url = custom_url
@@ -232,7 +240,6 @@ class Pokemon(commands.Cog):
     @commands.guild_only()
     async def randomfusedcustom(self, ctx):
         query = Helpers.CommandStrip(self, ctx.message.content)
-        triplechance = 1000
         if not query.strip():
             query = None
         if query:
@@ -244,11 +251,13 @@ class Pokemon(commands.Cog):
         if query:
             index = pokemon_names_fusion.index(query.lower()) + 1
         else:
-            tripleroll = random.randint(1,triplechance)
-            if tripleroll == triplechance:
+            tripleroll = random.randint(1,self.triplechance)
+            print(self.triplechance)
+            if tripleroll == self.triplechance:
+                self.triplechance = 500
                 await asyncio.sleep(4)
                 fusion = self.GetTripleFusion()
-                image_url = f"https://raw.githubusercontent.com/infinitefusion/autogen-fusion-sprites/master/Battlers/special/{fusion[0]}.png"
+                image_url = f"https://gitlab.com/pokemoninfinitefusion/customsprites/-/raw/master/Other/Triples/{fusion[0]}.png"
                 name = fusion[1]
                 
                 poke_embed = discord.Embed()
@@ -256,11 +265,10 @@ class Pokemon(commands.Cog):
                 poke_embed.set_thumbnail(url="https://i.imgur.com/KPHXUAl.png")  
                 poke_embed.description = f"Waiting for the smoke to clear..."
                 await sent.edit(embed=poke_embed, content=None)
-                await ctx.trigger_typing()
                 
                 poke_embed.title = f':sparkles: Triple Fusion: {name.title()} :sparkles:'
                 poke_embed.description = f"**[Image Link]({image_url})**"
-                if len(ctx.guild.members) >= 100:
+                if len(ctx.guild.members) >= 1000:
                     poke_embed.set_thumbnail(url=image_url)
                 else:
                     poke_embed.set_image(url=image_url)
@@ -273,6 +281,9 @@ class Pokemon(commands.Cog):
                     await asyncio.sleep(15)
                     await sent.edit(embed=poke_embed, content=None)
                 return
+            else:
+                if random.randint(1,6) == 1:
+                    self.triplechance = self.triplechance-1
             index = random.randint(1,420)
         fusion_result = None
         i = 1
@@ -280,11 +291,32 @@ class Pokemon(commands.Cog):
         while fusion_result[0] == None:
             fusion_result = self.GetCustomFusion(index)
             i = i+1
-            if i >= 200:
-                await ctx.reply(f"No custom fusion found after {i} attempts.")
+            if i >= 30:
+                fusion = self.GetTripleFusion()
+                image_url = f"https://gitlab.com/pokemoninfinitefusion/customsprites/-/raw/master/Other/Triples/{fusion[0]}.png"
+                name = fusion[1]
+                
+                poke_embed = discord.Embed()
+                poke_embed.title = f'WARNING: A Fusion Accident has occurred!'
+                poke_embed.set_thumbnail(url="https://i.imgur.com/KPHXUAl.png")  
+                poke_embed.description = f"Waiting for the smoke to clear..."
+                await sent.edit(embed=poke_embed, content=None)
+                
+                poke_embed.title = f':sparkles: Triple Fusion: {name.title()} :sparkles:'
+                poke_embed.description = f"**[Image Link]({image_url})**"
+                if len(ctx.guild.members) >= 1000:
+                    poke_embed.set_thumbnail(url=image_url)
+                else:
+                    poke_embed.set_image(url=image_url)
+                
+                await asyncio.sleep(6)
+                await sent.edit(embed=poke_embed, content=None)
+                if len(ctx.guild.members) < 100:
+                    poke_embed.set_thumbnail(url=image_url)
+                    poke_embed.set_image(url="")
+                    await asyncio.sleep(15)
+                    await sent.edit(embed=poke_embed, content=None)
                 return
-            if i % 20 == 0:
-                await ctx.trigger_typing()
             if i == 20:
                 await sent.edit(content="Still searching.......")
             await asyncio.sleep(0.3)
@@ -330,22 +362,9 @@ class Pokemon(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def randomfused(self, ctx):
-        custom_requested = "custom" in Helpers.CommandStrip(self, ctx.message.content).lower()
         fusion_result = self.GetRandomFusion()      
         sent = None  
         i = None
-        if custom_requested:
-            sent = await ctx.reply("Searching for custom fusion...")
-            await ctx.trigger_typing()
-            i = 1
-            while "custom" not in fusion_result[0]:
-                fusion_result = self.GetRandomFusion()
-                if i % 20 == 0:
-                    await ctx.trigger_typing()
-                if i == 20:
-                    await sent.edit(content="Still searching.......")
-                i += 1
-                await asyncio.sleep(0.3)
         image_url = fusion_result[0]
         p1 = fusion_result[1][0]
         p2 = fusion_result[1][1]
@@ -425,19 +444,21 @@ class Pokemon(commands.Cog):
                 image_url = self.fusion_cache[(index1,index2)]
                 print("Retrieved from cache!")
             else:
-                custom_url = f"https://raw.githubusercontent.com/infinitefusion/sprites/main/CustomBattlers/{index1}.{index2}.png"
-                fallback_url = f"https://raw.githubusercontent.com/infinitefusion/autogen-fusion-sprites/master/Battlers/{index1}/{index1}.{index2}.png"
+                custom_url = f"https://gitlab.com/infinitefusion/sprites/-/raw/master/CustomBattlers/{index1}/{index1}.{index2}.png"
+                fallback_url = f"https://gitlab.com/infinitefusion/sprites/-/raw/master/Battlers/{index1}/{index1}.{index2}.png"
                 custom_request = requests.get(custom_url)
                 if custom_request.status_code != 404:
                     image_url = custom_url
+                    custom_found = True
                 else:
                     image_url = fallback_url
+                    custom_found = False
                 self.AddToFusionCache((index1,index2), image_url)
-            if "Custom" in image_url:
+            if custom_found == True:
                 custom = "Custom Made"
             else:
                 custom = "Auto Generated"
-            if index1 == index2 and "custom" not in image_url:
+            if index1 == index2 and custom_found == False:
                 await ctx.reply(f"No custom fusion for double {mon1.title()}s.")
                 ctx.command.reset_cooldown(ctx)
                 return 
