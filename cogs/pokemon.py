@@ -442,6 +442,10 @@ class Pokemon(commands.Cog):
                 index1 = t               
             if (index1,index2) in self.fusion_cache:
                 image_url = self.fusion_cache[(index1,index2)]
+                if 'Custom' in image_url:
+                    custom_found = True
+                else:
+                    custom_found = False
                 print("Retrieved from cache!")
             else:
                 custom_url = f"https://gitlab.com/infinitefusion/sprites/-/raw/master/CustomBattlers/{index1}/{index1}.{index2}.png"

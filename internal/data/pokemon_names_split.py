@@ -1329,7 +1329,7 @@ pokemon_names_split_fusion = [
 ("dusk", "skull"),
 ("dusc", "lops"),
 ("dusk", "noir"),
-("wail", "ord"),
+("wail", "lord"),
 ("arc", "eus"),
 ("turt", "twig"),
 ("gro", "tle"),
