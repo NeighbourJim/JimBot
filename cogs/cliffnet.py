@@ -425,7 +425,8 @@ class cliffnet(commands.Cog):
                 locator = mdates.AutoDateLocator(minticks=3, maxticks=7)
                 ax.xaxis.set_major_locator(locator)
                 #y axis values aranged by the smallest to the largest value found in the durations list
-                pyplot.yticks(numpy.arange(y_values.min(),y_values.max()))
+                num_ticks = 10 
+                pyplot.yticks(numpy.linspace(y_values.min(), y_values.max(), num_ticks))
                 #labels
                 ax.set(ylabel="Duration(Days)", xlabel="Reset Date")
                 #plot (b)lue b(o)lls
