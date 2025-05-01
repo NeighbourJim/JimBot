@@ -5,6 +5,8 @@ import logging
 import functools
 from discord.ext import commands
 from discord.ext.commands import BucketType
+import googletrans
+import httpx==0.13.3
 from googletrans import Translator
 
 # Internal Imports

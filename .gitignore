@@ -1,5 +1,10 @@
 # Bot Specific files
 internal/data/databases
+internal/data/images/fusions
+internal/data/images/ai*
+internal/data/images/bing*
+internal/data/images/fakemon*
+internal/data/images/sd*
 config.json
 bromoviessearch.json
 viper.json

@@ -283,6 +283,45 @@ class Base(commands.Cog):
                     return
         await ctx.reply(f'Invalid input. Correct input eg. `!cc 2.5, USD, EUR`\n You must provide the 3 letter currency codes: <https://www.iban.com/currency-codes>')
 
+    @commands.command(aliases=["dc"], help="Convert a distance into another distance")
+    @commands.cooldown(rate=1, per=1, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def distanceconvert(self, ctx):
+        split_message = Helpers.CommandStrip(self, ctx.message.content).split(',')
+        units = ['mm', 'cm', 'm', 'km', 'in', 'ft', 'yd', 'mi']
+        if len(split_message) >= 3:
+            input_value = Helpers.FuzzyNumberSearch_OLD(self, split_message[0])
+            try:
+                input_value = float(input_value)
+            except:
+                await ctx.reply(f'Invalid input. Correct input eg. `!dc 2.5, m, ft`\n You must provide the unit codes: mm, cm, m, km, in, ft, yd, mi')
+                return            
+            unit_one = split_message[1].strip().lower()
+            unit_two = split_message[2].strip().lower()
+            if input_value and input_value > 0 and unit_one in units and unit_two in units:
+                conversions = {
+                    'mm': 1,
+                    'cm': 10,
+                    'm': 1000,
+                    'km': 1000000,
+                    'in': 25.4,
+                    'ft': 304.8,
+                    'yd': 914.4,
+                    'mi': 1609344
+                }
+                result = input_value * conversions[unit_one] / conversions[unit_two]
+                formatted_value = "{:,.2f}".format(input_value)
+                formatted_result = "{:,.2f}".format(result)
+                await ctx.reply(f'`{formatted_value} {unit_one} = {formatted_result} {unit_two}.`')
+                return
+            else:
+                await ctx.reply(f'Invalid input. Correct input eg. `!dc 2.5, m, ft`\n You must provide the unit codes: mm, cm, m, km, in, ft, yd, mi')
+        else:
+            await ctx.reply(f'Invalid input. Correct input eg. `!dc 2.5, m, ft`\n You must provide the unit codes: mm, cm, m, km, in, ft, yd, mi')
+            
+        
+
 
 def setup(client):
     client.add_cog(Base(client))

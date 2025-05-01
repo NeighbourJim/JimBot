@@ -4,6 +4,7 @@ import random
 import json
 import html
 import freeGPT
+import requests
 import asyncio
 from PIL import Image
 from io import BytesIO
@@ -21,6 +22,8 @@ class GPT(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+        self.server_url = "http://10.0.0.1:7881/v1/chat/completions"
+        self.headers = {"Content-Type": "application/json"}
         self.banned_terms = ["tits","titty", "titties","phallus","butthole", "breasts", "breast", "boobs", "boob", "pussy", "cock", "penis", "sex ", "sex,", "nude", "asshole", "genitalia", "semen", "masturbate", "masturbating", "masturbation", "dildo", "dick", "naked", "nipple", "areola", "vagina", "labia", "titties", "cunny", "coochie"]
 
     async def cog_check(self, ctx):
@@ -47,28 +50,68 @@ class GPT(commands.Cog):
         except Exception as e:
             print(f"ERROR: {e}")
             return None
+        
+    async def get_text_local(self, prompt, character):
+        try:
+            history = []
+            history.append({"role": "user", "content": prompt})
+            data = {
+                "mode": "chat-instruct",
+                "instruction_template": "Llama-v3",
+                "character": character,
+                "messages": history,
+                "max_tokens": 200,
+                "temperature": 0.8,
+            }
+            response = requests.post(self.server_url, headers=self.headers, json=data, verify=False)
+            assistant_message = response.json()['choices'][0]['message']['content']
+            return assistant_message
+        except Exception as e:
+            print(f"ERROR: {e}")
+            return None
 
-    @commands.command(aliases=["gptt", "chat2"], help="Chat to GPT4")    
-    @commands.cooldown(rate=1, per=15, type=BucketType.user)
+    @commands.command(aliases=["evil2"], help="")    
+    @commands.cooldown(rate=1, per=15, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
-    async def gpttext(self, ctx):
-        
+    async def gptlocal_evil(self, ctx):
         split_message = Helpers.CommandStrip(self, ctx.message.content)
         split_message = Helpers.EmojiConvert(self, split_message)
         split_message = Helpers.DiscordEmoteConvert(self, split_message)
-        split_message = split_message[:200]
+        split_message = split_message[:2000]
         if len(split_message) < 1:
             await ctx.reply(f'You didn\'t enter a message.')
             return
         await ctx.trigger_typing()
-        task = asyncio.create_task(self.get_gpt_text(split_message))
+        task = asyncio.create_task(self.get_text_local(split_message, "EvilTroll2"))
         await task            
         gpt_response = task.result()
-        gpt_response = gpt_response[:1750].encode('utf-8')
         if gpt_response is None:
             await ctx.reply("GPT did not respond.")
         else:
+            gpt_response = gpt_response[:1750].encode('utf-8')
+            await ctx.reply(f"{gpt_response.decode('utf-8')}")
+
+    @commands.command(aliases=["chat2"], help="")    
+    @commands.cooldown(rate=1, per=15, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def gptlocal(self, ctx):
+        split_message = Helpers.CommandStrip(self, ctx.message.content)
+        split_message = Helpers.EmojiConvert(self, split_message)
+        split_message = Helpers.DiscordEmoteConvert(self, split_message)
+        split_message = split_message[:2000]
+        if len(split_message) < 1:
+            await ctx.reply(f'You didn\'t enter a message.')
+            return
+        await ctx.trigger_typing()
+        task = asyncio.create_task(self.get_text_local(split_message, "Assistant"))
+        await task            
+        gpt_response = task.result()
+        if gpt_response is None:
+            await ctx.reply("GPT did not respond.")
+        else:
+            gpt_response = gpt_response[:1750].encode('utf-8')
             await ctx.reply(f"{gpt_response.decode('utf-8')}")
 
     @commands.command(aliases=["ig", "igen"], help="Generate an image")    

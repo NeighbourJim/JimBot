@@ -4,6 +4,9 @@ import logging
 import random
 import asyncio
 import requests
+import glob
+import re
+import os
 from discord.ext import commands
 from discord.ext.commands import BucketType
 
@@ -32,8 +35,8 @@ class Pokemon(commands.Cog):
         self.fusion_cache[key] = value
 
     def GenerateFusedName(self, id1, id2):
-        prefix_only = ['mr. ', 'regi', 'type: ', 'tapu ', 'iron ', "wo-", "ting-", "chi-", "chien-", "mimi"]
-        suffix_only = [' jr.', 'ese', 'mo-o']      
+        prefix_only = ['mr. ', 'regi', 'type: ', 'tapu ', 'iron ', "wo-", "ting-", "chi-", "chien-", "mimi", "ultra necro"]
+        suffix_only = [' jr.', 'ese', 'mo-o', 'pedo']      
         n2_prefix_found = False
         n1_suffix_found = False
 
@@ -55,6 +58,76 @@ class Pokemon(commands.Cog):
             name = name1pre + name2suf
 
         return name.title().strip()
+
+    def GetCustomFusionNew(self, id):
+        max_id = 473
+        found = False
+        count = 0        
+        tripleroll = random.randint(0, self.triplechance)
+        if random.randint(1,6) == 1:
+            self.triplechance = self.triplechance-1
+        while found == False:
+            count = count+1
+            if count > 50 or tripleroll == self.triplechance:
+                self.triplechance = 500
+                fusion = random.choice(glob.glob(f'./internal/data/images/fusions/CustomBattlers/indexed/triples/*.png'))
+                return [fusion,count,None,None]
+            if id == -1:
+                id = random.randint(1,max_id)
+            if random.randint(0,1) == 1:
+                id1 = id
+                id2 = random.randint(1, max_id)
+            else:
+                id1 = random.randint(1, max_id)
+                id2 = id
+            path = f"./internal/data/images/fusions/CustomBattlers/indexed/{id1}/{id1}.{id2}"
+            path_prefix = f"./internal/data/images/fusions/CustomBattlers/indexed/{id1}\\"
+            pattern = re.compile(rf'{re.escape(path_prefix)}{id1}\.{id2}[a-zA-Z]?\.png')
+            fusions =  glob.glob(f'{path}*.png')
+            matching = []
+            for fusion in fusions:
+                print(fusion)
+                print(pattern.match(fusion))
+                if pattern.match(fusion):
+                    matching.append(fusion)
+            if len(matching) > 0:
+                found = True
+                return [random.choice(matching),count,id1,id2]
+            path_prefix = f"./internal/data/images/fusions/CustomBattlers/indexed/{id2}\\"
+            pattern = re.compile(rf'{re.escape(path_prefix)}{id2}\.{id1}[a-zA-Z]?\.png')
+            fusions =  glob.glob(f'{path}*.png')
+            matching = []
+            for fusion in fusions:
+                print(fusion)
+                print(pattern.match(fusion))
+                if pattern.match(fusion):
+                    matching.append(fusion)
+            if len(matching) > 0:
+                found = True
+                return [random.choice(matching),count,id2,id1]
+            
+    def GetFusion(self, id1, id2):
+        max_id = 473
+        if id1 == -1:
+            id1 = random.randint(1,max_id)
+        if id2 == -1:
+            id2 = random.randint(1,max_id)
+        path = f'./internal/data/images/fusions/CustomBattlers/indexed/{id1}/{id1}.{id2}'
+        path_prefix = f"./internal/data/images/fusions/CustomBattlers/indexed/{id1}\\"
+        pattern = re.compile(rf'{re.escape(path_prefix)}{id1}\.{id2}[a-zA-Z]?\.png')
+        fusions =  glob.glob(f'{path}*.png')
+        matching = []
+        for fusion in fusions:
+            if pattern.match(fusion):
+                matching.append(fusion)
+        if len(matching) > 0:
+                return [random.choice(matching),id1,id2]
+        if os.path.isfile(path):
+            print('returning custom')
+            return [path,id1,id2]
+        print('returning auto')
+        return [f'./internal/data/images/fusions/Battlers/{id1}/{id1}.{id2}.png',id1,id2]
+
 
     def GetRandomFusion(self):
         max_id = 420
@@ -195,6 +268,70 @@ class Pokemon(commands.Cog):
         random.shuffle(stats)
         return stats, stage, stat_total   
 
+    @commands.command(help="Get a random fused Pokemon (custom only).", aliases=["rfc"])
+    @commands.cooldown(rate=1, per=2, type=BucketType.user)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def randomfusedcustom(self, ctx):
+        triple = False
+        query = Helpers.CommandStrip(self, ctx.message.content)
+        if not query.strip():
+            query = None
+        if query:
+            await ctx.trigger_typing()
+            if query.lower() not in pokemon_names_fusion: 
+                await ctx.reply(f"{query} not available for fusion.")
+                return
+            index = pokemon_names_fusion.index(query.lower())+1
+            print(index)
+        else:
+            index = -1
+        results = self.GetCustomFusionNew(index)
+        fusion = results[0]
+        count = results[1]
+        if results[2] == None:
+            triple = True
+            name = os.path.basename(fusion)
+            name = name.replace('.png','')
+        else:
+            name = self.GenerateFusedName(results[2]-1,results[3]-1)
+            name1 = pokemon_names_fusion[results[2]-1]
+            name2 = pokemon_names_fusion[results[3]-1]
+            name = name.title()
+        fusion_embed = discord.Embed()
+        if not triple:
+            image_file = discord.File(fusion, filename=f'fusion.png')
+            if len(ctx.guild.members) >= 200:
+                fusion_embed.set_thumbnail(url=f"attachment://fusion.png")
+            else:
+                fusion_embed.set_image(url=f"attachment://fusion.png")
+            fusion_embed.title = f'{name.title()}'
+            fusion_embed.set_footer(text=f"{name1.title()} + {name2.title()} | Took {count} roll(s).")
+            sent = await ctx.reply(file=image_file, embed=fusion_embed)
+            if len(ctx.guild.members) <= 200:
+                await asyncio.sleep(12)
+                fusion_embed.set_thumbnail(url=f"attachment://fusion.png")
+                fusion_embed.set_image(url='')
+                await sent.edit(embed=fusion_embed)
+        else:
+            fusion_embed.title = f'WARNING: A Fusion Accident has occurred!'
+            fusion_embed.set_image(url="https://i.imgur.com/KPHXUAl.png")  
+            fusion_embed.description = f"Waiting for the smoke to clear..."
+            sent = await ctx.reply(embed=fusion_embed)
+            await asyncio.sleep(6)
+            image_file = discord.File(fusion, filename=f'fusion.png')
+            fusion_embed.title = f':sparkles: Triple Fusion: {name.title()} :sparkles:'
+            fusion_embed.set_image(url="attachment://fusion.png")
+            await sent.delete()
+            fusion_embed.description = f""
+            sent = await ctx.reply(file=image_file,embed=fusion_embed)
+            if len(ctx.guild.members) > 80:
+                await asyncio.sleep(12)
+                fusion_embed.set_thumbnail(url=f"attachment://fusion.png")
+                fusion_embed.set_image(url='')
+                await sent.edit(embed=fusion_embed)
+
+
     @commands.command(help="Get a random Pokemon.", aliases=["rmon", "RMon", "Rmon", "RMON"])
     @commands.cooldown(rate=1, per=2, type=BucketType.user)
     @commands.has_role("Bot Use")
@@ -234,11 +371,11 @@ class Pokemon(commands.Cog):
         #poke_embed.set_image(url='')
         #await sent.edit(embed=poke_embed)
 
-    @commands.command(help="Get a random fused Pokemon (custom only).", aliases=["rfc", "rfusec", "cfuse"])
+    @commands.command(help="Get a random fused Pokemon (custom only).", aliases=["rfcOLD"])
     @commands.cooldown(rate=1, per=15, type=BucketType.user)
     @commands.has_role("Bot Use")
     @commands.guild_only()
-    async def randomfusedcustom(self, ctx):
+    async def randomfusedcustomOLD(self, ctx):
         query = Helpers.CommandStrip(self, ctx.message.content)
         if not query.strip():
             query = None
@@ -352,8 +489,72 @@ class Pokemon(commands.Cog):
             await sent.edit(embed=poke_embed, content=None)
         return
                 
-
-        
+    @commands.command(help="Get a fused Pokemon.", aliases=["fuse", "Fuse", "f", "pf", "Pf", "pfuse"])
+    @commands.cooldown(rate=1, per=15, type=BucketType.user)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def pokefuse(self, ctx):
+        query = Helpers.CommandStrip(self, ctx.message.content)
+        id1 = -1
+        id2 = -1
+        random_form = False
+        if not query.strip():
+            ctx.command.reset_cooldown(ctx)
+            return
+        query = query.split(',')
+        if len(query) > 1:
+            mon1 = query[0].strip()
+            mon2 = query[1].strip()
+        else:
+            mon1 = query[0]
+            mon2 = None
+            random_form = True
+        if mon1.lower() == "something":
+            mon1 = random.choice(pokemon_names_fusion)
+        if mon2 == None:
+            mon2 = random.choice(pokemon_names_fusion)
+        if mon2.lower() == "something":
+            mon2 = random.choice(pokemon_names_fusion)
+        if mon1.lower() in pokemon_names_fusion:            
+            id1 = pokemon_names_fusion.index(mon1.lower()) + 1
+        else:
+            await ctx.reply(f"{mon1} is not available for fusion.")
+            ctx.command.reset_cooldown(ctx)
+            return
+        if mon2.lower() in pokemon_names_fusion:
+            id2 = pokemon_names_fusion.index(mon2.lower()) + 1
+        else:
+            await ctx.reply(f"{mon2} is not available for fusion.")
+            ctx.command.reset_cooldown(ctx)
+            return
+        if random_form:
+            if random.randint(0,1) == 1:
+                id_temp = id1
+                id1 = id2
+                id2 = id_temp
+        results = self.GetFusion(id1,id2)
+        fusion = results[0]
+        custom = "Auto-Generated"
+        if 'CustomBattlers' in fusion:
+            custom = "Custom Made"
+        name = self.GenerateFusedName(results[1]-1,results[2]-1)
+        name1 = pokemon_names_fusion[results[1]-1]
+        name2 = pokemon_names_fusion[results[2]-1]
+        name = name.title()
+        fusion_embed = discord.Embed()
+        image_file = discord.File(fusion, filename=f'fusion.png')
+        if len(ctx.guild.members) >= 200:
+            fusion_embed.set_thumbnail(url=f"attachment://fusion.png")
+        else:
+            fusion_embed.set_image(url=f"attachment://fusion.png")
+            fusion_embed.title = f'{name.title()}'
+            fusion_embed.set_footer(text=f"{name1.title()} + {name2.title()} | {custom}")
+            sent = await ctx.reply(file=image_file, embed=fusion_embed)
+            if len(ctx.guild.members) > 80:
+                await asyncio.sleep(12)
+                fusion_embed.set_thumbnail(url=f"attachment://fusion.png")
+                fusion_embed.set_image(url='')
+                await sent.edit(embed=fusion_embed)
 
         
 
@@ -400,11 +601,11 @@ class Pokemon(commands.Cog):
             await sent.edit(embed=poke_embed, content=None)
         return
         
-    @commands.command(help="Get a fused Pokemon.", aliases=["fuse", "Fuse", "f", "pf", "Pf", "pfuse"])
+    @commands.command(help="Get a fused Pokemon.")
     @commands.cooldown(rate=1, per=15, type=BucketType.user)
     @commands.has_role("Bot Use")
     @commands.guild_only()
-    async def pokefuse(self, ctx):
+    async def pokefuseOLD(self, ctx):
 
         query = Helpers.CommandStrip(self, ctx.message.content)
         if not query.strip():
