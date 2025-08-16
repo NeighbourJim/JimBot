@@ -214,11 +214,11 @@ class sd(commands.Cog):
     #        await ctx.reply(response)
     #        return
 
-    @commands.command(aliases=["fm"], help="Create a fake pokemon")    
+    @commands.command(aliases=["fms"], help="Create a fake pokemon")    
     @commands.cooldown(rate=1, per=10, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()
-    async def fakemon(self, ctx):
+    async def fakemonsprite(self, ctx):
         await ctx.trigger_typing()
         try:
             requests.get(self.server_url, timeout=1.5)
@@ -230,7 +230,7 @@ class sd(commands.Cog):
         if len(msg) > 1:
             self.current_model = "dreamshaperXL_v21TurboDPMSDE.safetensors [4496b36d48]"
             neg = "((nsfw, naked, nude, sexy, underwear, partially clothed, erotic, nipples, breasts, penis, vagina, pussy, ass, sex))"
-            pos = ""
+            pos = "pokemon, creature, cartoony, solo, full body,"
             sampler = "DPM++ SDE Karras"
             cfg = 2
             steps = 8
@@ -244,10 +244,6 @@ class sd(commands.Cog):
             elif "frontback" in msg.lower() or "backfront" in msg.lower():
                 pos = "__pkspritebf__, blank background"
                 neg = f"{neg},((human))"
-            elif "artwork" in msg.lower():
-                pos = "<lora:Xeomon-000008:1.3> xeomon, creature"
-                pos = pos.replace("pokemon", "xeomon")
-                sprite = False
             else:
                 pos = "__pksprite__, blank background"
                 neg = f"{neg},((human))"
@@ -255,6 +251,7 @@ class sd(commands.Cog):
             pruned = pruned.replace("frontback","")
             pruned = pruned.replace("backfront","")
             pruned = pruned.replace("artwork","")
+            pruned = pruned.replace("pokemon","")
             pos = f"{pos},{pruned}"
             if "pkspritebf" in pos:
                 width = 1536
@@ -293,6 +290,80 @@ class sd(commands.Cog):
         image_file = discord.File(f'./internal/data/images/fakemon{ctx.author.id}.png', filename='SPOILER_fakemon.png')
         sent = await ctx.reply(file=image_file)
 
+    @commands.command(aliases=["fm"], help="Create a fake pokemon")    
+    @commands.cooldown(rate=1, per=4, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def fakemon(self, ctx):
+        await ctx.trigger_typing()
+        try:
+            requests.get(self.server_url, timeout=1.5)
+        except:
+            await ctx.reply("This command is not currently available.")
+            return
+        msg = Helpers.CommandStrip(self,ctx.message.content)
+        msg = Helpers.DiscordEmoteConvert(self, msg)
+        if len(msg) >= 1:
+            self.current_model = "catCitronAnimeTreasure_ilV9.safetensors [3761477265]"
+            if "trainer" in msg.lower():
+                msg = msg.lower().replace("trainer","")
+                neg = "low quality, worst quality, lazynsfw, detailed background"
+                pos = "masterpiece, best quality, absurdres, white background, blank background"
+                lora = "<lora:Pokemon-Trainer-SpritesV2_Fp:1>, pixel art, simple background, full body,{|holding poke ball,}"
+            else:
+                neg = "low quality, worst quality, (((orb, sphere, round, ball))), ((multiple characters, group, crowd), (((ball, round, circle))), no characters, landscape"
+                pos = "masterpiece, best quality, absurdres, ((black background, blank background))"
+                lora = "<lora:Fakemon-_Sugimori:1> (Fakemon),Sugimori, pokemon \(creature\), no humans,animal, (solo))"
+            sampler = "Euler a"
+            cfg = 5.5
+            steps = 30
+            enable_hr = 'false'
+            hr_scale = 1.35
+            hr_second_pass_steps = 15
+            hr_upscaler = 'Latent'
+            denoising_strength = 0.6
+            if not ctx.message.channel.is_nsfw():
+                pos = pos + ",rating_safe, non-h"
+                neg = neg + ",(lazynsfw), (((nsfw, nude, pussy, penis, naked, nipples, breasts, rating_explicit, explicit))) (gore, guro, pussy, penis, sex, vaginal, anal, semen, cum, ecchi, sexual, panties)"
+            if len(msg.lower().split('!neg')) > 1:
+                cneg = msg.lower().split('!neg')[1]
+                msg = msg.lower().split('!neg')[0]
+            else:
+                cneg = ""
+            if not ctx.message.channel.is_nsfw():
+                neg = neg + ", nsfw"
+                pos = pos + ""
+            payload = {
+                "prompt": f"{pos}, {msg}, {lora}",
+                "negative_prompt": f"{neg},f{cneg}",
+                "seed": -1,
+                "steps": steps,
+                "width": 1024,
+                "height": 1024,
+                "cfg_scale": cfg,
+                "sampler_name": sampler,
+                "n_iter": 1,
+                "batch_size": 1,
+                "enable_hr": enable_hr,
+                "hr_upscaler": hr_upscaler,
+                "hr_second_pass_steps": hr_second_pass_steps,
+                "hr_scale": hr_scale,
+                "denoising_strength" : denoising_strength,
+                "override_settings": {
+                    'sd_model_checkpoint' : self.current_model,
+                    'sd_vae' : "sdxl_vae.safetensors"
+                },
+                "alwayson_scripts": {"Kohya HRFix Integrated":{"args" :[{"0" : True,"1" : 3,"2" : 2,"3" : 0,"4" : 0.35,"5" : True,"6" : "bicubic","7" : "bicubic"}]},"ADetailer": {"args": [True, False, {"ad_cfg_scale": 7, "ad_checkpoint": "Use same checkpoint", "ad_clip_skip": 1, "ad_confidence": 0.3, "ad_controlnet_guidance_end": 1, "ad_controlnet_guidance_start": 0, "ad_controlnet_model": "None", "ad_controlnet_module": "None", "ad_controlnet_weight": 1, "ad_denoising_strength": 0.3, "ad_dilate_erode": 4, "ad_inpaint_height": 512, "ad_inpaint_only_masked": True, "ad_inpaint_only_masked_padding": 32, "ad_inpaint_width": 512, "ad_mask_blur": 6, "ad_mask_k_largest": 5, "ad_mask_max_ratio": 1, "ad_mask_merge_invert": "None", "ad_mask_min_ratio": 0, "ad_model": "face_yolov8s.pt", "ad_negative_prompt": "", "ad_noise_multiplier": 1, "ad_prompt": "", "ad_restore_face": False, "ad_sampler": "Euler a", "ad_steps": 28, "ad_use_cfg_scale": False, "ad_use_checkpoint": False, "ad_use_clip_skip": False, "ad_use_inpaint_width_height": False, "ad_use_noise_multiplier": False, "ad_use_sampler": False, "ad_use_steps": False, "ad_use_vae": False, "ad_vae": "Use same VAE", "ad_x_offset": 0, "ad_y_offset": 0, "is_api": []}, {"ad_cfg_scale": 7, "ad_checkpoint": "Use same checkpoint", "ad_clip_skip": 1, "ad_confidence": 0.3, "ad_controlnet_guidance_end": 1, "ad_controlnet_guidance_start": 0, "ad_controlnet_model": "None", "ad_controlnet_module": "None", "ad_controlnet_weight": 1, "ad_denoising_strength": 0.4, "ad_dilate_erode": 4, "ad_inpaint_height": 512, "ad_inpaint_only_masked": True, "ad_inpaint_only_masked_padding": 32, "ad_inpaint_width": 512, "ad_mask_blur": 4, "ad_mask_k_largest": 0, "ad_mask_max_ratio": 1, "ad_mask_merge_invert": "None", "ad_mask_min_ratio": 0, "ad_model": "None", "ad_negative_prompt": "", "ad_noise_multiplier": 1, "ad_prompt": "", "ad_restore_face": False, "ad_sampler": "DPM++ 2M Karras", "ad_steps": 28, "ad_use_cfg_scale": False, "ad_use_checkpoint": False, "ad_use_clip_skip": False, "ad_use_inpaint_width_height": False, "ad_use_noise_multiplier": False, "ad_use_sampler": False, "ad_use_steps": False, "ad_use_vae": False, "ad_vae": "Use same VAE", "ad_x_offset": 0, "ad_y_offset": 0, "is_api": []},{"ad_cfg_scale": 7, "ad_checkpoint": "Use same checkpoint", "ad_clip_skip": 1, "ad_confidence": 0.3, "ad_controlnet_guidance_end": 1, "ad_controlnet_guidance_start": 0, "ad_controlnet_model": "None", "ad_controlnet_module": "None", "ad_controlnet_weight": 1, "ad_denoising_strength": 0.4, "ad_dilate_erode": 4, "ad_inpaint_height": 512, "ad_inpaint_only_masked": True, "ad_inpaint_only_masked_padding": 32, "ad_inpaint_width": 512, "ad_mask_blur": 4, "ad_mask_k_largest": 0, "ad_mask_max_ratio": 1, "ad_mask_merge_invert": "None", "ad_mask_min_ratio": 0, "ad_model": "None", "ad_negative_prompt": "", "ad_noise_multiplier": 1, "ad_prompt": "", "ad_restore_face": False, "ad_sampler": "DPM++ 2M Karras", "ad_steps": 28, "ad_use_cfg_scale": False, "ad_use_checkpoint": False, "ad_use_clip_skip": False, "ad_use_inpaint_width_height": False, "ad_use_noise_multiplier": False, "ad_use_sampler": False, "ad_use_steps": False, "ad_use_vae": False, "ad_vae": "Use same VAE", "ad_x_offset": 0, "ad_y_offset": 0, "is_api": []}]}}
+            }
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(None, lambda: self.generate_image(payload))
+            #response = self.generate_image(payload)
+            image = Image.open(io.BytesIO(base64.b64decode(response['images'][0])))
+            image.save(f'./internal/data/images/fakemon{ctx.author.id}.png')
+        else:
+            response = f'You didn\'t enter a message.'
+        image_file = discord.File(f'./internal/data/images/fakemon{ctx.author.id}.png', filename='SPOILER_fakemon.png')
+        sent = await ctx.reply(file=image_file)
     # #@commands.command(aliases=[], help="Create an image")    
     # #@commands.cooldown(rate=1, per=30, type=BucketType.user)
     # #@commands.has_role("Bot Use")
@@ -367,10 +438,11 @@ class sd(commands.Cog):
             hr_second_pass_steps = 5
             hr_upscaler = 'Latent'
             denoising_strength = 0.6
+            posSuf = ""
 
             xl_real_models_old = ["realvisxlV50_v50LightningBakedvae.safetensors [fabcadd933]"]
-            xl_real_models = ["wildcardxXLFusion_fusionOG.safetensors [22ebc61141]", "moxieDiffusionXL_v191.safetensors [5c19630a58]", "juggernautXL_juggXIByRundiffusion.safetensors [33e58e8668]"]
-            xl_anime_realistic = ["damnPonyxlRealistic_v30.safetensors [9b28824a9e]","ponyRealism_v22MainVAE.safetensors [7c97ecf786]"]
+            xl_real_models = ["wildcardxXLFusion_fusionOG.safetensors [22ebc61141]"]
+            xl_anime_realistic = ["illustrious_v10B03.safetensors [3abc56d131]"]
             sprite = False
             vae = "sdxl_vae.safetensors"
             if "anime" in msg.lower() or "lora:pixel" in msg.lower():
@@ -380,26 +452,49 @@ class sd(commands.Cog):
                     msg = msg.replace("anime","")
                     msg = msg.replace("realistic", "")
                 else:
-                    self.current_model = "autismmixSDXL_autismmixConfetti.safetensors"
-                    msg = msg.replace("anime","")
-                neg = "score_4, score_5,BeyondSDXLv3"
-                pos = "<lora:dmd2_sdxl_4step_lora:1>, score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up,"
+                    self.current_model = "catCitronAnimeTreasure_ilV9.safetensors [3761477265]"
+                    msg = msg.replace('anime','')
+                neg = "lowres, worst quality, zoomed out, far away, bad quality, bad anatomy, bad hands, sketch, signature, watermark, logo, border,"
+                pos = "masterpiece, best quality, ("
+                posSuf = ")"
+
+                #if "style" not in msg.lower() and "ilartist" not in msg.lower():
+                #    pos = pos + ", (anime screencap style), flat colours, outlines, shading, ("
+                #else:
+                #    pos = pos + ",("
+
                 sampler = "Euler a"
-                cfg = 1.5
-                steps = 8
+                cfg = 6
+                steps = 30
                 enable_hr = 'true'
-                hr_scale = 1.5
-                hr_second_pass_steps = 5
+                hr_scale = 1.35
+                hr_second_pass_steps = 15
                 hr_upscaler = 'Latent'
                 denoising_strength = 0.6
                 if not ctx.message.channel.is_nsfw():
-                    pos = pos + "rating_safe,"
-                    neg = neg + "nsfw, nude, pussy, penis, naked, rating_explicit"
+                    pos = pos + ", (general)"
+                    neg = neg + "(explicit), ((lazynsfw)), (((nsfw, nude, pussy, penis, naked, nipples, breasts, rating_explicit, loli, shota, child)))"
+                '''else:
+                    self.current_model = "lunarcherrymix_v22BaseIllustrxl20.safetensors [6a22ffd713]"
+                    msg = msg.replace("anime","")
+                neg = "low quality, worst quality, ((logo, qr code, text, english text, watermark, japanese text)), (loli, shota, child, gore, guro, pussy, penis, sex, vaginal, anal, semen, cum, ecchi, sexual, panties)"
+                pos = "masterpiece, best quality, absurdres, "
+                sampler = "Euler a"
+                cfg = 5.5
+                steps = 30
+                enable_hr = 'true'
+                hr_scale = 1.35
+                hr_second_pass_steps = 15
+                hr_upscaler = 'Latent'
+                denoising_strength = 0.6
+                if not ctx.message.channel.is_nsfw():
+                    pos = pos + "rating_safe, non-h"
+                    neg = neg + "(lazynsfw), (((nsfw, nude, pussy, penis, naked, nipples, breasts, rating_explicit, explicit)))"'''
             else:
-                if random.randint(0,8) == 1 or self.current_model not in xl_real_models_old:
-                    self.current_model = random.choice(xl_real_models_old)
+                if random.randint(0,8) == 1 or self.current_model not in xl_real_models:
+                    self.current_model = random.choice(xl_real_models)
                 if "realistic" in msg.lower():
-                    self.current_model = "realvisxlV50_v50LightningBakedvae.safetensors [fabcadd933]"
+                    self.current_model = "juggernautXL_ragnarokBy.safetensors [dd08fa32f9]"
                     msg = msg.lower().replace("realistic", "")
                 if "pkspif" in msg.lower() or "pk_trainer" in msg.lower() or "__pksprite" in msg.lower() or "__pktrainer" in msg.lower() or "pkspbf" in msg.lower():
                     self.current_model = "dreamshaperXL_v21TurboDPMSDE.safetensors [4496b36d48]"
@@ -436,10 +531,15 @@ class sd(commands.Cog):
                     pos = ""
                 elif self.current_model == "wildcardxXLFusion_fusionOG.safetensors [22ebc61141]":
                     neg = "BeyondSDXLv3"
-                    pos = f'<lora:WildcardX-XL-Detail-Enhancer:{random.choice([1,0.9,0.8,0.7])}>'
+                    pos = f'<lora:dmd2_sdxl_4step_lora:0.7>,'
                     sampler = "Euler a"
-                    cfg = random.randint(3,9)
-                    steps = random.randint(20,35)
+                    cfg = 1.5
+                    steps = random.randint(10,15)
+                    enable_hr = 'true'
+                    hr_scale = 1.5
+                    hr_second_pass_steps = 7
+                    hr_upscaler = 'Latent'
+                    denoising_strength = 0.6
                     if not ctx.message.channel.is_nsfw():
                         neg = neg + "(nsfw, nude)"
                 elif self.current_model == "valiantStallion_v30.safetensors [d2aa1d5cd3]":
@@ -448,15 +548,20 @@ class sd(commands.Cog):
                     sampler = "DPM++ SDE"
                     cfg = 5
                     steps = 24
-                elif self.current_model == "juggernautXL_juggXIByRundiffusion.safetensors [33e58e8668]":
+                elif self.current_model == "juggernautXL_ragnarokBy.safetensors [dd08fa32f9]":
                     cfg = round(random.uniform(3.0,6.0),2)
                     msg = msg.replace("realistic,","")
                     msg = msg.replace("realistic","")
                     steps = random.randint(30,40)
                     sampler = "DPM++ 2M Karras"
                     vae = "None"
+                    enable_hr = 'true'
+                    hr_scale = 1.5
+                    hr_second_pass_steps = 15
+                    hr_upscaler = 'Latent'
+                    denoising_strength = 0.6
                     pos = ""
-                    neg = "bad eyes, cgi, airbrushed, plastic, deformed, watermark, loli,shota, nude,"
+                    neg = "bad eyes, blurry, missing limbs, bad anatomy, cartoon, nsfw, nude, penis, breasts, pussy, vagina"
                 elif self.current_model == "Dream_Diffusion_ Pony_V1 _By_ DICE.safetensors [70a97af393]":
                     cfg = random.randint(7,11)
                     steps = 35
@@ -490,8 +595,8 @@ class sd(commands.Cog):
                 neg = neg + ", nsfw"
                 pos = pos + ""
             payload = {
-                "prompt": f"{pos}, {msg}",
-                "negative_prompt": f"{neg},f{cneg}",
+                "prompt": f"{pos}, {msg}, {posSuf}",
+                "negative_prompt": f"{neg},{cneg}",
                 "seed": -1,
                 "steps": steps,
                 "width": width,
@@ -509,10 +614,11 @@ class sd(commands.Cog):
                     'sd_model_checkpoint' : self.current_model,
                     'sd_vae' : vae
                 },
-                "alwayson_scripts": {"ADetailer": {"args": [True, False, {"ad_cfg_scale": 7, "ad_checkpoint": "Use same checkpoint", "ad_clip_skip": 1, "ad_confidence": 0.3, "ad_controlnet_guidance_end": 1, "ad_controlnet_guidance_start": 0, "ad_controlnet_model": "None", "ad_controlnet_module": "None", "ad_controlnet_weight": 1, "ad_denoising_strength": 0.3, "ad_dilate_erode": 4, "ad_inpaint_height": 512, "ad_inpaint_only_masked": True, "ad_inpaint_only_masked_padding": 32, "ad_inpaint_width": 512, "ad_mask_blur": 6, "ad_mask_k_largest": 5, "ad_mask_max_ratio": 1, "ad_mask_merge_invert": "None", "ad_mask_min_ratio": 0, "ad_model": "face_yolov8s.pt", "ad_negative_prompt": "", "ad_noise_multiplier": 1, "ad_prompt": "", "ad_restore_face": False, "ad_sampler": "Euler a", "ad_steps": 28, "ad_use_cfg_scale": False, "ad_use_checkpoint": False, "ad_use_clip_skip": False, "ad_use_inpaint_width_height": False, "ad_use_noise_multiplier": False, "ad_use_sampler": False, "ad_use_steps": False, "ad_use_vae": False, "ad_vae": "Use same VAE", "ad_x_offset": 0, "ad_y_offset": 0, "is_api": []}, {"ad_cfg_scale": 7, "ad_checkpoint": "Use same checkpoint", "ad_clip_skip": 1, "ad_confidence": 0.3, "ad_controlnet_guidance_end": 1, "ad_controlnet_guidance_start": 0, "ad_controlnet_model": "None", "ad_controlnet_module": "None", "ad_controlnet_weight": 1, "ad_denoising_strength": 0.4, "ad_dilate_erode": 4, "ad_inpaint_height": 512, "ad_inpaint_only_masked": True, "ad_inpaint_only_masked_padding": 32, "ad_inpaint_width": 512, "ad_mask_blur": 4, "ad_mask_k_largest": 0, "ad_mask_max_ratio": 1, "ad_mask_merge_invert": "None", "ad_mask_min_ratio": 0, "ad_model": "None", "ad_negative_prompt": "", "ad_noise_multiplier": 1, "ad_prompt": "", "ad_restore_face": False, "ad_sampler": "DPM++ 2M Karras", "ad_steps": 28, "ad_use_cfg_scale": False, "ad_use_checkpoint": False, "ad_use_clip_skip": False, "ad_use_inpaint_width_height": False, "ad_use_noise_multiplier": False, "ad_use_sampler": False, "ad_use_steps": False, "ad_use_vae": False, "ad_vae": "Use same VAE", "ad_x_offset": 0, "ad_y_offset": 0, "is_api": []},{"ad_cfg_scale": 7, "ad_checkpoint": "Use same checkpoint", "ad_clip_skip": 1, "ad_confidence": 0.3, "ad_controlnet_guidance_end": 1, "ad_controlnet_guidance_start": 0, "ad_controlnet_model": "None", "ad_controlnet_module": "None", "ad_controlnet_weight": 1, "ad_denoising_strength": 0.4, "ad_dilate_erode": 4, "ad_inpaint_height": 512, "ad_inpaint_only_masked": True, "ad_inpaint_only_masked_padding": 32, "ad_inpaint_width": 512, "ad_mask_blur": 4, "ad_mask_k_largest": 0, "ad_mask_max_ratio": 1, "ad_mask_merge_invert": "None", "ad_mask_min_ratio": 0, "ad_model": "None", "ad_negative_prompt": "", "ad_noise_multiplier": 1, "ad_prompt": "", "ad_restore_face": False, "ad_sampler": "DPM++ 2M Karras", "ad_steps": 28, "ad_use_cfg_scale": False, "ad_use_checkpoint": False, "ad_use_clip_skip": False, "ad_use_inpaint_width_height": False, "ad_use_noise_multiplier": False, "ad_use_sampler": False, "ad_use_steps": False, "ad_use_vae": False, "ad_vae": "Use same VAE", "ad_x_offset": 0, "ad_y_offset": 0, "is_api": []}]}}
+                "alwayson_scripts": {"Kohya HRFix Integrated":{"args" :[{"0" : True,"1" : 3,"2" : 2,"3" : 0,"4" : 0.35,"5" : True,"6" : "bicubic","7" : "bicubic"}]},"ADetailer": {"args": [True, False, {"ad_cfg_scale": 7, "ad_checkpoint": "Use same checkpoint", "ad_clip_skip": 1, "ad_confidence": 0.3, "ad_controlnet_guidance_end": 1, "ad_controlnet_guidance_start": 0, "ad_controlnet_model": "None", "ad_controlnet_module": "None", "ad_controlnet_weight": 1, "ad_denoising_strength": 0.3, "ad_dilate_erode": 4, "ad_inpaint_height": 512, "ad_inpaint_only_masked": True, "ad_inpaint_only_masked_padding": 32, "ad_inpaint_width": 512, "ad_mask_blur": 6, "ad_mask_k_largest": 5, "ad_mask_max_ratio": 1, "ad_mask_merge_invert": "None", "ad_mask_min_ratio": 0, "ad_model": "face_yolov8s.pt", "ad_negative_prompt": "", "ad_noise_multiplier": 1, "ad_prompt": "", "ad_restore_face": False, "ad_sampler": "Euler a", "ad_steps": 28, "ad_use_cfg_scale": False, "ad_use_checkpoint": False, "ad_use_clip_skip": False, "ad_use_inpaint_width_height": False, "ad_use_noise_multiplier": False, "ad_use_sampler": False, "ad_use_steps": False, "ad_use_vae": False, "ad_vae": "Use same VAE", "ad_x_offset": 0, "ad_y_offset": 0, "is_api": []}, {"ad_cfg_scale": 7, "ad_checkpoint": "Use same checkpoint", "ad_clip_skip": 1, "ad_confidence": 0.3, "ad_controlnet_guidance_end": 1, "ad_controlnet_guidance_start": 0, "ad_controlnet_model": "None", "ad_controlnet_module": "None", "ad_controlnet_weight": 1, "ad_denoising_strength": 0.4, "ad_dilate_erode": 4, "ad_inpaint_height": 512, "ad_inpaint_only_masked": True, "ad_inpaint_only_masked_padding": 32, "ad_inpaint_width": 512, "ad_mask_blur": 4, "ad_mask_k_largest": 0, "ad_mask_max_ratio": 1, "ad_mask_merge_invert": "None", "ad_mask_min_ratio": 0, "ad_model": "None", "ad_negative_prompt": "", "ad_noise_multiplier": 1, "ad_prompt": "", "ad_restore_face": False, "ad_sampler": "DPM++ 2M Karras", "ad_steps": 28, "ad_use_cfg_scale": False, "ad_use_checkpoint": False, "ad_use_clip_skip": False, "ad_use_inpaint_width_height": False, "ad_use_noise_multiplier": False, "ad_use_sampler": False, "ad_use_steps": False, "ad_use_vae": False, "ad_vae": "Use same VAE", "ad_x_offset": 0, "ad_y_offset": 0, "is_api": []},{"ad_cfg_scale": 7, "ad_checkpoint": "Use same checkpoint", "ad_clip_skip": 1, "ad_confidence": 0.3, "ad_controlnet_guidance_end": 1, "ad_controlnet_guidance_start": 0, "ad_controlnet_model": "None", "ad_controlnet_module": "None", "ad_controlnet_weight": 1, "ad_denoising_strength": 0.4, "ad_dilate_erode": 4, "ad_inpaint_height": 512, "ad_inpaint_only_masked": True, "ad_inpaint_only_masked_padding": 32, "ad_inpaint_width": 512, "ad_mask_blur": 4, "ad_mask_k_largest": 0, "ad_mask_max_ratio": 1, "ad_mask_merge_invert": "None", "ad_mask_min_ratio": 0, "ad_model": "None", "ad_negative_prompt": "", "ad_noise_multiplier": 1, "ad_prompt": "", "ad_restore_face": False, "ad_sampler": "DPM++ 2M Karras", "ad_steps": 28, "ad_use_cfg_scale": False, "ad_use_checkpoint": False, "ad_use_clip_skip": False, "ad_use_inpaint_width_height": False, "ad_use_noise_multiplier": False, "ad_use_sampler": False, "ad_use_steps": False, "ad_use_vae": False, "ad_vae": "Use same VAE", "ad_x_offset": 0, "ad_y_offset": 0, "is_api": []}]}}
             }
 
-            response = self.generate_image(payload)
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(None, lambda: self.generate_image(payload))
             image = Image.open(io.BytesIO(base64.b64decode(response['images'][0])))
             image.save(f'./internal/data/images/sd{ctx.author.id}.png')
             if sprite == True:

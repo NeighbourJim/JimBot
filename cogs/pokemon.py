@@ -275,15 +275,29 @@ class Pokemon(commands.Cog):
     async def randomfusedcustom(self, ctx):
         triple = False
         query = Helpers.CommandStrip(self, ctx.message.content)
+        unavailable_msg = ""
+        space_names = ['mr. mime', 'mime jr.', 'nidoran f', 'nidoran m',"oricorio baile", "oricorio pom-pom","oricorio pau","oricorio sensu","lycanroc midday","lycanroc midnight","ultra necrozma","meloetta pirouette"]
         if not query.strip():
             query = None
         if query:
             await ctx.trigger_typing()
-            if query.lower() not in pokemon_names_fusion: 
-                await ctx.reply(f"{query} not available for fusion.")
-                return
-            index = pokemon_names_fusion.index(query.lower())+1
-            print(index)
+            query_split = query.split()
+            index = -1
+            found = False
+            for n in space_names:
+                if n in query.lower():
+                    index = pokemon_names_fusion.index(n)+1
+                    unavailable_msg = ""
+                    found = True
+                    break
+            if not found:
+                for i in query_split:
+                    if i.lower() in pokemon_names_fusion:
+                        index = pokemon_names_fusion.index(i.lower())+1
+                        unavailable_msg = ""
+                        break
+                    elif i.lower() in (n.lower() for n in pokemon_names):
+                        unavailable_msg = " | That pokemon isn't available. Rolling random instead."
         else:
             index = -1
         results = self.GetCustomFusionNew(index)
@@ -306,7 +320,7 @@ class Pokemon(commands.Cog):
             else:
                 fusion_embed.set_image(url=f"attachment://fusion.png")
             fusion_embed.title = f'{name.title()}'
-            fusion_embed.set_footer(text=f"{name1.title()} + {name2.title()} | Took {count} roll(s).")
+            fusion_embed.set_footer(text=f"{name1.title()} + {name2.title()} | Took {count} roll(s).{unavailable_msg}")
             sent = await ctx.reply(file=image_file, embed=fusion_embed)
             if len(ctx.guild.members) <= 200:
                 await asyncio.sleep(12)

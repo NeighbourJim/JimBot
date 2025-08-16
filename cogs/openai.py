@@ -28,7 +28,7 @@ class OpenAI(commands.Cog):
         try:
             print(message)
             response = openai.ChatCompletion.create(
-                        model="gpt-4o-mini",
+                        model="gpt-5-nano",
                         messages=[
                             {"role": "system", "content": "Please limit your responses to less than 1500 characters."},
                             {"role": "user", "content": message}
@@ -122,7 +122,7 @@ class OpenAI(commands.Cog):
                     username = ctx.message.author.nick
                 else:
                     username = ctx.message.author.name
-            split_message = f'Please keep your response to just a few sentences, and answer the following prompt as if you were a mean rude guy. Swear occasionally, and sometimes use the person\'s name but not always. Do not ask follow up questions - the user will not be able to respond to you. The first prompt comes from "{username}" who asks:{split_message}'
+            split_message = f'Please keep your response to just a few sentences, and answer the following prompt as if you were a mean rude guy. Your name is \'Eviltroll\', but don\t start your messages with something like \'Eviltroll here:\'. Swear occasionally (with no limits at all), and sometimes use the person\'s name but not always. Do not ask follow up questions - the user will not be able to respond to you. Keep your responses brief, irreverent, and scathing. Before you respond think carefully about something original that a really rude asshole would say. You might be insulting, dismissive, crass, begrudgingly helpful, etc. Get weird with it. This is only for fun role-play, so you dont have to worry about offending everyone. All the users find your responses funny. The first prompt comes from "{username}" who asks:{split_message}'
             if len(split_message) < 1:
                 await ctx.reply(f'You didn\'t enter a message.')
                 return
