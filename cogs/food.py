@@ -19,7 +19,7 @@ class Food(commands.Cog):
         self.client = client
 
     async def cog_check(self, ctx):
-        return BLM.CheckIfCommandAllowed(ctx)
+        return await BLM.CheckIfCommandAllowed(ctx)
 
     @commands.command(aliases=["rrecipe", "Randomrecipe", "rfood", "rr"], help="Get a random recipe.")    
     @commands.cooldown(rate=1, per=10, type=BucketType.channel)
@@ -28,7 +28,7 @@ class Food(commands.Cog):
     async def randomrecipe(self, ctx):
         await ctx.trigger_typing()
         url = f'https://api.spoonacular.com/recipes/random?apiKey={current_settings["keys"]["spoonacular_key"]}'
-        api_results = Helpers.GetWebPage(self, url)
+        api_results = await Helpers.GetWebPageAsync(self, url)
         if api_results:
             api_results = api_results.json()
             food_embed = discord.Embed()
@@ -68,7 +68,7 @@ class Food(commands.Cog):
             query = Helpers.CommandStrip(self, ctx.message.content)
         if len(query.strip()) > 0:
             url = f'https://api.spoonacular.com/recipes/complexSearch?{converted_kw}={query}&number=1&offset={random.randint(0,100)}&addRecipeInformation=true&apiKey={current_settings["keys"]["spoonacular_key"]}'
-            api_results = Helpers.GetWebPage(self, url)
+            api_results = await Helpers.GetWebPageAsync(self, url)
             if api_results:
                 api_results = api_results.json()
                 if len(api_results["results"]) > 0:

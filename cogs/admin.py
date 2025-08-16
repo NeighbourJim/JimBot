@@ -71,7 +71,7 @@ class Admin(commands.Cog):
             if command.name.lower() == command_to_toggle:
                 valid_command = True
         if valid_command:
-            result = BLM.ToggleCommandInChannel(command_to_toggle, ctx.guild.id, channel.id)
+            result = await BLM.ToggleCommandInChannelAsync(command_to_toggle, ctx.guild.id, channel.id)
             if result == True:
                 await ctx.reply(f'Command `{command_to_toggle}` enabled in channel `{channel.name}`.')
             else:

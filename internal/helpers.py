@@ -7,6 +7,7 @@ import logging
 import emoji
 import datetime
 import asyncio
+import functools
 
 from os import path
 
@@ -246,6 +247,36 @@ class Helpers():
                 return None
         except Exception as ex:
             print(ex)
+
+    @staticmethod
+    async def GetWebPageAsync(self, url: str, params=None):
+        """Pass a url and optional parameters to requests.get() asynchronously.
+
+        Args:
+            url (str): URL of the webpage.
+            params (dict, optional): Parameters to pass through to webpage. Defaults to None.
+
+        Returns:
+            requests.Response: If Status Code 200 return the result of .get()
+            None: If any other Status Code
+        """
+        try:
+            logger.LogPrint(f"Initiating async request...")
+            loop = asyncio.get_event_loop()
+            if params:
+                fn = functools.partial(requests.get, url, params=params)
+            else:
+                fn = functools.partial(requests.get, url)
+            result = await loop.run_in_executor(None, fn)
+
+            logger.LogPrint(f"Response: {result}")
+            if result.status_code == 200:
+                return result
+            else:
+                return None
+        except Exception as ex:
+            print(ex)
+            return None
 
     @staticmethod
     def CleanHTML(self, input):

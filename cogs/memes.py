@@ -5,6 +5,8 @@ import discord
 import logging
 import csv
 import pandas as pd
+import asyncio
+import functools
 from discord.ext import commands
 from discord.ext.commands import BucketType
 from os import path
@@ -25,30 +27,32 @@ class Memes(commands.Cog):
         self.last_meme_roll = {}
 
     async def cog_check(self, ctx):
-        return BLM.CheckIfCommandAllowed(ctx)
+        return await BLM.CheckIfCommandAllowed(ctx)
 
 #region Non-Command Methods - General Helpers Methods specific to this cog
-    def CheckAndCreateDatabase(self, ctx):
+    async def CheckAndCreateDatabaseAsync(self, ctx):
         """Check if a meme database has been made, and create it if not.
         """
         try:
             filename = f"memes{ctx.guild.id}"
-            if not path.exists(f'{self.db_folder}{filename}.db'):
+            loop = asyncio.get_event_loop()
+            db_exists = await loop.run_in_executor(None, path.exists, f'{self.db_folder}{filename}.db')
+            if not db_exists:
                 # Create the required tables
                 columns = {"m_id": "integer PRIMARY KEY AUTOINCREMENT", "meme": "text NOT NULL", "score": "integer NOT NULL", "author_username": "varchar(255) NOT NULL", "author_nickname": "varchar(255)", "author_id": "varchar(255) NOT NULL", "date_added": "text NOT NULL"}
-                dbm.CreateTable(filename, "memes", columns)
+                await loop.run_in_executor(None, functools.partial(dbm.CreateTable, filename, "memes", columns))
                 columns = {"m_id": "integer NOT NULL", "author_id": "varchar(255) NOT NULL", "author_username": "varchar(255)"}
-                dbm.CreateTable(filename, "downvotes", columns)
-                dbm.CreateTable(filename, "upvotes", columns)
+                await loop.run_in_executor(None, functools.partial(dbm.CreateTable, filename, "downvotes", columns))
+                await loop.run_in_executor(None, functools.partial(dbm.CreateTable, filename, "upvotes", columns))
 
                 # Create the required views
                 for view in meme_views:
-                    dbm.ExecuteRawQuery(filename, view)       
+                    await loop.run_in_executor(None, functools.partial(dbm.ExecuteRawQuery, filename, view))
         except Exception as ex:
             logger.LogPrint(f'ERROR - Could not create table or view: {ex}',logging.ERROR)     
             return False
 
-    def GetMemeScore(self, ctx, m_id):
+    async def GetMemeScoreAsync(self, ctx, m_id):
         """Get the score of a specific meme. Calls GetUpvoteCount() and GetDownvoteCount().
 
         Args:
@@ -59,11 +63,13 @@ class Memes(commands.Cog):
             int: The score of the meme. Calculated by subtracting upvotes from downvotes.
         """
         try: 
-            return self.GetUpvoteCount(ctx, m_id) - self.GetDownvoteCount(ctx, m_id)
+            ups = await self.GetUpvoteCountAsync(ctx, m_id)
+            downs = await self.GetDownvoteCountAsync(ctx, m_id)
+            return ups - downs
         except Exception as ex:
             logger.LogPrint(f'ERROR - Could not get meme score: {ex}',logging.ERROR)  
 
-    def GetUpvoteCount(self, ctx, m_id):
+    async def GetUpvoteCountAsync(self, ctx, m_id):
         """Get the total number of 'goodmeme' votes for a given meme.
 
         Args:
@@ -74,12 +80,13 @@ class Memes(commands.Cog):
             int: The number of upvotes on requested meme.
         """
         try:
-            ups = dbm.ExecuteRawQuery(f'memes{ctx.guild.id}',f'SELECT COUNT(DISTINCT author_id) as C FROM upvotes WHERE m_id = {m_id}')
+            loop = asyncio.get_event_loop()
+            ups = await loop.run_in_executor(None, functools.partial(dbm.ExecuteRawQuery, f'memes{ctx.guild.id}',f'SELECT COUNT(DISTINCT author_id) as C FROM upvotes WHERE m_id = {m_id}'))
             return ups[0]
         except Exception as ex:
             logger.LogPrint(f'ERROR - Could not get meme upvote count: {ex}',logging.ERROR) 
 
-    def GetDownvoteCount(self, ctx, m_id):
+    async def GetDownvoteCountAsync(self, ctx, m_id):
         """Get the total number of 'badmeme' votes for a given meme.
 
         Args:
@@ -90,12 +97,13 @@ class Memes(commands.Cog):
             int: The number of downvotes on requested meme.
         """
         try:
-            downs = dbm.ExecuteRawQuery(f'memes{ctx.guild.id}',f'SELECT COUNT(DISTINCT author_id) as C FROM downvotes WHERE m_id = {m_id}')
+            loop = asyncio.get_event_loop()
+            downs = await loop.run_in_executor(None, functools.partial(dbm.ExecuteRawQuery, f'memes{ctx.guild.id}',f'SELECT COUNT(DISTINCT author_id) as C FROM downvotes WHERE m_id = {m_id}'))
             return downs[0]
         except Exception as ex:
             logger.LogPrint(f'ERROR - Could not get meme downvote count: {ex}',logging.ERROR) 
 
-    def GetVoters(self, ctx, m_id):
+    async def GetVotersAsync(self, ctx, m_id):
         """Get all of the votes for a meme, both good and bad.
 
         Args:
@@ -107,8 +115,9 @@ class Memes(commands.Cog):
         """
         try:
             w = [("m_id", m_id)]
-            ups = dbm.Retrieve(f'memes{ctx.guild.id}', 'upvotes', w, WhereType.AND, ["author_id", "author_username"], 10000)
-            downs = dbm.Retrieve(f'memes{ctx.guild.id}', 'downvotes', w, WhereType.AND, ["author_id", "author_username"], 10000)
+            loop = asyncio.get_event_loop()
+            ups = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', 'upvotes', w, WhereType.AND, ["author_id", "author_username"], 10000))
+            downs = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', 'downvotes', w, WhereType.AND, ["author_id", "author_username"], 10000))
             return {"ups": ups, "downs": downs}
         except Exception as ex:
             logger.LogPrint(f'ERROR: Could not get meme votes. - {ex}', logging.ERROR)
@@ -191,7 +200,8 @@ class Memes(commands.Cog):
     @commands.guild_only()
     async def meme(self, ctx):
         try:
-            self.CheckAndCreateDatabase(ctx)
+            await self.CheckAndCreateDatabaseAsync(ctx)
+            loop = asyncio.get_event_loop()
 
             message = Helpers.CommandStrip(self, ctx.message.content)
             values_to_find = []
@@ -208,9 +218,9 @@ class Memes(commands.Cog):
                             t = ("author_username", name)
                     values_to_find.append(t)
             if len(values_to_find) != 0:
-                meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_meme_all", values_to_find, WhereType.OR, ["*"], 1, CompareType.LIKE)
+                meme = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', "random_meme_all", values_to_find, WhereType.OR, ["*"], 1, CompareType.LIKE))
             else:
-                meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_meme_all")
+                meme = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', "random_meme_all"))
             if len(meme) > 0:
                 self.last_meme_roll[f"{ctx.guild.id}"] = meme[0][0]
                 await ctx.reply(f'**ID:{meme[0][0]}**\n {meme[0][1]}')
@@ -226,7 +236,8 @@ class Memes(commands.Cog):
     @commands.guild_only()
     async def newmeme(self, ctx):
         try:
-            self.CheckAndCreateDatabase(ctx)
+            await self.CheckAndCreateDatabaseAsync(ctx)
+            loop = asyncio.get_event_loop()
 
             message = Helpers.CommandStrip(self, ctx.message.content)
             values_to_find = []
@@ -240,9 +251,9 @@ class Memes(commands.Cog):
                         t = ("author_username", name)
                     values_to_find.append(t)
             if len(values_to_find) != 0:
-                meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_meme_all_new", values_to_find, WhereType.OR)
+                meme = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', "random_meme_all_new", values_to_find, WhereType.OR))
             else:
-                meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_meme_all_new", None)
+                meme = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', "random_meme_all_new", None))
             if len(meme) > 0:
                 self.last_meme_roll[f"{ctx.guild.id}"] = meme[0][0]
                 await ctx.reply(f'**ID:{meme[0][0]}**\n {meme[0][1]}')
@@ -258,7 +269,8 @@ class Memes(commands.Cog):
     @commands.guild_only()
     async def yearmeme(self, ctx):
         try:
-            self.CheckAndCreateDatabase(ctx)
+            await self.CheckAndCreateDatabaseAsync(ctx)
+            loop = asyncio.get_event_loop()
 
             split_message = Helpers.CommandStrip(self, ctx.message.content).split(' ')
             if len(split_message) > 0:
@@ -277,7 +289,7 @@ class Memes(commands.Cog):
                         else:
                             t = ("author_username", user)
                         values_to_find.append(t)
-                    meme = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', where=values_to_find, compare_type=CompareType.LIKE, rows_required=10000000)
+                    meme = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', 'memes', where=values_to_find, compare_type=CompareType.LIKE, rows_required=10000000))
                     if len(meme) > 0:
                         meme = random.choice(meme)
                         self.last_meme_roll[f"{ctx.guild.id}"] = meme[0]
@@ -297,7 +309,8 @@ class Memes(commands.Cog):
     @commands.guild_only()
     async def unratedmeme(self, ctx):
         try:
-            self.CheckAndCreateDatabase(ctx)
+            await self.CheckAndCreateDatabaseAsync(ctx)
+            loop = asyncio.get_event_loop()
             
             message = Helpers.CommandStrip(self, ctx.message.content)
             values_to_find = []
@@ -311,9 +324,9 @@ class Memes(commands.Cog):
                         t = ("author_username", name)
                     values_to_find.append(t)
             if len(values_to_find) != 0:
-                meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_unrated_all", values_to_find, WhereType.OR)
+                meme = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', "random_unrated_all", values_to_find, WhereType.OR))
             else:
-                meme = dbm.Retrieve(f'memes{ctx.guild.id}', "random_unrated_all", None)
+                meme = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', "random_unrated_all", None))
             if len(meme) > 0:
                 self.last_meme_roll[f"{ctx.guild.id}"] = meme[0][0]
                 await ctx.reply(f'**ID:{meme[0][0]}**\n {meme[0][1]}')
@@ -331,7 +344,8 @@ class Memes(commands.Cog):
         m_id = None
         values_to_find = []
         try:
-            self.CheckAndCreateDatabase(ctx)
+            await self.CheckAndCreateDatabaseAsync(ctx)
+            loop = asyncio.get_event_loop()
 
             message = Helpers.CommandStrip(self, ctx.message.content)
             if f"{ctx.guild.id}" in self.last_meme_roll:
@@ -342,15 +356,16 @@ class Memes(commands.Cog):
                 m_id = int(Helpers.FuzzyIntegerSearch(self, message))
             t = ("m_id", m_id)
             values_to_find.append(t)
-            meme = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', values_to_find)
+            meme = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', 'memes', values_to_find))
             if len(meme) > 0:
-                vote = dbm.Retrieve(f'memes{ctx.guild.id}', 'upvotes', [("author_id", f'<@{ctx.message.author.id}>'), ("m_id", m_id)])
+                vote = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', 'upvotes', [("author_id", f'<@{ctx.message.author.id}>'), ("m_id", m_id)]))
                 if len(vote) == 0:
                     d = {"m_id": m_id, "author_id": f'<@{ctx.message.author.id}>', "author_username": ctx.message.author.name}
-                    dbm.Insert(f'memes{ctx.guild.id}', "upvotes", d)
-                    dbm.Delete(f'memes{ctx.guild.id}', "downvotes", {"m_id": m_id, "author_id": f'<@{ctx.message.author.id}>'})
-                    dbm.Update(f'memes{ctx.guild.id}', 'memes', {"score": self.GetMemeScore(ctx, m_id)}, {"m_id": m_id})
-                    await ctx.reply(f'**ID:{m_id}** - :arrow_up: **{self.GetMemeScore(ctx, m_id)}**')
+                    await loop.run_in_executor(None, functools.partial(dbm.Insert, f'memes{ctx.guild.id}', "upvotes", d))
+                    await loop.run_in_executor(None, functools.partial(dbm.Delete, f'memes{ctx.guild.id}', "downvotes", {"m_id": m_id, "author_id": f'<@{ctx.message.author.id}>'}))
+                    score = await self.GetMemeScoreAsync(ctx, m_id)
+                    await loop.run_in_executor(None, functools.partial(dbm.Update, f'memes{ctx.guild.id}', 'memes', {"score": score}, {"m_id": m_id}))
+                    await ctx.reply(f'**ID:{m_id}** - :arrow_up: **{score}**')
                 else:
                     await ctx.reply(f'You already upvoted **ID:{m_id}**.')
             else:
@@ -368,7 +383,8 @@ class Memes(commands.Cog):
         m_id = None
         values_to_find = []
         try:
-            self.CheckAndCreateDatabase(ctx)
+            await self.CheckAndCreateDatabaseAsync(ctx)
+            loop = asyncio.get_event_loop()
 
             message = Helpers.CommandStrip(self, ctx.message.content)
             if f"{ctx.guild.id}" in self.last_meme_roll:
@@ -379,15 +395,16 @@ class Memes(commands.Cog):
                 m_id = int(Helpers.FuzzyIntegerSearch(self, message))
             t = ("m_id", m_id)
             values_to_find.append(t)
-            meme = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', values_to_find)
+            meme = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', 'memes', values_to_find))
             if len(meme) > 0:
-                vote = dbm.Retrieve(f'memes{ctx.guild.id}', 'downvotes', [("author_id", f'<@{ctx.message.author.id}>'), ("m_id", m_id)])
+                vote = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', 'downvotes', [("author_id", f'<@{ctx.message.author.id}>'), ("m_id", m_id)]))
                 if len(vote) == 0:
                     d = {"m_id": m_id, "author_id": f'<@{ctx.message.author.id}>', "author_username": ctx.message.author.name}
-                    dbm.Insert(f'memes{ctx.guild.id}', "downvotes", d)
-                    dbm.Delete(f'memes{ctx.guild.id}', "upvotes", {"m_id": m_id, "author_id": f'<@{ctx.message.author.id}>'})
-                    dbm.Update(f'memes{ctx.guild.id}', 'memes', {"score": self.GetMemeScore(ctx, m_id)}, {"m_id": m_id})
-                    await ctx.reply(f'**ID:{m_id}** - :arrow_down: **{self.GetMemeScore(ctx, m_id)}**')
+                    await loop.run_in_executor(None, functools.partial(dbm.Insert, f'memes{ctx.guild.id}', "downvotes", d))
+                    await loop.run_in_executor(None, functools.partial(dbm.Delete, f'memes{ctx.guild.id}', "upvotes", {"m_id": m_id, "author_id": f'<@{ctx.message.author.id}>'}))
+                    score = await self.GetMemeScoreAsync(ctx, m_id)
+                    await loop.run_in_executor(None, functools.partial(dbm.Update, f'memes{ctx.guild.id}', 'memes', {"score": score}, {"m_id": m_id}))
+                    await ctx.reply(f'**ID:{m_id}** - :arrow_down: **{score}**')
                 else:
                     await ctx.reply(f'You already downvoted **ID:{m_id}**.')
             else:
@@ -404,7 +421,8 @@ class Memes(commands.Cog):
         m_id = None
         values_to_find = []
         try:
-            self.CheckAndCreateDatabase(ctx)
+            await self.CheckAndCreateDatabaseAsync(ctx)
+            loop = asyncio.get_event_loop()
 
             message = Helpers.CommandStrip(self, ctx.message.content)
             if f"{ctx.guild.id}" in self.last_meme_roll:
@@ -415,15 +433,16 @@ class Memes(commands.Cog):
                 m_id = int(Helpers.FuzzyIntegerSearch(self, message))
             t = ("m_id", m_id)
             values_to_find.append(t)
-            meme = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', values_to_find)
+            meme = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', 'memes', values_to_find))
             if len(meme) > 0:
-                uvote = dbm.Retrieve(f'memes{ctx.guild.id}', 'upvotes', [("author_id", f'<@{ctx.message.author.id}>'), ("m_id", m_id)])
-                dvote = dbm.Retrieve(f'memes{ctx.guild.id}', 'downvotes', [("author_id", f'<@{ctx.message.author.id}>'), ("m_id", m_id)])
+                uvote = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', 'upvotes', [("author_id", f'<@{ctx.message.author.id}>'), ("m_id", m_id)]))
+                dvote = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', 'downvotes', [("author_id", f'<@{ctx.message.author.id}>'), ("m_id", m_id)]))
                 if len(uvote) != 0 or len(dvote) != 0:
-                    dbm.Delete(f'memes{ctx.guild.id}', "upvotes", {"m_id": m_id, "author_id": f'<@{ctx.message.author.id}>'})
-                    dbm.Delete(f'memes{ctx.guild.id}', "downvotes", {"m_id": m_id, "author_id": f'<@{ctx.message.author.id}>'})
-                    dbm.Update(f'memes{ctx.guild.id}', 'memes', {"score": self.GetMemeScore(ctx, m_id)}, {"m_id": m_id})
-                    await ctx.reply(f'**ID:{m_id}** - :arrow_up_down: **{self.GetMemeScore(ctx, m_id)}**')
+                    await loop.run_in_executor(None, functools.partial(dbm.Delete, f'memes{ctx.guild.id}', "upvotes", {"m_id": m_id, "author_id": f'<@{ctx.message.author.id}>'}))
+                    await loop.run_in_executor(None, functools.partial(dbm.Delete, f'memes{ctx.guild.id}', "downvotes", {"m_id": m_id, "author_id": f'<@{ctx.message.author.id}>'}))
+                    score = await self.GetMemeScoreAsync(ctx, m_id)
+                    await loop.run_in_executor(None, functools.partial(dbm.Update, f'memes{ctx.guild.id}', 'memes', {"score": score}, {"m_id": m_id}))
+                    await ctx.reply(f'**ID:{m_id}** - :arrow_up_down: **{score}**')
                 else:
                     await ctx.reply(f'You haven\'t voted on **ID:{m_id}**.')
             else:
@@ -441,7 +460,8 @@ class Memes(commands.Cog):
         m_id = None
         values_to_find = []
         try:
-            self.CheckAndCreateDatabase(ctx)
+            await self.CheckAndCreateDatabaseAsync(ctx)
+            loop = asyncio.get_event_loop()
 
             message = Helpers.CommandStrip(self, ctx.message.content)
             if f"{ctx.guild.id}" in self.last_meme_roll:
@@ -452,11 +472,14 @@ class Memes(commands.Cog):
                 m_id = int(Helpers.FuzzyIntegerSearch(self, message))
             t = ("m_id", m_id)
             values_to_find.append(t)
-            meme = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', values_to_find)
+            meme = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', 'memes', values_to_find))
             if len(meme) > 0:
+                score = await self.GetMemeScoreAsync(ctx, m_id)
+                upvotes = await self.GetUpvoteCountAsync(ctx, m_id)
+                downvotes = await self.GetDownvoteCountAsync(ctx, m_id)
                 meme_dict = {
                     "author": {"name": f'Meme #{m_id} Info'},
-                    "description": f'Created by {meme[0][3]} on {meme[0][6]}\nScore: **{self.GetMemeScore(ctx, m_id)}** (+{self.GetUpvoteCount(ctx, m_id)} / -{self.GetDownvoteCount(ctx, m_id)})',
+                    "description": f'Created by {meme[0][3]} on {meme[0][6]}\nScore: **{score}** (+{upvotes} / -{downvotes})',
                     "thumbnail": {"url": f'{self.GetGradeUrl(ctx, meme[0][2])}'},
                 }
                 result_embed = discord.Embed.from_dict(meme_dict)
@@ -474,7 +497,7 @@ class Memes(commands.Cog):
     @commands.guild_only()
     async def voters(self, ctx):
         try:
-            self.CheckAndCreateDatabase(ctx)
+            await self.CheckAndCreateDatabaseAsync(ctx)
 
             upvoters = []
             upvoter_message = ""
@@ -488,7 +511,7 @@ class Memes(commands.Cog):
             if len(message) > 0 and Helpers.FuzzyIntegerSearch(self, message) is not None:
                 m_id = int(Helpers.FuzzyIntegerSearch(self, message))
             if m_id != None:
-                voter_dict = self.GetVoters(ctx, m_id)
+                voter_dict = await self.GetVotersAsync(ctx, m_id)
                 for a_id, name in voter_dict["ups"]:
                     member_id = int(Helpers.FuzzyIntegerSearch(self, a_id))
                     member = ctx.guild.get_member(member_id)
@@ -548,7 +571,8 @@ class Memes(commands.Cog):
     @commands.guild_only()
     async def addmeme(self, ctx):
         try:
-            self.CheckAndCreateDatabase(ctx)
+            await self.CheckAndCreateDatabaseAsync(ctx)
+            loop = asyncio.get_event_loop()
 
             forbidden = ["@everyone", "@here", "puu.sh", "twimg.com", "i.4cdn.org", "4chan.org", "mixtape.moe"]
             message = Helpers.CommandStrip(self, ctx.message.content)
@@ -563,12 +587,12 @@ class Memes(commands.Cog):
                 if len(mentions) > 0:
                     valid = False
                 if valid:
-                    existing = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', [("meme", message)])
+                    existing = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', 'memes', [("meme", message)]))
                     if len(existing) == 0:
                         today = datetime.today().strftime('%Y-%m-%d')
                         d = {"meme": message, "score": 0, "author_username": ctx.message.author.name, "author_nickname": ctx.message.author.nick, "author_id": f'<@{ctx.message.author.id}>', "date_added": today}
-                        dbm.Insert(f'memes{ctx.guild.id}', 'memes', d)
-                        nm = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', [("meme", message)], where_type=WhereType.AND, column_data=["m_id"])
+                        await loop.run_in_executor(None, functools.partial(dbm.Insert, f'memes{ctx.guild.id}', 'memes', d))
+                        nm = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', 'memes', [("meme", message)], where_type=WhereType.AND, column_data=["m_id"]))
                         await ctx.reply(f'Meme added. (ID:{nm[0][0]})')
                     else:
                         ctx.command.reset_cooldown(ctx)
@@ -588,15 +612,16 @@ class Memes(commands.Cog):
     @commands.guild_only()
     async def deletememe(self, ctx):
         try:
-            self.CheckAndCreateDatabase(ctx)
+            await self.CheckAndCreateDatabaseAsync(ctx)
+            loop = asyncio.get_event_loop()
 
             m_id = int(Helpers.FuzzyIntegerSearch(self, Helpers.CommandStrip(self, ctx.message.content)))
             if m_id != None:
                 where = {"m_id": m_id}
-                affected = dbm.Delete(f'memes{ctx.guild.id}', 'memes', where)
+                affected = await loop.run_in_executor(None, functools.partial(dbm.Delete, f'memes{ctx.guild.id}', 'memes', where))
                 if affected == 1:
-                    dbm.Delete(f'memes{ctx.guild.id}', 'upvotes', where)
-                    dbm.Delete(f'memes{ctx.guild.id}', 'downvotes', where)
+                    await loop.run_in_executor(None, functools.partial(dbm.Delete, f'memes{ctx.guild.id}', 'upvotes', where))
+                    await loop.run_in_executor(None, functools.partial(dbm.Delete, f'memes{ctx.guild.id}', 'downvotes', where))
                     await ctx.reply(f'Meme #{m_id} deleted.')
                 else:
                     ctx.command.reset_cooldown(ctx)
@@ -613,16 +638,17 @@ class Memes(commands.Cog):
     @commands.guild_only()
     async def selfdeletememe(self, ctx):
         try:
-            self.CheckAndCreateDatabase(ctx)
+            await self.CheckAndCreateDatabaseAsync(ctx)
+            loop = asyncio.get_event_loop()
 
             m_id = int(Helpers.FuzzyIntegerSearch(self, Helpers.CommandStrip(self, ctx.message.content)))
             if m_id != None:
                 where = {"m_id": m_id, "author_id": f'<@{ctx.message.author.id}>'}
-                affected = dbm.Delete(f'memes{ctx.guild.id}', 'memes', where)
+                affected = await loop.run_in_executor(None, functools.partial(dbm.Delete, f'memes{ctx.guild.id}', 'memes', where))
                 if affected == 1:
                     where = {"m_id": m_id}
-                    dbm.Delete(f'memes{ctx.guild.id}', 'upvotes', where)
-                    dbm.Delete(f'memes{ctx.guild.id}', 'downvotes', where)
+                    await loop.run_in_executor(None, functools.partial(dbm.Delete, f'memes{ctx.guild.id}', 'upvotes', where))
+                    await loop.run_in_executor(None, functools.partial(dbm.Delete, f'memes{ctx.guild.id}', 'downvotes', where))
                     await ctx.reply(f'Meme #{m_id} deleted.', delete_after=10)
                 else:
                     ctx.command.reset_cooldown(ctx)
@@ -639,14 +665,15 @@ class Memes(commands.Cog):
     @commands.guild_only()
     async def bestmeme(self, ctx):
         try:
-            self.CheckAndCreateDatabase(ctx)
+            await self.CheckAndCreateDatabaseAsync(ctx)
+            loop = asyncio.get_event_loop()
 
             name = Helpers.CommandStrip(self, ctx.message.content)
             where = None
             if len(name) > 0:
                 where = [("author_username", name)]
 
-            meme = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', where=where, compare_type=CompareType.LIKE, order_by=("score", "desc"))
+            meme = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', 'memes', where=where, compare_type=CompareType.LIKE, order_by=("score", "desc")))
             if len(meme) > 0:
                 self.last_meme_roll[f"{ctx.guild.id}"] = meme[0][0]
                 if len(name) > 0:
@@ -670,14 +697,15 @@ class Memes(commands.Cog):
     @commands.guild_only()
     async def worstmeme(self, ctx):
         try:
-            self.CheckAndCreateDatabase(ctx)
+            await self.CheckAndCreateDatabaseAsync(ctx)
+            loop = asyncio.get_event_loop()
 
             name = Helpers.CommandStrip(self, ctx.message.content)
             where = None
             if len(name) > 0:
                 where = [("author_username", name)]
 
-            meme = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', where=where, compare_type=CompareType.LIKE, order_by=("score", "asc"))
+            meme = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', 'memes', where=where, compare_type=CompareType.LIKE, order_by=("score", "asc")))
             if len(meme) > 0:
                 self.last_meme_roll[f"{ctx.guild.id}"] = meme[0][0]
                 if len(name) > 0:
@@ -700,7 +728,8 @@ class Memes(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def memelist(self, ctx):
-        self.CheckAndCreateDatabase(ctx)
+        await self.CheckAndCreateDatabaseAsync(ctx)
+        loop = asyncio.get_event_loop()
 
         msg = Helpers.CommandStrip(self, ctx.message.content)
         if len(msg) > 0:
@@ -715,17 +744,18 @@ class Memes(commands.Cog):
             where = []
             for name in names:
                 where.append(("author_username", name.strip()))
-            memes = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', where=where, where_type=WhereType.OR, compare_type=CompareType.LIKE, rows_required=999999)
+            memes = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', 'memes', where=where, where_type=WhereType.OR, compare_type=CompareType.LIKE, rows_required=999999))
         else:
-            memes = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', rows_required=999999)
+            memes = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', 'memes', rows_required=999999))
         if len(memes) > 0:
             for meme in memes:
                 meme_string = f'ID: {meme[0]}\nAuthor: {meme[3]}\nDate Added: {meme[6]}\nScore: {meme[2]}\nMeme: {meme[1]}\n\n'
                 meme_list += meme_string
-            list_file = open(f'./internal/data/databases/memelist-{ctx.guild.id}.txt', 'wb')
-            meme_list = meme_list.encode('utf-8-sig')
-            list_file.write(meme_list)
-            list_file.close()
+
+            def write_file():
+                with open(f'./internal/data/databases/memelist-{ctx.guild.id}.txt', 'wb') as list_file:
+                    list_file.write(meme_list.encode('utf-8-sig'))
+            await loop.run_in_executor(None, write_file)
             await ctx.reply(content=f'{ctx.message.author.mention}', file=discord.File(f'./internal/data/databases/memelist-{ctx.guild.id}.txt'))
         else:
             ctx.command.reset_cooldown(ctx)
@@ -736,12 +766,14 @@ class Memes(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def memespreadsheet(self, ctx):        
-        self.CheckAndCreateDatabase(ctx)
+        await self.CheckAndCreateDatabaseAsync(ctx)
+        loop = asyncio.get_event_loop()
         
         await ctx.trigger_typing()
-        memes = dbm.Retrieve(f'memes{ctx.guild.id}', 'memes', rows_required=1)
+        memes = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', 'memes', rows_required=1))
         if len(memes) > 0:
-            if dbm.ConvertTableToCSV(f'memes{ctx.guild.id}', 'memes'):
+            csv_created = await loop.run_in_executor(None, functools.partial(dbm.ConvertTableToCSV, f'memes{ctx.guild.id}', 'memes'))
+            if csv_created:
                 await ctx.reply(content=f'{ctx.message.author.mention}', file=discord.File(f'./internal/data/databases/ss-memes{ctx.guild.id}.csv'))
             else:
                 await ctx.reply(f'Could not form .csv.', delete_after=10)
@@ -760,7 +792,8 @@ class Memes(commands.Cog):
         voted_count = 0
         average = 0
 
-        self.CheckAndCreateDatabase(ctx)
+        await self.CheckAndCreateDatabaseAsync(ctx)
+        loop = asyncio.get_event_loop()
 
         query = '''SELECT * FROM 
 			(SELECT COUNT(DISTINCT m_id) as totalcount FROM memes),
@@ -768,7 +801,7 @@ class Memes(commands.Cog):
 			(SELECT COUNT(DISTINCT m_id) as bad FROM memes WHERE score < 0), 
 			(SELECT COUNT(DISTINCT memes.m_id) as neutral FROM memes INNER JOIN upvotes ON memes.m_id LIKE upvotes.m_id WHERE memes.score = 0 AND memes.m_id IN (SELECT m_id FROM upvotes)),
 			(SELECT AVG(score) as average FROM memes)'''
-        results = dbm.ExecuteRawQuery(f'memes{ctx.guild.id}', query)
+        results = await loop.run_in_executor(None, functools.partial(dbm.ExecuteRawQuery, f'memes{ctx.guild.id}', query))
         
         if results != None:
             total_memes = results[0]
@@ -793,7 +826,8 @@ class Memes(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def memerboard(self, ctx):
-        self.CheckAndCreateDatabase(ctx)
+        await self.CheckAndCreateDatabaseAsync(ctx)
+        loop = asyncio.get_event_loop()
 
         msg = Helpers.CommandStrip(self, ctx.message.content)
         if len(msg) > 0:
@@ -808,7 +842,7 @@ class Memes(commands.Cog):
                 table = 'top_ten_above_ten'
             else:
                 table = 'top_five'
-        results = dbm.Retrieve(f'memes{ctx.guild.id}', table, rows_required=10)
+        results = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'memes{ctx.guild.id}', table, rows_required=10))
         if results != None:
             if msg == 'bottom' or msg == 'bot':
                 response = 'The bottom 10 average memescore holders are:\n'
@@ -842,7 +876,8 @@ class Memes(commands.Cog):
         voted_count = 0
         average = 0
 
-        self.CheckAndCreateDatabase(ctx)
+        await self.CheckAndCreateDatabaseAsync(ctx)
+        loop = asyncio.get_event_loop()
 
         msg = Helpers.CommandStrip(self, ctx.message.content)
         if len(msg) > 0:
@@ -857,7 +892,7 @@ class Memes(commands.Cog):
 			(SELECT COUNT(DISTINCT memes.m_id) as neutral FROM memes INNER JOIN upvotes ON memes.m_id LIKE upvotes.m_id WHERE memes.author_username LIKE ?1 AND memes.score = 0 AND memes.m_id IN (SELECT m_id FROM upvotes)),
 			(SELECT AVG(score) as average FROM memes WHERE author_username LIKE ?1)'''
         params = [name]
-        results = dbm.ExecuteParamQuery(f'memes{ctx.guild.id}', query, params)
+        results = await loop.run_in_executor(None, functools.partial(dbm.ExecuteParamQuery, f'memes{ctx.guild.id}', query, params))
         if results != None:
             if results[0][1] > 0:
                 total_memes = results[0][0]

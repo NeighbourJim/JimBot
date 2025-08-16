@@ -6,6 +6,7 @@ import html
 import freeGPT
 import requests
 import asyncio
+import functools
 from PIL import Image
 from io import BytesIO
 from discord.ext import commands
@@ -27,7 +28,7 @@ class GPT(commands.Cog):
         self.banned_terms = ["tits","titty", "titties","phallus","butthole", "breasts", "breast", "boobs", "boob", "pussy", "cock", "penis", "sex ", "sex,", "nude", "asshole", "genitalia", "semen", "masturbate", "masturbating", "masturbation", "dildo", "dick", "naked", "nipple", "areola", "vagina", "labia", "titties", "cunny", "coochie"]
 
     async def cog_check(self, ctx):
-        return BLM.CheckIfCommandAllowed(ctx)
+        return await BLM.CheckIfCommandAllowed(ctx)
 
     async def get_gpt_text(self, prompt):
         try:
@@ -63,7 +64,8 @@ class GPT(commands.Cog):
                 "max_tokens": 200,
                 "temperature": 0.8,
             }
-            response = requests.post(self.server_url, headers=self.headers, json=data, verify=False)
+            fn = functools.partial(requests.post, self.server_url, headers=self.headers, json=data, verify=False)
+            response = await asyncio.get_event_loop().run_in_executor(None, fn)
             assistant_message = response.json()['choices'][0]['message']['content']
             return assistant_message
         except Exception as e:

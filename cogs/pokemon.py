@@ -24,6 +24,52 @@ class Pokemon(commands.Cog):
         self.client = client
         self.fusion_cache = dict()
         self.triplechance = 500
+        self.head_fusions, self.body_fusions, self.fusion_files = self._build_fusion_maps()
+        self.fusable_pokemon = list(self.head_fusions.keys() | self.body_fusions.keys())
+
+        triples_path = f'./internal/data/images/fusions/CustomBattlers/indexed/triples/'
+        if os.path.isdir(triples_path):
+            self.triple_fusions = [os.path.join(triples_path, f) for f in os.listdir(triples_path) if f.endswith('.png')]
+        else:
+            self.triple_fusions = []
+
+    def _build_fusion_maps(self):
+        head_fusions = {}
+        body_fusions = {}
+        fusion_files = {}
+        root_dir = './internal/data/images/fusions/CustomBattlers/indexed/'
+        if not os.path.isdir(root_dir):
+            logger.error("Custom fusions directory not found.")
+            return {}, {}, {}
+
+        for head_dir in os.listdir(root_dir):
+            if not head_dir.isdigit():
+                continue
+            head_id = int(head_dir)
+            path = os.path.join(root_dir, head_dir)
+            if not os.path.isdir(path):
+                continue
+
+            for fusion_file in os.listdir(path):
+                match = re.match(rf'^{head_id}\.(\d+)([a-zA-Z])?\.png$', fusion_file)
+                if match:
+                    body_id = int(match.group(1))
+
+                    if head_id not in head_fusions:
+                        head_fusions[head_id] = []
+                    if body_id not in head_fusions[head_id]:
+                        head_fusions[head_id].append(body_id)
+
+                    if body_id not in body_fusions:
+                        body_fusions[body_id] = []
+                    if head_id not in body_fusions[body_id]:
+                        body_fusions[body_id].append(head_id)
+
+                    if (head_id, body_id) not in fusion_files:
+                        fusion_files[(head_id, body_id)] = []
+                    fusion_files[(head_id, body_id)].append(fusion_file)
+
+        return head_fusions, body_fusions, fusion_files
 
     async def cog_check(self, ctx):
         return BLM.CheckIfCommandAllowed(ctx)
@@ -60,51 +106,57 @@ class Pokemon(commands.Cog):
         return name.title().strip()
 
     def GetCustomFusionNew(self, id):
-        max_id = 473
-        found = False
-        count = 0        
+        count = 1
         tripleroll = random.randint(0, self.triplechance)
-        if random.randint(1,6) == 1:
-            self.triplechance = self.triplechance-1
-        while found == False:
-            count = count+1
-            if count > 50 or tripleroll == self.triplechance:
+        if random.randint(1,6) == 1 and self.triplechance > 0:
+            self.triplechance = self.triplechance - 1
+
+        if (tripleroll == self.triplechance or not self.fusable_pokemon) and self.triple_fusions:
+            self.triplechance = 500
+            fusion = random.choice(self.triple_fusions)
+            return [fusion,count,None,None]
+
+        search_pokemon_id = id
+
+        if search_pokemon_id != -1:
+            if search_pokemon_id not in self.fusable_pokemon:
+                search_pokemon_id = -1
+
+        if search_pokemon_id == -1:
+            search_pokemon_id = random.choice(self.fusable_pokemon)
+
+        choice = []
+        if search_pokemon_id in self.head_fusions:
+            choice.append('head')
+        if search_pokemon_id in self.body_fusions:
+            choice.append('body')
+
+        if not choice:
+            if self.triple_fusions:
                 self.triplechance = 500
-                fusion = random.choice(glob.glob(f'./internal/data/images/fusions/CustomBattlers/indexed/triples/*.png'))
-                return [fusion,count,None,None]
-            if id == -1:
-                id = random.randint(1,max_id)
-            if random.randint(0,1) == 1:
-                id1 = id
-                id2 = random.randint(1, max_id)
-            else:
-                id1 = random.randint(1, max_id)
-                id2 = id
-            path = f"./internal/data/images/fusions/CustomBattlers/indexed/{id1}/{id1}.{id2}"
-            path_prefix = f"./internal/data/images/fusions/CustomBattlers/indexed/{id1}\\"
-            pattern = re.compile(rf'{re.escape(path_prefix)}{id1}\.{id2}[a-zA-Z]?\.png')
-            fusions =  glob.glob(f'{path}*.png')
-            matching = []
-            for fusion in fusions:
-                print(fusion)
-                print(pattern.match(fusion))
-                if pattern.match(fusion):
-                    matching.append(fusion)
-            if len(matching) > 0:
-                found = True
-                return [random.choice(matching),count,id1,id2]
-            path_prefix = f"./internal/data/images/fusions/CustomBattlers/indexed/{id2}\\"
-            pattern = re.compile(rf'{re.escape(path_prefix)}{id2}\.{id1}[a-zA-Z]?\.png')
-            fusions =  glob.glob(f'{path}*.png')
-            matching = []
-            for fusion in fusions:
-                print(fusion)
-                print(pattern.match(fusion))
-                if pattern.match(fusion):
-                    matching.append(fusion)
-            if len(matching) > 0:
-                found = True
-                return [random.choice(matching),count,id2,id1]
+                fusion = random.choice(self.triple_fusions)
+                return [fusion, 51, None, None]
+            else: # Catastrophic failure
+                return [None, 51, None, None]
+
+        if random.choice(choice) == 'head':
+            id1 = search_pokemon_id
+            id2 = random.choice(self.head_fusions[id1])
+        else:
+            id2 = search_pokemon_id
+            id1 = random.choice(self.body_fusions[id2])
+
+        filenames = self.fusion_files.get((id1, id2))
+        if not filenames:
+            if self.triple_fusions:
+                self.triplechance = 500
+                fusion = random.choice(self.triple_fusions)
+                return [fusion, 51, None, None]
+            else: # Catastrophic failure
+                return [None, 51, None, None]
+        filename = random.choice(filenames)
+        path = f"./internal/data/images/fusions/CustomBattlers/indexed/{id1}/{filename}"
+        return [path, count, id1, id2]
             
     def GetFusion(self, id1, id2):
         max_id = 473
@@ -301,6 +353,9 @@ class Pokemon(commands.Cog):
         else:
             index = -1
         results = self.GetCustomFusionNew(index)
+        if results[0] is None:
+            await ctx.reply("Could not find a custom fusion, and triple fusions are unavailable. Please try again later.")
+            return
         fusion = results[0]
         count = results[1]
         if results[2] == None:

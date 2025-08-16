@@ -22,7 +22,7 @@ class Base(commands.Cog):
         #self.eldencd.start()
 
     async def cog_check(self, ctx):
-        return BLM.CheckIfCommandAllowed(ctx)
+        return await BLM.CheckIfCommandAllowed(ctx)
 
     def cog_unload(self):
         #self.eldencd.cancel()
@@ -274,9 +274,11 @@ class Base(commands.Cog):
                 currency_one = split_message[1].strip(',')
                 currency_two = split_message[2].strip(',')
                 url = f'https://free.currconv.com/api/v7/convert?q={currency_one}_{currency_two}&compact=ultra&apiKey={current_settings["keys"]["currencyconverter_key"]}'
-                response = Helpers.GetWebPage(self, url).json()
-                if len(response) > 0:
-                    result = input_value * list(response.values())[0]
+                response = await Helpers.GetWebPageAsync(self, url)
+                if response is not None:
+                    response = response.json()
+                    if len(response) > 0:
+                        result = input_value * list(response.values())[0]
                     formatted_value = "{:,.2f}".format(input_value)
                     formatted_result = "{:,.2f}".format(result)
                     await ctx.reply(f'`{formatted_value} {currency_one.upper()} = {formatted_result} {currency_two.upper()}.`')

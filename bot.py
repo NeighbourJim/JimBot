@@ -4,6 +4,8 @@ import random
 import os
 import logging
 import discord
+import asyncio
+import functools
 from cleverwrap import CleverWrap
 from discord.ext import commands, tasks
 
@@ -80,7 +82,9 @@ async def on_message(ctx):
                 if truemessage.lower().startswith('chatbot'):
                     truemessage = truemessage.replace("chatbot", " ")
                     truemessage = truemessage.replace("Chatbot", " ")
-                response = convo.say(truemessage)
+                loop = asyncio.get_event_loop()
+                fn = functools.partial(convo.say, truemessage)
+                response = await loop.run_in_executor(None, fn)
                 hitroll = 4000
                 await ctx.reply(content=f'`{response}`', mention_author=False)
     hitroll -= 1

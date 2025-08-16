@@ -6,6 +6,7 @@ import json
 import re
 import html as base_html
 import urllib.parse
+import functools
 from bs4 import BeautifulSoup as BS
 from lxml import html
 from discord.ext import commands
@@ -24,7 +25,7 @@ class Games(commands.Cog):
         self.client = client
 
     async def cog_check(self, ctx):
-        return BLM.CheckIfCommandAllowed(ctx)
+        return await BLM.CheckIfCommandAllowed(ctx)
         
     # Generate Stats for the Stand command
     def GetStandStats(self):
@@ -198,8 +199,12 @@ class Games(commands.Cog):
     async def agdq(self, ctx):
         await ctx.trigger_typing()
         api_url = 'https://taskinoz.com/gdq/api'
-        donation = Helpers.GetWebPage(self, api_url).text
-        await ctx.reply(f'{donation}')
+        response = await Helpers.GetWebPageAsync(self, api_url)
+        if response is not None:
+            donation = response.text
+            await ctx.reply(f'{donation}')
+        else:
+            await ctx.reply('Could not connect to GDQ API.')
 
     @commands.command(aliases=["ais","lexica"])
     @commands.cooldown(rate=1, per=20, type=BucketType.channel)
@@ -212,10 +217,14 @@ class Games(commands.Cog):
             await ctx.reply("Enter a search term.")
             return
         api_url = f'https://lexica.art/api/v1/search?q={user_input}'
-        results = Helpers.GetWebPage(self, api_url)
-        results = results.json()
-        if len(results) > 0:
-            rand = random.choice(results["images"])            
+        results = await Helpers.GetWebPageAsync(self, api_url)
+        if results is not None:
+            results = results.json()
+            if "images" in results and len(results["images"]) > 0:
+                rand = random.choice(results["images"])
+            else:
+                await ctx.reply('No results.')
+                return
             out_url = rand["srcSmall"]
             out_gallery = rand["gallery"]
             out_description = rand["prompt"]
@@ -251,12 +260,12 @@ class Games(commands.Cog):
                 "rnlimit": "1",
                 "format": "json"
             }
-            random_power = Helpers.GetWebPage(self, api_url, params)
+            random_power = await Helpers.GetWebPageAsync(self, api_url, params)
             if random_power:
                 power = random_power.json()["query"]["random"][0]
                 name = power["title"]
                 encoded_url = f'https://powerlisting.fandom.com/wiki/{urllib.parse.quote(name)}'
-                power_data = Helpers.GetWebPage(self, encoded_url)
+                power_data = await Helpers.GetWebPageAsync(self, encoded_url)
                 if power_data:
                     page_tree = html.fromstring(power_data.text)
                     desc = page_tree.xpath('//meta[@name="description"]/@content')
@@ -294,13 +303,13 @@ class Games(commands.Cog):
         }
         power_valid = False
         while not(power_valid):
-            random_power = Helpers.GetWebPage(self, power_api_url, params)        
+            random_power = await Helpers.GetWebPageAsync(self, power_api_url, params)
             power = random_power.json()["query"]["random"][0]
             pow_name = power["title"]
             pow_url = f'https://powerlisting.fandom.com/wiki/{urllib.parse.quote(pow_name)}'
             if "physiology" not in pow_name.lower() and "proficiency" not in pow_name.lower():
                 power_valid = True
-        random_music = Helpers.GetWebPage(self, music_api_url, params)
+        random_music = await Helpers.GetWebPageAsync(self, music_api_url, params)
         if random_power and random_music:            
             music = random_music.json()["query"]["random"][0]
             music_name = music["title"].split(',')[0]
@@ -316,7 +325,7 @@ class Games(commands.Cog):
                 music_name = music_name.split(':')[0]
             if music_name == "Lyrics":
                 music_name = music["title"].split(':')[1]
-            power_data = Helpers.GetWebPage(self, pow_url)
+            power_data = await Helpers.GetWebPageAsync(self, pow_url)
             if power_data:
                 page_tree = html.fromstring(power_data.text)
                 desc = page_tree.xpath('//meta[@name="description"]/@content')
@@ -337,7 +346,10 @@ class Games(commands.Cog):
                 elif b < 50:
                     b = b+50
                 user_colour = (r,g,b,200)
-                if stand_gen.GenerateImage(stats_dict,user_colour) == True:
+                loop = asyncio.get_event_loop()
+                fn = functools.partial(stand_gen.GenerateImage, stats_dict, user_colour)
+                image_generated = await loop.run_in_executor(None, fn)
+                if image_generated:
                     image_file = discord.File('./internal/data/images/stand.png', filename='stand.png')
                     stand_embed = discord.Embed()
                     if len(ctx.guild.members) >= 200:
@@ -435,7 +447,7 @@ class Games(commands.Cog):
     async def tvtropes(self, ctx):
         try:            
             await ctx.trigger_typing()
-            page = Helpers.GetWebPage(self, f"https://tvtropes.org/pmwiki/randomitem.php?p={random.randint(1,1000000)}")
+            page = await Helpers.GetWebPageAsync(self, f"https://tvtropes.org/pmwiki/randomitem.php?p={random.randint(1,1000000)}")
             if page:
                 soup = BS(page.content, "lxml")
                 url = soup.find('meta', {"property":"og:url"})['content']
@@ -467,13 +479,13 @@ class Games(commands.Cog):
                     "rnlimit": "1",
                     "format": "json"
                 }
-                random_aesthetic = Helpers.GetWebPage(self, api_url, params)
+                random_aesthetic = await Helpers.GetWebPageAsync(self, api_url, params)
                 if random_aesthetic:
                     try:
                         power = random_aesthetic.json()["query"]["random"][0]
                         name = power["title"]
                         encoded_url = f'https://{query}.fandom.com/wiki/{urllib.parse.quote(name)}'
-                        power_data = Helpers.GetWebPage(self, encoded_url)
+                        power_data = await Helpers.GetWebPageAsync(self, encoded_url)
                         if power_data:
                             page_tree = html.fromstring(power_data.text)
                             desc = page_tree.xpath('//meta[@name="description"]/@content')

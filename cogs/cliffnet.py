@@ -10,6 +10,7 @@ import asyncio
 import time
 import re
 import os.path
+import functools
 from os import path
 from discord.ext import commands
 from discord.ext.commands import BucketType
@@ -33,7 +34,7 @@ class cliffnet(commands.Cog):
 
     async def cog_check(self, ctx):
         if ctx.guild.id == 107847342006226944:
-            return BLM.CheckIfCommandAllowed(ctx)
+            return await BLM.CheckIfCommandAllowed(ctx)
         return False
 
     @commands.command(aliases=["Scramble"], help="scrambles word order")
@@ -67,7 +68,9 @@ class cliffnet(commands.Cog):
                     
                 source = (f'http://newsapi.org/v2/everything?q={userInput}&sortBy=top&apiKey=fec0d23dd26549a9a6d58a29a675e764')
                 
-                pull = requests.get(source)
+                loop = asyncio.get_event_loop()
+                fn = functools.partial(requests.get, source)
+                pull = await loop.run_in_executor(None, fn)
 
                 articles = pull.json()["totalResults"]
 
@@ -156,9 +159,12 @@ class cliffnet(commands.Cog):
             #most of it shamelessly lifted from meme.py
             try:
                 filename = f"days{ctx.guild.id}"
+                loop = asyncio.get_event_loop()
                 daysPickleFile = f"./internal/data/databases/days{ctx.guild.id}.pk"
-                pickleFileExists = os.path.isfile(daysPickleFile)
-                if not path.exists(f'{"./internal/data/databases/"}{filename}.db'):
+                pickleFileExists = await loop.run_in_executor(None, os.path.isfile, daysPickleFile)
+                db_exists = await loop.run_in_executor(None, path.exists, f'{"./internal/data/databases/"}{filename}.db')
+
+                if not db_exists:
                     # Create days table
                     columns={
                     "Id":"INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT",
@@ -170,21 +176,21 @@ class cliffnet(commands.Cog):
                     "LastResetByName":"varchar(255)",
                     "RecordDuration":"varchar(255)",
                     "TimesReset":"INTEGER",}
-                    dbm.CreateTable(filename, "days", columns)
+                    await loop.run_in_executor(None, functools.partial(dbm.CreateTable, filename, "days", columns))
                     # Create Creators table
                     columns ={
                         "Id":"INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT",
                         "CreatorName":"varchar(255)",
                         "CreatorId":"varchar(255)",
                     }
-                    dbm.CreateTable(filename, "creator", columns)
+                    await loop.run_in_executor(None, functools.partial(dbm.CreateTable, filename, "creator", columns))
                     # Create durations table
                     columns ={
                         "Id":"INTEGER",
                         "Duration":"varchar(255)",
                         "ResetDate":"varchar(255)",
                     }
-                    dbm.CreateTable(filename, "durations", columns)
+                    await loop.run_in_executor(None, functools.partial(dbm.CreateTable, filename, "durations", columns))
 
                 if pickleFileExists:
                     await ConvertPickleToDatabase(self,ctx)
@@ -193,85 +199,89 @@ class cliffnet(commands.Cog):
                 logger.LogPrint(f'ERROR - Could not create table: {ex}',logging.ERROR)     
                 return False
         async def ConvertPickleToDatabase(self, ctx):
-
             filename = f"days{ctx.guild.id}"
             try:
+                loop = asyncio.get_event_loop()
                 daysPickleFile = f"./internal/data/databases/days{ctx.guild.id}.pk"
                 daysDict = {}
-                fileExists = os.path.isfile(daysPickleFile)
-                contentExists = os.path.getsize(daysPickleFile) > 0
-                if fileExists is False:
+                fileExists = await loop.run_in_executor(None, os.path.isfile, daysPickleFile)
+                if not fileExists:
                     logger.LogPrint(f'ERROR ConvertPickleToDatabase - pickle file does not exist, conversion cancelled.', logging.ERROR)
                     return False
-                else:
-                    if contentExists:
-                        legacyCreatorName = "Some Chunk"
-                        legacyCreatorId = "<@676693645155631124>" #jimbot
-                        legacyResetCount = 1
 
-                        #fill creator table with legacy creator
-                        dictForInsert = {
-                        "CreatorId": legacyCreatorId,
-                        "CreatorName": legacyCreatorName,}
-                        dbm.Insert(f"{filename}","creator",dictForInsert)
-                        
-                        #populate database with pickle data
+                contentExists = await loop.run_in_executor(None, os.path.getsize, daysPickleFile) > 0
+                if contentExists:
+                    legacyCreatorName = "Some Chunk"
+                    legacyCreatorId = "<@676693645155631124>" #jimbot
+                    legacyResetCount = 1
+
+                    #fill creator table with legacy creator
+                    dictForInsert = {
+                    "CreatorId": legacyCreatorId,
+                    "CreatorName": legacyCreatorName,}
+                    await loop.run_in_executor(None, functools.partial(dbm.Insert, f"{filename}","creator",dictForInsert))
+
+                    #populate database with pickle data
+                    def load_pickle():
                         with open(daysPickleFile,"rb") as daysFileReader:           
-                            daysDict = pickle.load(daysFileReader)
-                        
-                        #find legacy creator id
-                        creatorId = dbm.Retrieve(f'{filename}', 'creator', [("CreatorName", legacyCreatorName)], where_type=WhereType.AND, column_data=["id"])
+                            return pickle.load(daysFileReader)
+                    daysDict = await loop.run_in_executor(None, load_pickle)
 
-                        for key in daysDict.keys():
-                            #convert timedelta objects to days / hours
-                            lastDurationDays = Helpers.timeDeltaFormat(self, daysDict[key][1])[0]
-                            lastDurationHours = Helpers.timeDeltaFormat(self, daysDict[key][1])[1]
-                            recordDurationDays = Helpers.timeDeltaFormat(self, daysDict[key][2])[0]
-                            recordDurationHours = Helpers.timeDeltaFormat(self, daysDict[key][2])[1]
+                    #find legacy creator id
+                    creatorId = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'{filename}', 'creator', [("CreatorName", legacyCreatorName)], where_type=WhereType.AND, column_data=["id"]))
 
-                            #convert datetime objects to readable string dates + hours
-                            creationDate = str(daysDict[key][0].strftime("%m/%d/%Y, %H:%M:%S"))
-                            lastResetDate = str(daysDict[key][0].strftime("%m/%d/%Y, %H:%M:%S"))
-                            lastDuration = str([lastDurationDays,lastDurationHours])
-                            recordDuration = str([recordDurationDays,recordDurationHours])
-                            
-                            #set legacyresetcount to 0 if entry has never been reset
-                            if lastDurationDays == 0 and lastDurationHours == 0:
-                                legacyResetCount = 0
-                            else:
-                                legacyResetCount = 1
+                    for key in daysDict.keys():
+                        #convert timedelta objects to days / hours
+                        lastDurationDays = Helpers.timeDeltaFormat(self, daysDict[key][1])[0]
+                        lastDurationHours = Helpers.timeDeltaFormat(self, daysDict[key][1])[1]
+                        recordDurationDays = Helpers.timeDeltaFormat(self, daysDict[key][2])[0]
+                        recordDurationHours = Helpers.timeDeltaFormat(self, daysDict[key][2])[1]
 
+                        #convert datetime objects to readable string dates + hours
+                        creationDate = str(daysDict[key][0].strftime("%m/%d/%Y, %H:%M:%S"))
+                        lastResetDate = str(daysDict[key][0].strftime("%m/%d/%Y, %H:%M:%S"))
+                        lastDuration = str([lastDurationDays,lastDurationHours])
+                        recordDuration = str([recordDurationDays,recordDurationHours])
+
+                        #set legacyresetcount to 0 if entry has never been reset
+                        if lastDurationDays == 0 and lastDurationHours == 0:
+                            legacyResetCount = 0
+                        else:
+                            legacyResetCount = 1
+
+                        dictForInsert = {
+                        "EntryName": key,
+                        "CreationDate": creationDate,
+                        "CreatorId": creatorId[0][0],
+                        "LastResetDate": lastResetDate,
+                        "LastDuration": lastDuration,
+                        "TimesReset": legacyResetCount,
+                        "LastResetByName": legacyCreatorName,
+                        "RecordDuration": recordDuration,}
+                        await loop.run_in_executor(None, functools.partial(dbm.Insert, f"{filename}","days",dictForInsert))
+
+                        #prevent 0 duration entries into the durations table
+                        if legacyResetCount > 0:
+                            entry_id_result = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f'{filename}', 'days', [("EntryName", key)], where_type=WhereType.AND, column_data=["id"]))
                             dictForInsert = {
-                            "EntryName": key,
-                            "CreationDate": creationDate,
-                            "CreatorId": creatorId[0][0],
-                            "LastResetDate": lastResetDate,
-                            "LastDuration": lastDuration,
-                            "TimesReset": legacyResetCount,
-                            "LastResetByName": legacyCreatorName,
-                            "RecordDuration": recordDuration,}
-                            dbm.Insert(f"{filename}","days",dictForInsert)
+                            "Id": entry_id_result[0][0],
+                            "Duration": lastDuration,
+                            "ResetDate": lastResetDate,}
+                            await loop.run_in_executor(None, functools.partial(dbm.Insert, f"{filename}","durations",dictForInsert))
 
-                            #prevent 0 duration entries into the durations table
-                            if legacyResetCount > 0: 
-                                dictForInsert = {
-                                "Id": dbm.Retrieve(f'{filename}', 'days', [("EntryName", key)], where_type=WhereType.AND, column_data=["id"])[0][0],
-                                "Duration": lastDuration,
-                                "ResetDate": lastResetDate,}
-                                dbm.Insert(f"{filename}","durations",dictForInsert)
-                            
-                        #rename pickle file so it is not called anymore for imports maybe delete? jim would probably yell at me for deleting files on his server
-                        os.rename(f"./internal/data/databases/days{ctx.guild.id}.pk",f"./internal/data/databases/days{ctx.guild.id}BACKUP.pk")
-                    else: 
-                        os.rename(f"./internal/data/databases/days{ctx.guild.id}.pk",f"./internal/data/databases/days{ctx.guild.id}BACKUP.pk")
-                        logger.LogPrint(f'ERROR ConvertPickleToDatabase - pickle is empty, pickle renamed, conversion ended.', logging.ERROR)
-                        return False
+                    #rename pickle file so it is not called anymore for imports maybe delete? jim would probably yell at me for deleting files on his server
+                    await loop.run_in_executor(None, os.rename, f"./internal/data/databases/days{ctx.guild.id}.pk",f"./internal/data/databases/days{ctx.guild.id}BACKUP.pk")
+                else:
+                    await loop.run_in_executor(None, os.rename, f"./internal/data/databases/days{ctx.guild.id}.pk",f"./internal/data/databases/days{ctx.guild.id}BACKUP.pk")
+                    logger.LogPrint(f'ERROR ConvertPickleToDatabase - pickle is empty, pickle renamed, conversion ended.', logging.ERROR)
+                    return False
             except Exception as ex:
                 logger.LogPrint(f"Error converting: {ex}",logging.ERROR)
         async def PrintDays(self,ctx):
             try:
                 output = ""
-                tableImport = dbm.Retrieve(filename,"days",rows_required=1000)
+                loop = asyncio.get_event_loop()
+                tableImport = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, filename,"days",rows_required=1000))
                 #days table -ID|ENTRYNAME|CREATIONDATE|CREATORID|LASTDURATION|LASTRESETDATE|LASTRESETBY|RECORDDURATION|TIMESRESET
                 #creator table - ID|CREATORNAME|CREATORID
                 #durations table - ID|DURATION|RESETDATE
@@ -308,20 +318,22 @@ class cliffnet(commands.Cog):
                 userId = (f"<@{ctx.message.author.id}>")
                 creationDate = datetime.datetime.utcnow().strftime("%m/%d/%Y, %H:%M:%S")
                 
-                duplicateDays = dbm.Retrieve(filename,"days",[("EntryName",userInput)])
-                duplicateCreator = dbm.Retrieve(filename,"creator",[("CreatorId",userId)])
+                loop = asyncio.get_event_loop()
+                duplicateDays = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, filename,"days",[("EntryName",userInput)]))
+                duplicateCreator = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, filename,"creator",[("CreatorId",userId)]))
 
                 #if not found e.g. not exist e.g. not duplicate
                 if len(duplicateDays) == 0:
 
                     if len(duplicateCreator) == 0:
-                        dbm.Insert(filename,"creator",{"CreatorName":userName,"CreatorId":userId})
-                        tableId = dbm.Retrieve(filename,"creator",[("CreatorId",userId)])[0][0]
+                        await loop.run_in_executor(None, functools.partial(dbm.Insert, filename,"creator",{"CreatorName":userName,"CreatorId":userId}))
+                        tableId = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, filename,"creator",[("CreatorId",userId)]))
+                        tableId = tableId[0][0]
                     else:
                         tableId = duplicateCreator[0][0]
 
                     columns = {"EntryName":userInput, "CreationDate":creationDate, "CreatorId":tableId,"TimesReset":0}
-                    dbm.Insert(filename,"days",columns)
+                    await loop.run_in_executor(None, functools.partial(dbm.Insert, filename,"days",columns))
                     await ctx.send(f"**{userInput}** added!")
 
                 else:
@@ -333,18 +345,20 @@ class cliffnet(commands.Cog):
             try:
                 pattern = "DELETE "
                 userInput = re.split(pattern, userInput, 1)[1]
-                tableImport = dbm.Retrieve(filename,"days",[("EntryName",userInput)])
+                loop = asyncio.get_event_loop()
+                tableImport = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, filename,"days",[("EntryName",userInput)]))
                 requester = (f"<@{ctx.message.author.id}>") #check if format is same for elif statement
                 isAdmin = ctx.message.author.permissions_in(ctx.channel).administrator == True
-                isCreator = dbm.Retrieve(filename,"creator",[("Id",tableImport[0][3])])[0][2] == requester
+                isCreatorResult = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, filename,"creator",[("Id",tableImport[0][3])]))
+                isCreator = isCreatorResult[0][2] == requester
                 if not tableImport:
                     await ctx.send("Timer for deletion not found.")
                 #check if creator and delete
                 #i this will just find an entry with the requested id??
                 elif isCreator or isAdmin:
                     deletionId = {"Id":tableImport[0][0]}
-                    dbm.Delete(filename,"days", deletionId) 
-                    dbm.Delete(filename,"durations", deletionId)
+                    await loop.run_in_executor(None, functools.partial(dbm.Delete, filename,"days", deletionId))
+                    await loop.run_in_executor(None, functools.partial(dbm.Delete, filename,"durations", deletionId))
                     await ctx.send(f"**{userInput}** - Deleted")
                 else:
                     await ctx.send("Can't delete entry - not creator or admin.")
@@ -358,7 +372,8 @@ class cliffnet(commands.Cog):
                 if userInput.startswith("STATS"):
                     pattern = "STATS "
                     userInput = re.split(pattern, userInput, 1)[1]
-                tableImport = dbm.Retrieve(filename,"days",[("EntryName",userInput)])
+                loop = asyncio.get_event_loop()
+                tableImport = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, filename,"days",[("EntryName",userInput)]))
                 if not tableImport:
                     await ctx.send("Timer for stats not found.")
                     return False
@@ -382,8 +397,8 @@ class cliffnet(commands.Cog):
                 creatinDate = (tableImport[0][2].split(", "))[0]
                 creatinDate = (f"{creatinDate[3:5]}/{creatinDate[0:2]}/{creatinDate[6:]}")
                 #get all entry durations and calculate average 
-                durationsTableImport = dbm.Retrieve(filename,"durations",[("Id",tableImport[0][0])],rows_required=100000)
-                creatorTableImport = dbm.Retrieve(filename,"creator",[("Id",creatorId)])
+                durationsTableImport = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, filename,"durations",[("Id",tableImport[0][0])],rows_required=100000))
+                creatorTableImport = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, filename,"creator",[("Id",creatorId)]))
                 creatorName = creatorTableImport[0][1] 
 
                 #if new entry skip charting and average calculation
@@ -430,16 +445,18 @@ class cliffnet(commands.Cog):
                 #labels
                 ax.set(ylabel="Duration(Days)", xlabel="Reset Date")
                 #plot (b)lue b(o)lls
-                pyplot.plot(x_values, y_values, "bo")
-                #chart grid and outter spines
-                pyplot.grid(alpha=0.4)
-                pyplot.gca().spines["top"].set_alpha(0)
-                pyplot.gca().spines["bottom"].set_alpha(.3)
-                pyplot.gca().spines["right"].set_alpha(0)
-                pyplot.gca().spines["left"].set_alpha(.3)
-                #save plot to file and prepare to send
-                pyplot.savefig("./internal/data/images/chart.png")
-                pyplot.close()
+                def plot_chart():
+                    pyplot.plot(x_values, y_values, "bo")
+                    #chart grid and outter spines
+                    pyplot.grid(alpha=0.4)
+                    pyplot.gca().spines["top"].set_alpha(0)
+                    pyplot.gca().spines["bottom"].set_alpha(.3)
+                    pyplot.gca().spines["right"].set_alpha(0)
+                    pyplot.gca().spines["left"].set_alpha(.3)
+                    #save plot to file and prepare to send
+                    pyplot.savefig("./internal/data/images/chart.png")
+                    pyplot.close()
+                await loop.run_in_executor(None, plot_chart)
                 image_file = discord.File('./internal/data/images/chart.png', filename='chart.png')
 
                 #do the embed and send it           
@@ -471,7 +488,8 @@ class cliffnet(commands.Cog):
                     pattern = "RESET "
 
                 userInput = re.split(pattern, userInput, 1)[1]
-                tableImport = dbm.Retrieve(filename,"days",[("EntryName",userInput)])
+                loop = asyncio.get_event_loop()
+                tableImport = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, filename,"days",[("EntryName",userInput)]))
                 if not tableImport:
                     await ctx.send("Timer for reset not found.")
                 else:
@@ -490,21 +508,21 @@ class cliffnet(commands.Cog):
                     #check if new record
                     if (int(lastLength[0])+float(lastLength[1])/24) >= (int(recordDuration[0])+float(recordDuration[1])/24):
                         recordDuration = lastLength
-                        dbm.Update(filename, "days",{"RecordDuration": str(lastLength)}, {"id": tableImport[0][0]})
+                        await loop.run_in_executor(None, functools.partial(dbm.Update, filename, "days",{"RecordDuration": str(lastLength)}, {"id": tableImport[0][0]}))
                     #check if LastResetByName is the same as current reset guy
                     currentResetter = ctx.message.author.name
                     if tableImport[0][6] is not currentResetter:
-                        dbm.Update(filename, "days",{"LastResetByName": currentResetter}, {"id": tableImport[0][0]})
+                        await loop.run_in_executor(None, functools.partial(dbm.Update, filename, "days",{"LastResetByName": currentResetter}, {"id": tableImport[0][0]}))
                     #update LastDuration and last reset date and insert new reset dates :^)
                     currentDate = currentDate.strftime("%m/%d/%Y, %H:%M:%S")
-                    dbm.Update(filename, "days",{"LastResetDate": currentDate}, {"id": tableImport[0][0]})
-                    dbm.Update(filename, "days",{"LastDuration": str(lastLength)}, {"id": tableImport[0][0]})
+                    await loop.run_in_executor(None, functools.partial(dbm.Update, filename, "days",{"LastResetDate": currentDate}, {"id": tableImport[0][0]}))
+                    await loop.run_in_executor(None, functools.partial(dbm.Update, filename, "days",{"LastDuration": str(lastLength)}, {"id": tableImport[0][0]}))
                     dictForInsert = {
                         "Id": tableImport[0][0],
                         "Duration": str(lastLength),
                         "ResetDate": currentDate,}
-                    dbm.Insert(filename,"durations",dictForInsert)
-                    dbm.Update(filename,"days", {"TimesReset": (tableImport[0][8]+1)}, {"id": tableImport[0][0]})
+                    await loop.run_in_executor(None, functools.partial(dbm.Insert, filename,"durations",dictForInsert))
+                    await loop.run_in_executor(None, functools.partial(dbm.Update, filename,"days", {"TimesReset": (tableImport[0][8]+1)}, {"id": tableImport[0][0]}))
                     await ctx.send(f"```ini\n[{userInput}] - timer reset. {lastLength[0]}d {lastLength[1]}h. Record - {recordDuration[0]}d {recordDuration[1]}h.```")
 
             except Exception as ex:

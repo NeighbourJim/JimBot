@@ -1,6 +1,8 @@
 import discord
 import logging
 import re
+import asyncio
+import functools
 from discord.ext import commands
 from discord.ext.commands import BucketType
 from os import path
@@ -20,13 +22,15 @@ class Tags(commands.Cog):
     async def cog_check(self, ctx):
         return BLM.CheckIfCommandAllowed(ctx)
         
-    def CheckAndCreateDatabase(self, ctx):
+    async def CheckAndCreateDatabaseAsync(self, ctx):
         try:
             filename = f"tags{ctx.guild.id}"
-            if not path.exists(f'{self.db_folder}{filename}.db'):
+            loop = asyncio.get_event_loop()
+            db_exists = await loop.run_in_executor(None, path.exists, f'{self.db_folder}{filename}.db')
+            if not db_exists:
                 # Create the required tables
                 columns = {"tag_name": "text PRIMARY KEY", "tag_content": "text NOT NULL", "author_id": "integer NOT NULL"}
-                dbm.CreateTable(filename, "tags", columns)
+                await loop.run_in_executor(None, functools.partial(dbm.CreateTable, filename, "tags", columns))
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t create database: {ex}',logging.ERROR)
 
@@ -36,10 +40,11 @@ class Tags(commands.Cog):
     @commands.guild_only()
     async def tag(self, ctx):
         try:
-            self.CheckAndCreateDatabase(ctx)
+            await self.CheckAndCreateDatabaseAsync(ctx)
+            loop = asyncio.get_event_loop()
 
             where = ("tag_name", Helpers.CommandStrip(self, ctx.message.content))
-            tag = dbm.Retrieve(f"tags{ctx.guild.id}", "tags", [where])
+            tag = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f"tags{ctx.guild.id}", "tags", [where]))
             if len(tag) > 0:
                 await ctx.reply(f'{tag[0][1]}')
             else:
@@ -54,7 +59,8 @@ class Tags(commands.Cog):
     @commands.guild_only()
     async def createtag(self, ctx):
         try:
-            self.CheckAndCreateDatabase(ctx)
+            await self.CheckAndCreateDatabaseAsync(ctx)
+            loop = asyncio.get_event_loop()
             msg = Helpers.CommandStrip(self, ctx.message.clean_content)
             split_message = msg.split(' ')
             if len(split_message) > 1 and len(split_message) < 400:
@@ -67,10 +73,11 @@ class Tags(commands.Cog):
                         await ctx.reply(f'No more than one link in a tag.')
                         return
                 where = ("tag_name", tag_name)
-                existing = dbm.Retrieve(f"tags{ctx.guild.id}", "tags", [where])
+                existing = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f"tags{ctx.guild.id}", "tags", [where]))
                 if len(existing) == 0:
                     new_tag = {"tag_name": tag_name, "tag_content": tag_content, "author_id": ctx.message.author.id}
-                    if dbm.Insert(f"tags{ctx.guild.id}", "tags", new_tag):
+                    success = await loop.run_in_executor(None, functools.partial(dbm.Insert, f"tags{ctx.guild.id}", "tags", new_tag))
+                    if success:
                         await ctx.reply(f'Created tag \'{tag_name}\'.')
                 else:
                     ctx.command.reset_cooldown(ctx)
@@ -86,16 +93,18 @@ class Tags(commands.Cog):
     @commands.guild_only()
     async def deletetag(self, ctx):
         try:
-            self.CheckAndCreateDatabase(ctx)
+            await self.CheckAndCreateDatabaseAsync(ctx)
+            loop = asyncio.get_event_loop()
 
             tag_name = Helpers.CommandStrip(self, ctx.message.content)
             where = ("tag_name", tag_name)
             where_dict = {"tag_name": tag_name}
-            existing = dbm.Retrieve(f"tags{ctx.guild.id}", "tags", [where])
+            existing = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f"tags{ctx.guild.id}", "tags", [where]))
             if len(existing) > 0:
                 user_is_admin = ctx.message.author.permissions_in(ctx.message.channel).administrator
                 if user_is_admin or ctx.message.author.id == existing[0][2]:
-                    if dbm.Delete(f"tags{ctx.guild.id}", "tags", where_dict) > 0:
+                    deleted = await loop.run_in_executor(None, functools.partial(dbm.Delete, f"tags{ctx.guild.id}", "tags", where_dict))
+                    if deleted > 0:
                         await ctx.reply(f'Tag \'{tag_name}\' deleted.')
                 else:
                     ctx.command.reset_cooldown(ctx)
@@ -112,17 +121,22 @@ class Tags(commands.Cog):
     @commands.guild_only()
     async def taglist(self, ctx):
         try:
-            self.CheckAndCreateDatabase(ctx)
+            await self.CheckAndCreateDatabaseAsync(ctx)
+            loop = asyncio.get_event_loop()
 
             filename = f"{self.db_folder}taglist-{ctx.guild.id}.txt"
-            tags = dbm.Retrieve(f"tags{ctx.guild.id}", "tags", rows_required=100000, order_by=("tag_name", "asc"))
+            tags = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, f"tags{ctx.guild.id}", "tags", rows_required=100000, order_by=("tag_name", "asc")))
             if len(tags) > 0:
                 tag_details_list = []
                 for tag in tags:                    
                     tag_details_list.append(f"Tag Name: {tag[0]}\nAuthor ID: <@{tag[2]}>\nContent: {tag[1]}")
-                with open(filename, 'w', encoding="utf-8") as list_file:
-                    for item in tag_details_list:
-                        list_file.write('%s\n\n' % item)
+
+                def write_file():
+                    with open(filename, 'w', encoding="utf-8") as list_file:
+                        for item in tag_details_list:
+                            list_file.write('%s\n\n' % item)
+                await loop.run_in_executor(None, write_file)
+
                 with open(f'{self.db_folder}taglist-{ctx.guild.id}.txt', 'rb') as fp:
                     await ctx.reply(f'{ctx.message.author.mention}', file=discord.File(fp, f'taglist-{ctx.guild.id}.txt'))
             else:

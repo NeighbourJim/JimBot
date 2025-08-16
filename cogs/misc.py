@@ -6,6 +6,7 @@ import json
 import random
 import re
 import requests
+import functools
 from discord.ext import commands
 from discord.ext.commands import BucketType
 from os import path
@@ -23,7 +24,7 @@ class Misc(commands.Cog):
         self.deep_ai_key = current_settings["keys"]["deep_ai"]
 
     async def cog_check(self, ctx):
-        return BLM.CheckIfCommandAllowed(ctx)
+        return await BLM.CheckIfCommandAllowed(ctx)
         
     #@commands.command(aliases=["tti"], help="Get an image generated from text.")    
     #@commands.cooldown(rate=1, per=20, type=BucketType.channel)
@@ -68,8 +69,10 @@ class Misc(commands.Cog):
         while not valid:
             comic_date = get_random_date()
             url = f'https://www.gocomics.com/calvinandhobbes/{comic_date.year}/{comic_date.month}/{comic_date.day}'
-            result = requests.get(url)
-            if result.url != 'https://www.gocomics.com/calvinandhobbes':
+            loop = asyncio.get_event_loop()
+            fn = functools.partial(requests.get, url)
+            result = await loop.run_in_executor(None, fn)
+            if result is not None and result.url != 'https://www.gocomics.com/calvinandhobbes':
                     valid = True
         await ctx.reply(url)
         
@@ -92,8 +95,10 @@ class Misc(commands.Cog):
         while not valid:
             comic_date = get_random_date()
             url = f'https://www.gocomics.com/peanuts/{comic_date.year}/{comic_date.month}/{comic_date.day}'
-            result = requests.get(url)
-            if result.url != 'https://www.gocomics.com/peanuts':
+            loop = asyncio.get_event_loop()
+            fn = functools.partial(requests.get, url)
+            result = await loop.run_in_executor(None, fn)
+            if result is not None and result.url != 'https://www.gocomics.com/peanuts':
                 valid = True
         await ctx.reply(url)
         
@@ -108,7 +113,9 @@ class Misc(commands.Cog):
 
         async def GetRandomPost(board):
             valid = False
-            results = requests.get(f'https://a.4cdn.org/{board}/threads.json')
+            loop = asyncio.get_event_loop()
+            fn = functools.partial(requests.get, f'https://a.4cdn.org/{board}/threads.json')
+            results = await loop.run_in_executor(None, fn)
             h = html2text.HTML2Text()
             h.ignore_links = True
             if results and results.status_code == 200:
@@ -118,7 +125,8 @@ class Misc(commands.Cog):
                 while not valid:
                     random_thread_id = random.choice(thread_list)["no"]
                     await asyncio.sleep(1)
-                    results = requests.get(f'https://a.4cdn.org/{board}/thread/{random_thread_id}.json')
+                    fn = functools.partial(requests.get, f'https://a.4cdn.org/{board}/thread/{random_thread_id}.json')
+                    results = await loop.run_in_executor(None, fn)
                     if results and results.status_code == 200:
                         post_list = results.json()
                         random_post = random.choice(post_list["posts"])

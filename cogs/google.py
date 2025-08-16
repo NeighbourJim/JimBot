@@ -2,6 +2,7 @@ import discord
 import random
 import asyncio
 import logging
+import functools
 from discord.ext import commands
 from discord.ext.commands import BucketType
 from googleapiclient.discovery import build
@@ -23,12 +24,13 @@ class Google(commands.Cog):
         self.yt_service = build('youtube', 'v3', developerKey=current_settings["keys"]["google"])
 
     async def cog_check(self, ctx):
-        return BLM.CheckIfCommandAllowed(ctx)
+        return await BLM.CheckIfCommandAllowed(ctx)
 
     #region --------------- Google Search ---------------
     async def GetSearchResult(self, message):
         query = Helpers.CommandStrip(self, message)
-        results = self.cse_service.cse().list(q=query, cx=current_settings["keys"]["cse"]).execute()
+        fn = functools.partial(self.cse_service.cse().list(q=query, cx=current_settings["keys"]["cse"]).execute)
+        results = await asyncio.get_event_loop().run_in_executor(None, fn)
         if "items" in results:
             final_results = []
             i = 0
@@ -44,7 +46,8 @@ class Google(commands.Cog):
 
     async def GetSafeSearchResult(self, message):
         query = Helpers.CommandStrip(self, message)
-        results = self.cse_service.cse().list(q=query, cx=current_settings["keys"]["cse"], safe="active").execute()
+        fn = functools.partial(self.cse_service.cse().list(q=query, cx=current_settings["keys"]["cse"], safe="active").execute)
+        results = await asyncio.get_event_loop().run_in_executor(None, fn)
         if "items" in results:
             final_results = []
             i = 0
@@ -93,7 +96,8 @@ class Google(commands.Cog):
     async def GetImageResult(self, message):
         forbidden = ["fbsbx.com", "i.kym-cdn.com", "x-raw-image"]
         query = Helpers.CommandStrip(self, message)
-        results = self.cse_service.cse().list(q=query, cx=current_settings["keys"]["cse"], searchType="image").execute()
+        fn = functools.partial(self.cse_service.cse().list(q=query, cx=current_settings["keys"]["cse"], searchType="image").execute)
+        results = await asyncio.get_event_loop().run_in_executor(None, fn)
         if "items" in results:
             for i in range(0,100):
                 result = random.choice(list(results["items"]))
@@ -113,7 +117,8 @@ class Google(commands.Cog):
     async def GetSafeImageResult(self, message):
         query = Helpers.CommandStrip(self, message)
         forbidden = ["fbsbx.com", "i.kym-cdn.com"]
-        results = self.cse_service.cse().list(q=query, cx=current_settings["keys"]["cse"], searchType="image", safe="active").execute()
+        fn = functools.partial(self.cse_service.cse().list(q=query, cx=current_settings["keys"]["cse"], searchType="image", safe="active").execute)
+        results = await asyncio.get_event_loop().run_in_executor(None, fn)
         if "items" in results:
             for i in range(0,100):
                 result = random.choice(list(results["items"]))
@@ -169,7 +174,8 @@ class Google(commands.Cog):
     #region --------------- Youtube Search ---------------
     async def GetYoutubeVideo(self, message):
         query = Helpers.CommandStrip(self, message) # removes the command invocation from the message ie '!yt funny dog' becomes 'funny dog'
-        results = self.yt_service.search().list(q=query, part='id,snippet', type="video", maxResults=1).execute()
+        fn = functools.partial(self.yt_service.search().list(q=query, part='id,snippet', type="video", maxResults=1).execute)
+        results = await asyncio.get_event_loop().run_in_executor(None, fn)
         videos = []
         if "items" in results:
             for item in results.get('items', []):

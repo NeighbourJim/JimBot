@@ -1,6 +1,8 @@
 import discord
 import logging
 import os.path
+import asyncio
+import functools
 from discord.ext import commands
 from discord.ext.commands import BucketType
 
@@ -18,7 +20,7 @@ class Chatbot(commands.Cog):
 
     async def cog_check(self, ctx):
         if ctx.guild.id == 107847342006226944:
-            return BLM.CheckIfCommandAllowed(ctx)
+            return await BLM.CheckIfCommandAllowed(ctx)
         return False
 
     @commands.command(aliases=["cb", "chatbot", "Chatbot"], help="Talk to Chatbot.")    
@@ -29,7 +31,9 @@ class Chatbot(commands.Cog):
         await ctx.trigger_typing()
         msg = Helpers.CommandStrip(self,ctx.message.content)
         if len(msg) > 1:
-            response = convo.say(msg)
+            loop = asyncio.get_event_loop()
+            fn = functools.partial(convo.say, msg)
+            response = await loop.run_in_executor(None, fn)
         else:
             response = f'You didn\'t enter a message.'
         await ctx.reply(f'`{response}`')

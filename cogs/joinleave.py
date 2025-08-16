@@ -1,6 +1,8 @@
 import discord
 import logging
 import pickle
+import asyncio
+import functools
 from discord.ext import commands
 from discord.ext.commands import BucketType
 from os import path
@@ -20,15 +22,21 @@ class joinleave(commands.Cog):
         self.settings_cache = dict()
 
     async def cog_check(self, ctx):
-        return BLM.CheckIfCommandAllowed(ctx)
+        return await BLM.CheckIfCommandAllowed(ctx)
         
-    def pickle_settings(self, settings, id):
-        with open(f'{self.db_folder}jl-settings-{id}.pickle', 'wb') as handle:
-            pickle.dump(settings, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    async def pickle_settings_async(self, settings, id):
+        loop = asyncio.get_event_loop()
+        def p_dump():
+            with open(f'{self.db_folder}jl-settings-{id}.pickle', 'wb') as handle:
+                pickle.dump(settings, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        await loop.run_in_executor(None, p_dump)
 
-    def load_settings(self, id):
-        with open(f'{self.db_folder}jl-settings-{id}.pickle', 'rb') as handle:
-            return pickle.load(handle)
+    async def load_settings_async(self, id):
+        loop = asyncio.get_event_loop()
+        def p_load():
+            with open(f'{self.db_folder}jl-settings-{id}.pickle', 'rb') as handle:
+                return pickle.load(handle)
+        return await loop.run_in_executor(None, p_load)
 
     @commands.command(help="Change join leave message settings.", aliases=["jls"])
     @commands.cooldown(rate=1, per=15, type=BucketType.channel)
@@ -52,14 +60,16 @@ class joinleave(commands.Cog):
                 settings_d["leave_message"] = leave_message
     
                 self.settings_cache[ctx.guild.id] = settings_d
-                self.pickle_settings(settings_d, ctx.guild.id)
+                await self.pickle_settings_async(settings_d, ctx.guild.id)
                 await ctx.reply("Settings saved.")
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
         if member.guild.id not in self.settings_cache:
-            if path.isfile(f"{self.db_folder}jl-settings-{member.guild.id}.pickle"):
-                self.settings_cache[member.guild.id] = self.load_settings(member.guild.id)
+            loop = asyncio.get_event_loop()
+            pickle_exists = await loop.run_in_executor(None, path.isfile, f"{self.db_folder}jl-settings-{member.guild.id}.pickle")
+            if pickle_exists:
+                self.settings_cache[member.guild.id] = await self.load_settings_async(member.guild.id)
             else:
                 return
         active_settings = self.settings_cache[member.guild.id]        
@@ -71,8 +81,10 @@ class joinleave(commands.Cog):
     @commands.Cog.listener()
     async def on_member_remove(self, member):
         if member.guild.id not in self.settings_cache:
-            if path.isfile(f"{self.db_folder}jl-settings-{member.guild.id}.pickle"):
-                self.settings_cache[member.guild.id] = self.load_settings(member.guild.id)
+            loop = asyncio.get_event_loop()
+            pickle_exists = await loop.run_in_executor(None, path.isfile, f"{self.db_folder}jl-settings-{member.guild.id}.pickle")
+            if pickle_exists:
+                self.settings_cache[member.guild.id] = await self.load_settings_async(member.guild.id)
             else:
                 return
         active_settings = self.settings_cache[member.guild.id]        

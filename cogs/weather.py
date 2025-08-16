@@ -5,6 +5,8 @@ import math
 import pycountry
 import datetime
 import pytz
+import asyncio
+import functools
 from discord.ext import commands
 from discord.ext.commands import BucketType
 from os import path
@@ -24,15 +26,17 @@ class Weather(commands.Cog):
     async def cog_check(self, ctx):
         return BLM.CheckIfCommandAllowed(ctx)
         
-    def CheckAndCreateDatabase(self, ctx):
+    async def CheckAndCreateDatabaseAsync(self, ctx):
         """Check if a meme database has been made for each server the bot is connected to, and create it if not.
         """
         try:
             filename = f"weather{ctx.guild.id}"
-            if not path.exists(f'{self.db_folder}{filename}.db'):
+            loop = asyncio.get_event_loop()
+            db_exists = await loop.run_in_executor(None, path.exists, f'{self.db_folder}{filename}.db')
+            if not db_exists:
                 # Create the required tables
                 columns = {"uid": "integer", "location": "text NOT NULL"}
-                dbm.CreateTable(filename, "w_locs", columns)
+                await loop.run_in_executor(None, functools.partial(dbm.CreateTable, filename, "w_locs", columns))
                     
         except Exception as ex:
             logger.LogPrint(f'ERROR - Could not create table or view: {ex}',logging.ERROR)    
@@ -117,21 +121,22 @@ class Weather(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def Weather(self, ctx):
-        self.CheckAndCreateDatabase(ctx)
+        await self.CheckAndCreateDatabaseAsync(ctx)
+        loop = asyncio.get_event_loop()
 
         filename = f"weather{ctx.guild.id}"        
 
         await ctx.trigger_typing()
         city = Helpers.CommandStrip(self, ctx.message.content)
         if len(city.strip()) == 0:
-            user_location = dbm.Retrieve(filename, "w_locs", where=[("uid", ctx.message.author.id)], column_data=["location"])
+            user_location = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, filename, "w_locs", where=[("uid", ctx.message.author.id)], column_data=["location"]))
             if len(user_location) > 0:
                 city = user_location[0][0]
             else:
                 city = None
         if city != None:            
             api_url = f'https://api.openweathermap.org/data/2.5/weather?q={city}&appid={current_settings["keys"]["open_weather_key"]}'
-            api_results = Helpers.GetWebPage(self, api_url)
+            api_results = await Helpers.GetWebPageAsync(self, api_url)
             if api_results:
                 api_results = api_results.json()
                 name = api_results["name"]
@@ -171,21 +176,22 @@ class Weather(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def WeatherForecast(self, ctx):
-        self.CheckAndCreateDatabase(ctx)
+        await self.CheckAndCreateDatabaseAsync(ctx)
+        loop = asyncio.get_event_loop()
 
         filename = f"weather{ctx.guild.id}"       
 
         await ctx.trigger_typing()
         city = Helpers.CommandStrip(self, ctx.message.content)
         if len(city.strip()) == 0:
-            user_location = dbm.Retrieve(filename, "w_locs", where=[("uid", ctx.message.author.id)], column_data=["location"])
+            user_location = await loop.run_in_executor(None, functools.partial(dbm.Retrieve, filename, "w_locs", where=[("uid", ctx.message.author.id)], column_data=["location"]))
             if len(user_location) > 0:
                 city = user_location[0][0]
             else:
                 city = None
         if city != None:
             api_url = f'https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={current_settings["keys"]["open_weather_key"]}'
-            api_results = Helpers.GetWebPage(self, api_url)
+            api_results = await Helpers.GetWebPageAsync(self, api_url)
             if api_results:
                 api_results = api_results.json()
                 data_list = api_results["list"]
@@ -239,14 +245,15 @@ class Weather(commands.Cog):
     @commands.has_role("Bot Use")
     @commands.guild_only()
     async def SetWeatherLocation(self, ctx):
-        self.CheckAndCreateDatabase(ctx)
+        await self.CheckAndCreateDatabaseAsync(ctx)
+        loop = asyncio.get_event_loop()
 
         filename = f"weather{ctx.guild.id}"
         location = Helpers.CommandStrip(self, ctx.message.content)
         data = {"uid": ctx.message.author.id, "location": location}
         try:
-            dbm.Delete(filename, "w_locs", where={"uid": ctx.message.author.id})
-            dbm.Insert(filename, "w_locs", data)
+            await loop.run_in_executor(None, functools.partial(dbm.Delete, filename, "w_locs", where={"uid": ctx.message.author.id}))
+            await loop.run_in_executor(None, functools.partial(dbm.Insert, filename, "w_locs", data))
             await ctx.reply(f'Set your default location to {location}')
         except Exception as ex:
             logger.LogPrint(f'ERROR - Couldn\'t execute SetWeatherLocation command: {ex}',logging.ERROR)     

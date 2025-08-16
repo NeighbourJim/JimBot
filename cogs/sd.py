@@ -70,12 +70,14 @@ class sd(commands.Cog):
         except PromptRejectedError:
             return -2
         
-    def download_images(self, urls):
+    async def download_images_async(self, urls):
         print('Images received. Downloading.')
         images = []
+        loop = asyncio.get_event_loop()
         for url in urls:
             print(url)
-            response = requests.get(url)
+            fn = functools.partial(requests.get, url)
+            response = await loop.run_in_executor(None, fn)
             image = Image.open(io.BytesIO(response.content))
             images.append(image)
         return images
@@ -140,7 +142,7 @@ class sd(commands.Cog):
             elif urls == None:
                 await ctx.reply("Image generation failed.")
             else:
-                imgs = self.download_images(urls)
+                imgs = await self.download_images_async(urls)
                 cols = 1
                 rows = 1
                 if len(imgs) >= 3:
@@ -148,8 +150,13 @@ class sd(commands.Cog):
                     rows = 2
                 elif len(imgs) == 2:
                     cols = 2
-                grid = self.combine_images(imgs, rows, cols)
-                grid.save(f'./internal/data/images/bing{ctx.guild.id}.jpg')
+
+                fn = functools.partial(self.combine_images, imgs, rows, cols)
+                grid = await loop.run_in_executor(None, fn)
+
+                def save_grid():
+                    grid.save(f'./internal/data/images/bing{ctx.guild.id}.jpg')
+                await loop.run_in_executor(None, save_grid)
                 image_file = discord.File(f'./internal/data/images/bing{ctx.guild.id}.jpg', filename='bing.jpg')
                 await ctx.reply(file=image_file)
                 ctx.command.reset_cooldown(ctx)
@@ -220,8 +227,10 @@ class sd(commands.Cog):
     @commands.guild_only()
     async def fakemonsprite(self, ctx):
         await ctx.trigger_typing()
+        loop = asyncio.get_event_loop()
         try:
-            requests.get(self.server_url, timeout=1.5)
+            fn = functools.partial(requests.get, self.server_url, timeout=1.5)
+            await loop.run_in_executor(None, fn)
         except:
             await ctx.reply("This command is not currently available.")
             return
@@ -276,15 +285,18 @@ class sd(commands.Cog):
                 "alwayson_scripts": {"ADetailer": {"args": [True, False, {"ad_cfg_scale": 7, "ad_checkpoint": "Use same checkpoint", "ad_clip_skip": 1, "ad_confidence": 0.3, "ad_controlnet_guidance_end": 1, "ad_controlnet_guidance_start": 0, "ad_controlnet_model": "None", "ad_controlnet_module": "None", "ad_controlnet_weight": 1, "ad_denoising_strength": 0.3, "ad_dilate_erode": 4, "ad_inpaint_height": 512, "ad_inpaint_only_masked": True, "ad_inpaint_only_masked_padding": 32, "ad_inpaint_width": 512, "ad_mask_blur": 6, "ad_mask_k_largest": 5, "ad_mask_max_ratio": 1, "ad_mask_merge_invert": "None", "ad_mask_min_ratio": 0, "ad_model": "face_yolov8s.pt", "ad_negative_prompt": "", "ad_noise_multiplier": 1, "ad_prompt": "", "ad_restore_face": False, "ad_sampler": "Euler a", "ad_steps": 28, "ad_use_cfg_scale": False, "ad_use_checkpoint": False, "ad_use_clip_skip": False, "ad_use_inpaint_width_height": False, "ad_use_noise_multiplier": False, "ad_use_sampler": False, "ad_use_steps": False, "ad_use_vae": False, "ad_vae": "Use same VAE", "ad_x_offset": 0, "ad_y_offset": 0, "is_api": []}, {"ad_cfg_scale": 7, "ad_checkpoint": "Use same checkpoint", "ad_clip_skip": 1, "ad_confidence": 0.3, "ad_controlnet_guidance_end": 1, "ad_controlnet_guidance_start": 0, "ad_controlnet_model": "None", "ad_controlnet_module": "None", "ad_controlnet_weight": 1, "ad_denoising_strength": 0.4, "ad_dilate_erode": 4, "ad_inpaint_height": 512, "ad_inpaint_only_masked": True, "ad_inpaint_only_masked_padding": 32, "ad_inpaint_width": 512, "ad_mask_blur": 4, "ad_mask_k_largest": 0, "ad_mask_max_ratio": 1, "ad_mask_merge_invert": "None", "ad_mask_min_ratio": 0, "ad_model": "None", "ad_negative_prompt": "", "ad_noise_multiplier": 1, "ad_prompt": "", "ad_restore_face": False, "ad_sampler": "DPM++ 2M Karras", "ad_steps": 28, "ad_use_cfg_scale": False, "ad_use_checkpoint": False, "ad_use_clip_skip": False, "ad_use_inpaint_width_height": False, "ad_use_noise_multiplier": False, "ad_use_sampler": False, "ad_use_steps": False, "ad_use_vae": False, "ad_vae": "Use same VAE", "ad_x_offset": 0, "ad_y_offset": 0, "is_api": []},{"ad_cfg_scale": 7, "ad_checkpoint": "Use same checkpoint", "ad_clip_skip": 1, "ad_confidence": 0.3, "ad_controlnet_guidance_end": 1, "ad_controlnet_guidance_start": 0, "ad_controlnet_model": "None", "ad_controlnet_module": "None", "ad_controlnet_weight": 1, "ad_denoising_strength": 0.4, "ad_dilate_erode": 4, "ad_inpaint_height": 512, "ad_inpaint_only_masked": True, "ad_inpaint_only_masked_padding": 32, "ad_inpaint_width": 512, "ad_mask_blur": 4, "ad_mask_k_largest": 0, "ad_mask_max_ratio": 1, "ad_mask_merge_invert": "None", "ad_mask_min_ratio": 0, "ad_model": "None", "ad_negative_prompt": "", "ad_noise_multiplier": 1, "ad_prompt": "", "ad_restore_face": False, "ad_sampler": "DPM++ 2M Karras", "ad_steps": 28, "ad_use_cfg_scale": False, "ad_use_checkpoint": False, "ad_use_clip_skip": False, "ad_use_inpaint_width_height": False, "ad_use_noise_multiplier": False, "ad_use_sampler": False, "ad_use_steps": False, "ad_use_vae": False, "ad_vae": "Use same VAE", "ad_x_offset": 0, "ad_y_offset": 0, "is_api": []}]}}
             }
 
-            response = self.generate_image(payload)
-            image = Image.open(io.BytesIO(base64.b64decode(response['images'][0])))
-            image.save(f'./internal/data/images/fakemon{ctx.author.id}.png')
-            img = Image.open(f'./internal/data/images/fakemon{ctx.author.id}.png')
-            if sprite:
-                new_img = img.resize((int(width/8), int(height/8)), resample=Image.NEAREST)
-                new_img = new_img.convert('P', palette=Image.ADAPTIVE, colors=64)
-                new_img = new_img.resize((width,  height), resample=Image.NEAREST)
-                new_img.save(f'./internal/data/images/fakemon{ctx.author.id}.png')
+            response = await loop.run_in_executor(None, functools.partial(self.generate_image, payload))
+
+            def process_image():
+                image = Image.open(io.BytesIO(base64.b64decode(response['images'][0])))
+                image.save(f'./internal/data/images/fakemon{ctx.author.id}.png')
+                img = Image.open(f'./internal/data/images/fakemon{ctx.author.id}.png')
+                if sprite:
+                    new_img = img.resize((int(width/8), int(height/8)), resample=Image.NEAREST)
+                    new_img = new_img.convert('P', palette=Image.ADAPTIVE, colors=64)
+                    new_img = new_img.resize((width,  height), resample=Image.NEAREST)
+                    new_img.save(f'./internal/data/images/fakemon{ctx.author.id}.png')
+            await loop.run_in_executor(None, process_image)
         else:
             response = f'You didn\'t enter a message.'
         image_file = discord.File(f'./internal/data/images/fakemon{ctx.author.id}.png', filename='SPOILER_fakemon.png')
@@ -423,8 +435,10 @@ class sd(commands.Cog):
     @commands.guild_only()
     async def stablediffusion_xl(self, ctx):
         await ctx.trigger_typing()
+        loop = asyncio.get_event_loop()
         try:
-            requests.get(self.server_url, timeout=1.5)
+            fn = functools.partial(requests.get, self.server_url, timeout=1.5)
+            await loop.run_in_executor(None, fn)
         except:
             await ctx.reply("This command is not currently available.")
             return
