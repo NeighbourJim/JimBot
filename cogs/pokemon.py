@@ -413,7 +413,10 @@ class Pokemon(commands.Cog):
             while results[2] is None:
                 results = self.GetCustomFusionNew(-1)
             fusions.append(results[0])
-            name = self.GenerateFusedName(results[2]-1, results[3]-1)
+            if results[2] == results[3]:
+                name = f"Mega {pokemon_names_fusion[results[2]-1]}"
+            else:
+                name = self.GenerateFusedName(results[2]-1, results[3]-1)
             fusion_names.append(name)
 
         width = 2853
