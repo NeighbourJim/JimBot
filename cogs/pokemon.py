@@ -7,8 +7,10 @@ import requests
 import glob
 import re
 import os
+import io
 from discord.ext import commands
 from discord.ext.commands import BucketType
+from PIL import Image
 
 from internal.logs import logger
 from internal.helpers import Helpers
@@ -396,6 +398,43 @@ class Pokemon(commands.Cog):
                 fusion_embed.set_thumbnail(url=f"attachment://fusion.png")
                 fusion_embed.set_image(url='')
                 await sent.edit(embed=fusion_embed)
+
+
+    @commands.command(help="Get a random fused Pokemon team (custom only).", aliases=["rft"])
+    @commands.cooldown(rate=1, per=10, type=BucketType.user)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def randomfusedteam(self, ctx):
+        await ctx.trigger_typing()
+        fusions = []
+        for _ in range(6):
+            results = self.GetCustomFusionNew(-1)
+            while results[2] is None:
+                results = self.GetCustomFusionNew(-1)
+            fusions.append(results[0])
+
+        width = 2853
+        height = 1902
+        new_image = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+
+        for i, fusion_path in enumerate(fusions):
+            row = i // 3
+            col = i % 3
+            x = col * 951
+            y = row * 951
+            try:
+                with Image.open(fusion_path) as img:
+                    img = img.resize((951, 951))
+                    new_image.paste(img, (x, y))
+            except Exception as e:
+                logger.error(f"Error processing image {fusion_path}: {e}")
+                await ctx.reply("An error occurred while creating the fused team image.")
+                return
+
+        with io.BytesIO() as image_binary:
+            new_image.save(image_binary, 'PNG')
+            image_binary.seek(0)
+            await ctx.reply(file=discord.File(fp=image_binary, filename='fused_team.png'))
 
 
     @commands.command(help="Get a random Pokemon.", aliases=["rmon", "RMon", "Rmon", "RMON"])
