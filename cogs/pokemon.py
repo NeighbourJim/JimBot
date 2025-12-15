@@ -407,11 +407,14 @@ class Pokemon(commands.Cog):
     async def randomfusedteam(self, ctx):
         await ctx.trigger_typing()
         fusions = []
+        fusion_names = []
         for _ in range(6):
             results = self.GetCustomFusionNew(-1)
             while results[2] is None:
                 results = self.GetCustomFusionNew(-1)
             fusions.append(results[0])
+            name = self.GenerateFusedName(results[2]-1, results[3]-1)
+            fusion_names.append(name)
 
         width = 2853
         height = 1902
@@ -434,7 +437,12 @@ class Pokemon(commands.Cog):
         with io.BytesIO() as image_binary:
             new_image.save(image_binary, 'PNG')
             image_binary.seek(0)
-            await ctx.reply(file=discord.File(fp=image_binary, filename='fused_team.png'))
+
+            embed = discord.Embed(title=f"{ctx.author.display_name}'s Team")
+            embed.set_image(url="attachment://fused_team.png")
+            embed.set_footer(text=", ".join(fusion_names))
+
+            await ctx.reply(embed=embed, file=discord.File(fp=image_binary, filename='fused_team.png'))
 
 
     @commands.command(help="Get a random Pokemon.", aliases=["rmon", "RMon", "Rmon", "RMON"])
