@@ -317,7 +317,7 @@ class sd(commands.Cog):
             sampler = "Euler a"
             cfg = 5.5
             steps = 30
-            enable_hr = 'false'
+            enable_hr = 'False'
             hr_scale = 1.35
             hr_second_pass_steps = 15
             hr_upscaler = 'Latent'
@@ -433,7 +433,7 @@ class sd(commands.Cog):
         if len(msg) > 1:
             width = 1024
             height = 1024
-            enable_hr = 'false'
+            enable_hr = 'False'
             hr_scale = '1.5'
             hr_second_pass_steps = 5
             hr_upscaler = 'Latent'
@@ -442,7 +442,7 @@ class sd(commands.Cog):
 
             xl_real_models_old = ["realvisxlV50_v50LightningBakedvae.safetensors [fabcadd933]"]
             xl_real_models = ["wildcardxXLFusion_fusionOG.safetensors [22ebc61141]"]
-            xl_anime_realistic = ["illustrious_v10B03.safetensors [3abc56d131]"]
+            xl_anime_realistic = ["illustrij_v18.safetensors [3c39254028]"]
             sprite = False
             vae = "sdxl_vae.safetensors"
             if "anime" in msg.lower() or "lora:pixel" in msg.lower():
@@ -455,8 +455,11 @@ class sd(commands.Cog):
                     self.current_model = "catCitronAnimeTreasure_ilV9.safetensors [3761477265]"
                     msg = msg.replace('anime','')
                 neg = "lowres, worst quality, zoomed out, far away, bad quality, bad anatomy, bad hands, sketch, signature, watermark, logo, border,"
-                pos = "masterpiece, best quality, ("
-                posSuf = ")"
+                if self.current_model in xl_anime_realistic:
+                    pos = "realistic, 3d, "
+                else:
+                    pos = ""
+                posSuf = ", <lora:illustrious_masterpieces_v3:1> masterpiece, best quality, very aesthetic"
 
                 #if "style" not in msg.lower() and "ilartist" not in msg.lower():
                 #    pos = pos + ", (anime screencap style), flat colours, outlines, shading, ("
@@ -464,13 +467,13 @@ class sd(commands.Cog):
                 #    pos = pos + ",("
 
                 sampler = "Euler a"
-                cfg = 6
+                cfg = 5.5
                 steps = 30
-                enable_hr = 'true'
-                hr_scale = 1.35
-                hr_second_pass_steps = 15
-                hr_upscaler = 'Latent'
-                denoising_strength = 0.6
+                enable_hr = 'False'
+                hr_scale = 1.2
+                hr_second_pass_steps = 10
+                hr_upscaler = '4x_foolhardy_Remacri'
+                denoising_strength = 0.35
                 if not ctx.message.channel.is_nsfw():
                     pos = pos + ", (general)"
                     neg = neg + "(explicit), ((lazynsfw)), (((nsfw, nude, pussy, penis, naked, nipples, breasts, rating_explicit, loli, shota, child)))"
@@ -482,7 +485,7 @@ class sd(commands.Cog):
                 sampler = "Euler a"
                 cfg = 5.5
                 steps = 30
-                enable_hr = 'true'
+                enable_hr = 'True'
                 hr_scale = 1.35
                 hr_second_pass_steps = 15
                 hr_upscaler = 'Latent'
@@ -518,7 +521,7 @@ class sd(commands.Cog):
                     cfg = 2
                     steps = random.randint(5,5)
                     sampler = "DPM++ SDE Karras"
-                    enable_hr = 'true'
+                    enable_hr = 'True'
                     hr_scale = 1.5
                     hr_second_pass_steps = 5
                     hr_upscaler = 'Latent'
@@ -535,7 +538,7 @@ class sd(commands.Cog):
                     sampler = "Euler a"
                     cfg = 1.5
                     steps = random.randint(10,15)
-                    enable_hr = 'true'
+                    enable_hr = 'True'
                     hr_scale = 1.5
                     hr_second_pass_steps = 7
                     hr_upscaler = 'Latent'
@@ -555,7 +558,7 @@ class sd(commands.Cog):
                     steps = random.randint(30,40)
                     sampler = "DPM++ 2M Karras"
                     vae = "None"
-                    enable_hr = 'true'
+                    enable_hr = 'True'
                     hr_scale = 1.5
                     hr_second_pass_steps = 15
                     hr_upscaler = 'Latent'
@@ -614,7 +617,7 @@ class sd(commands.Cog):
                     'sd_model_checkpoint' : self.current_model,
                     'sd_vae' : vae
                 },
-                "alwayson_scripts": {"Kohya HRFix Integrated":{"args" :[{"0" : True,"1" : 3,"2" : 2,"3" : 0,"4" : 0.35,"5" : True,"6" : "bicubic","7" : "bicubic"}]},"ADetailer": {"args": [True, False, {"ad_cfg_scale": 7, "ad_checkpoint": "Use same checkpoint", "ad_clip_skip": 1, "ad_confidence": 0.3, "ad_controlnet_guidance_end": 1, "ad_controlnet_guidance_start": 0, "ad_controlnet_model": "None", "ad_controlnet_module": "None", "ad_controlnet_weight": 1, "ad_denoising_strength": 0.3, "ad_dilate_erode": 4, "ad_inpaint_height": 512, "ad_inpaint_only_masked": True, "ad_inpaint_only_masked_padding": 32, "ad_inpaint_width": 512, "ad_mask_blur": 6, "ad_mask_k_largest": 5, "ad_mask_max_ratio": 1, "ad_mask_merge_invert": "None", "ad_mask_min_ratio": 0, "ad_model": "face_yolov8s.pt", "ad_negative_prompt": "", "ad_noise_multiplier": 1, "ad_prompt": "", "ad_restore_face": False, "ad_sampler": "Euler a", "ad_steps": 28, "ad_use_cfg_scale": False, "ad_use_checkpoint": False, "ad_use_clip_skip": False, "ad_use_inpaint_width_height": False, "ad_use_noise_multiplier": False, "ad_use_sampler": False, "ad_use_steps": False, "ad_use_vae": False, "ad_vae": "Use same VAE", "ad_x_offset": 0, "ad_y_offset": 0, "is_api": []}, {"ad_cfg_scale": 7, "ad_checkpoint": "Use same checkpoint", "ad_clip_skip": 1, "ad_confidence": 0.3, "ad_controlnet_guidance_end": 1, "ad_controlnet_guidance_start": 0, "ad_controlnet_model": "None", "ad_controlnet_module": "None", "ad_controlnet_weight": 1, "ad_denoising_strength": 0.4, "ad_dilate_erode": 4, "ad_inpaint_height": 512, "ad_inpaint_only_masked": True, "ad_inpaint_only_masked_padding": 32, "ad_inpaint_width": 512, "ad_mask_blur": 4, "ad_mask_k_largest": 0, "ad_mask_max_ratio": 1, "ad_mask_merge_invert": "None", "ad_mask_min_ratio": 0, "ad_model": "None", "ad_negative_prompt": "", "ad_noise_multiplier": 1, "ad_prompt": "", "ad_restore_face": False, "ad_sampler": "DPM++ 2M Karras", "ad_steps": 28, "ad_use_cfg_scale": False, "ad_use_checkpoint": False, "ad_use_clip_skip": False, "ad_use_inpaint_width_height": False, "ad_use_noise_multiplier": False, "ad_use_sampler": False, "ad_use_steps": False, "ad_use_vae": False, "ad_vae": "Use same VAE", "ad_x_offset": 0, "ad_y_offset": 0, "is_api": []},{"ad_cfg_scale": 7, "ad_checkpoint": "Use same checkpoint", "ad_clip_skip": 1, "ad_confidence": 0.3, "ad_controlnet_guidance_end": 1, "ad_controlnet_guidance_start": 0, "ad_controlnet_model": "None", "ad_controlnet_module": "None", "ad_controlnet_weight": 1, "ad_denoising_strength": 0.4, "ad_dilate_erode": 4, "ad_inpaint_height": 512, "ad_inpaint_only_masked": True, "ad_inpaint_only_masked_padding": 32, "ad_inpaint_width": 512, "ad_mask_blur": 4, "ad_mask_k_largest": 0, "ad_mask_max_ratio": 1, "ad_mask_merge_invert": "None", "ad_mask_min_ratio": 0, "ad_model": "None", "ad_negative_prompt": "", "ad_noise_multiplier": 1, "ad_prompt": "", "ad_restore_face": False, "ad_sampler": "DPM++ 2M Karras", "ad_steps": 28, "ad_use_cfg_scale": False, "ad_use_checkpoint": False, "ad_use_clip_skip": False, "ad_use_inpaint_width_height": False, "ad_use_noise_multiplier": False, "ad_use_sampler": False, "ad_use_steps": False, "ad_use_vae": False, "ad_vae": "Use same VAE", "ad_x_offset": 0, "ad_y_offset": 0, "is_api": []}]}}
+                "alwayson_scripts": {"ADetailer": {"args": [True, False, {"ad_cfg_scale": 7, "ad_checkpoint": "Use same checkpoint", "ad_clip_skip": 1, "ad_confidence": 0.2, "ad_controlnet_guidance_end": 1, "ad_controlnet_guidance_start": 0, "ad_controlnet_model": "None", "ad_controlnet_module": "None", "ad_controlnet_weight": 1, "ad_denoising_strength": 0.25, "ad_dilate_erode": 4, "ad_inpaint_height": 1024, "ad_inpaint_only_masked": True, "ad_inpaint_only_masked_padding": 32, "ad_inpaint_width": 1024, "ad_mask_blur": 4, "ad_mask_filter_method": "Area", "ad_mask_k": 5, "ad_mask_max_ratio": 1, "ad_mask_merge_invert": "None", "ad_mask_min_ratio": 0, "ad_model": "face_yolov8s.pt", "ad_model_classes": "", "ad_negative_prompt": "", "ad_noise_multiplier": 1, "ad_prompt": "", "ad_restore_face": False, "ad_sampler": "DPM++ 2M Karras", "ad_scheduler": "Use same scheduler", "ad_steps": 28, "ad_tab_enable": True, "ad_use_cfg_scale": False, "ad_use_checkpoint": False, "ad_use_clip_skip": False, "ad_use_inpaint_width_height": True, "ad_use_noise_multiplier": False, "ad_use_sampler": False, "ad_use_steps": False, "ad_use_vae": False, "ad_vae": "Use same VAE", "ad_x_offset": 0, "ad_y_offset": 0, "is_api": []}, {"ad_cfg_scale": 7, "ad_checkpoint": "Use same checkpoint", "ad_clip_skip": 1, "ad_confidence": 0.48, "ad_controlnet_guidance_end": 1, "ad_controlnet_guidance_start": 0, "ad_controlnet_model": "None", "ad_controlnet_module": "None", "ad_controlnet_weight": 1, "ad_denoising_strength": 0.3, "ad_dilate_erode": 4, "ad_inpaint_height": 1024, "ad_inpaint_only_masked": True, "ad_inpaint_only_masked_padding": 32, "ad_inpaint_width": 1024, "ad_mask_blur": 4, "ad_mask_filter_method": "Area", "ad_mask_k": 0, "ad_mask_max_ratio": 1, "ad_mask_merge_invert": "None", "ad_mask_min_ratio": 0.036, "ad_model": "pussyV2.pt", "ad_model_classes": "", "ad_negative_prompt": "", "ad_noise_multiplier": 1, "ad_prompt": "pussy, pussy juice, ", "ad_restore_face": False, "ad_sampler": "DPM++ 2M Karras", "ad_scheduler": "Use same scheduler", "ad_steps": 28, "ad_tab_enable": False, "ad_use_cfg_scale": False, "ad_use_checkpoint": False, "ad_use_clip_skip": False, "ad_use_inpaint_width_height": True, "ad_use_noise_multiplier": False, "ad_use_sampler": False, "ad_use_steps": False, "ad_use_vae": False, "ad_vae": "Use same VAE", "ad_x_offset": 0, "ad_y_offset": 0, "is_api": []}, {"ad_cfg_scale": 7, "ad_checkpoint": "Use same checkpoint", "ad_clip_skip": 1, "ad_confidence": 0.42, "ad_controlnet_guidance_end": 1, "ad_controlnet_guidance_start": 0, "ad_controlnet_model": "None", "ad_controlnet_module": "None", "ad_controlnet_weight": 1, "ad_denoising_strength": 0.4, "ad_dilate_erode": 4, "ad_inpaint_height": 1024, "ad_inpaint_only_masked": True, "ad_inpaint_only_masked_padding": 32, "ad_inpaint_width": 1024, "ad_mask_blur": 4, "ad_mask_filter_method": "Area", "ad_mask_k": 4, "ad_mask_max_ratio": 1, "ad_mask_merge_invert": "None", "ad_mask_min_ratio": 0.025, "ad_model": "penisV2.pt", "ad_model_classes": "", "ad_negative_prompt": "", "ad_noise_multiplier": 1, "ad_prompt": "penis, ", "ad_restore_face": False, "ad_sampler": "DPM++ 2M Karras", "ad_scheduler": "Use same scheduler", "ad_steps": 28, "ad_tab_enable": False, "ad_use_cfg_scale": False, "ad_use_checkpoint": False, "ad_use_clip_skip": False, "ad_use_inpaint_width_height": True, "ad_use_noise_multiplier": False, "ad_use_sampler": False, "ad_use_steps": False, "ad_use_vae": False, "ad_vae": "Use same VAE", "ad_x_offset": 0, "ad_y_offset": 0, "is_api": []}]}, "API payload": {"args": []}, "Comments": {"args": []}, "ControlNet": {"args": [{"batch_image_dir": "", "batch_input_gallery": [], "batch_mask_dir": "", "batch_mask_gallery": [], "control_mode": "Balanced", "enabled": False, "generated_image": None, "guidance_end": 1, "guidance_start": 0, "hr_option": "Both", "image": None, "input_mode": "simple", "mask_image": None, "model": "None", "module": "None", "pixel_perfect": False, "processor_res": -1, "resize_mode": "Crop and Resize", "save_detected_map": True, "threshold_a": -1, "threshold_b": -1, "use_preview_as_input": False, "weight": 1}, {"batch_image_dir": "", "batch_input_gallery": [], "batch_mask_dir": "", "batch_mask_gallery": [], "control_mode": "Balanced", "enabled": False, "generated_image": None, "guidance_end": 1, "guidance_start": 0, "hr_option": "Both", "image": None, "input_mode": "simple", "mask_image": None, "model": "None", "module": "None", "pixel_perfect": False, "processor_res": -1, "resize_mode": "Crop and Resize", "save_detected_map": True, "threshold_a": -1, "threshold_b": -1, "use_preview_as_input": False, "weight": 1}, {"batch_image_dir": "", "batch_input_gallery": [], "batch_mask_dir": "", "batch_mask_gallery": [], "control_mode": "Balanced", "enabled": False, "generated_image": None, "guidance_end": 1, "guidance_start": 0, "hr_option": "Both", "image": None, "input_mode": "simple", "mask_image": None, "model": "None", "module": "None", "pixel_perfect": False, "processor_res": -1, "resize_mode": "Crop and Resize", "save_detected_map": True, "threshold_a": -1, "threshold_b": -1, "use_preview_as_input": False, "weight": 1}]}, "Dynamic Prompts v2.17.1": {"args": [True, False, 1, False, False, False, 1.1, 1.5, 100, 0.7, False, False, True, False, False, 0, "Gustavosta/MagicPrompt-Stable-Diffusion", ""]}, "DynamicThresholding (CFG-Fix) Integrated": {"args": [False, 7, 1, "Constant", 0, "Constant", 0, 1, "enable", "MEAN", "AD", 1]}, "Extra options": {"args": []}, "FreeU Integrated": {"args": [False, 1.01, 1.02, 0.99, 0.95]}, "HyperTile Integrated": {"args": [False, 256, 2, 0, False]}, "Kohya HRFix Integrated": {"args": [True, 3, 2, 0, 0.35, True, "bicubic", "bicubic"]}, "LatentModifier Integrated": {"args": [False, 0, "anisotropic", 0, "reinhard", 100, 0, "subtract", 0, 0, "gaussian", "add", 0, 100, 127, 0, "hard_clamp", 5, 0, "None", "None"]}, "Model keyword": {"args": [True, "keyword prompt", "keyword1, keyword2", "None", "textual inversion first", "None", "0.7", "None"]}, "MultiDiffusion Integrated": {"args": [False, "MultiDiffusion", 768, 768, 64, 4]}, "NegPiP": {"args": [True]}, "Never OOM Integrated": {"args": [False, False]}, "ReActor": {"args": [None, False, "0", "0", "inswapper_128.onnx", "CodeFormer", 1, True, "None", 1, 1, False, True, 1, 0, 0, False, 0.5, True, False, "CUDA", False, 0, "None", "", None, False, False, 0.5, 0, "tab_single"]}, "Refiner": {"args": [False, "", 0.8]}, "Seed": {"args": [-1, False, -1, 0, 0, 0]}, "SelfAttentionGuidance Integrated": {"args": [True, 0.5, 2]}, "StyleAlign Integrated": {"args": [False]}}
             }
 
             loop = asyncio.get_event_loop()

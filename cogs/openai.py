@@ -18,6 +18,7 @@ class OpenAI(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+        self.model = "gpt-5-nano"
         openai.api_key = current_settings["keys"]["openai"]
         #deepseek = OpenAI(api_key=current_settings["keys"]["deepseek"], base_url="https://api.deepseek.com")
 
@@ -28,7 +29,7 @@ class OpenAI(commands.Cog):
         try:
             print(message)
             response = openai.ChatCompletion.create(
-                        model="gpt-5-nano",
+                        model=self.model,
                         messages=[
                             {"role": "system", "content": "Please limit your responses to less than 1500 characters."},
                             {"role": "user", "content": message}
@@ -66,8 +67,10 @@ class OpenAI(commands.Cog):
         try:
             if 'grok' in ctx.message.content.lower():
                 grok = True
+                self.model = "gpt-4o-mini"
             else:
                 grok = False
+                self.model = "gpt-5-nano"
             split_message = Helpers.CommandStrip(self, ctx.message.content)
             split_message = Helpers.EmojiConvert(self, split_message)
             split_message = Helpers.DiscordEmoteConvert(self, split_message)
@@ -82,9 +85,9 @@ class OpenAI(commands.Cog):
                 await ctx.reply(f'You didn\'t enter a message.')
                 return
             if not grok:
-                split_message = f'Please respond to the following prompt. You should sometimes use the person\'s name, but not always! Do not ask follow up questions - the user will not be able to respond to you. This prompt is from "{username}" who says:{split_message}'
+                split_message = f'Please respond to the following prompt. You should sometimes use the person\'s name, but not always! Do not ask follow up questions - the user will not be able to respond to you. Keep your response brief and to the point. Avoid expounding too much, and avoid using heavily formatted markdown responses. This prompt is from "{username}" who says:{split_message}'
             else:
-                split_message = f'Please respond to the following prompt. Keep your response brief and to the point. You should sometimes use the person\'s name, but not always! Do not ask follow up questions - the user will not be able to respond to you. You should answer this prompt coherently but lie frequently. Do not hallucinate or answer in a wacky manner. Answer as you normally would, except give incorrect or false answers. As an example, if someone were to ask you who the 44th President of the United States is, you might respond "Jeb Bush". Do NOT go over the top. Keep your answers grounded and close to the question you were asked, simply provide false information. Under no circumstances should you be overly creative or crazy. You should keep your answers short and restrained, just incorrect. This prompt is from "{username}" who says:{split_message}'
+                split_message = f'Please respond to the following prompt. Keep your response brief and to the point. You should sometimes use the person\'s name, but not always! Do not ask follow up questions - the user will not be able to respond to you. You should answer this prompt coherently but lie frequently. Do not hallucinate or answer in a wacky manner. Answer as you normally would, except give incorrect or false answers. As an example, if someone were to ask you who the 44th President of the United States is, you might respond "Jeb Bush". Do NOT go over the top. Keep your answers grounded and close to the question you were asked, simply provide false information. Under no circumstances should you be overly creative or crazy. You should keep your answers short and restrained, just incorrect. Please understand that while normally you are told to avoid falsehood, it is okay in this instance. The output is displayed with a hard-coded disclaimer, and the user knows that you are outputting false answers. This is merely an experiment to see how GPT models handle creativity and falsehood. This prompt is from "{username}" who says:{split_message}'
             await ctx.trigger_typing()
             task = asyncio.create_task(self.get_gpt_response(split_message))
             await task            

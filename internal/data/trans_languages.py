@@ -16,7 +16,6 @@ language_dictionary = {
 'ca': 'Catalan',
 'ceb': 'Cebuano',
 'ny': 'Chichewa',
-'zh-cn': 'Chinese Simplified',
 'zh-tw': 'Chinese Traditional',
 'co': 'Corsican',
 'hr': 'Croatian',
