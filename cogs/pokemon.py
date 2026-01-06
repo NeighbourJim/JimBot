@@ -261,6 +261,29 @@ class Pokemon(commands.Cog):
 
         return name.title().strip()
 
+    def _process_image(self, image_source):
+        try:
+            img = None
+            if isinstance(image_source, str):
+                img = Image.open(image_source)
+            elif isinstance(image_source, Image.Image):
+                img = image_source
+            else:
+                return None
+
+            img = img.convert("RGBA")
+            bbox = img.getbbox()
+            if bbox:
+                img = img.crop(bbox)
+
+            img_byte_arr = io.BytesIO()
+            img.save(img_byte_arr, format='PNG')
+            img_byte_arr.seek(0)
+            return img_byte_arr
+        except Exception as e:
+            logger.error(f"Error processing image: {e}")
+            return None
+
     def GenerateStats(self, type=0):
 
         def stat_gen(type, min_base_bst, max_base_bst, soft_stat_min, soft_stat_max):
@@ -355,15 +378,15 @@ class Pokemon(commands.Cog):
                 await ctx.reply("An error occurred while creating the fused team image.")
                 return
         
-        with io.BytesIO() as image_binary:
-            new_image.save(image_binary, 'PNG')
-            image_binary.seek(0)
-            
+        image_binary = self._process_image(new_image)
+        if image_binary:
             embed = discord.Embed(title=f"{ctx.author.display_name}'s Team")
             embed.set_image(url="attachment://fused_team.png")
             embed.set_footer(text=", ".join(fusion_names))
             
             await ctx.reply(embed=embed, file=discord.File(fp=image_binary, filename='fused_team.png'))
+        else:
+            await ctx.reply("An error occurred while creating the fused team image.")
 
 
 
@@ -419,7 +442,12 @@ class Pokemon(commands.Cog):
             name = name.title()
         fusion_embed = discord.Embed()
         if not triple:
-            image_file = discord.File(fusion, filename=f'fusion.png')
+            image_binary = self._process_image(fusion)
+            if image_binary:
+                image_file = discord.File(fp=image_binary, filename='fusion.png')
+            else:
+                image_file = discord.File(fusion, filename='fusion.png')
+
             if len(ctx.guild.members) >= 200:
                 fusion_embed.set_thumbnail(url=f"attachment://fusion.png")
             else:
@@ -438,7 +466,11 @@ class Pokemon(commands.Cog):
             fusion_embed.description = f"Waiting for the smoke to clear..."
             sent = await ctx.reply(embed=fusion_embed)
             await asyncio.sleep(6)
-            image_file = discord.File(fusion, filename=f'fusion.png')
+            image_binary = self._process_image(fusion)
+            if image_binary:
+                image_file = discord.File(fp=image_binary, filename='fusion.png')
+            else:
+                image_file = discord.File(fusion, filename='fusion.png')
             fusion_embed.title = f':sparkles: Triple Fusion: {name.title()} :sparkles:'
             fusion_embed.set_image(url="attachment://fusion.png")
             await sent.delete()
@@ -665,7 +697,11 @@ class Pokemon(commands.Cog):
             name2 = pokemon_names_fusion[results[2]-1]
             name = name.title()
             fusion_embed = discord.Embed()
-            image_file = discord.File(fusion, filename=f'fusion.png')
+            image_binary = self._process_image(fusion)
+            if image_binary:
+                image_file = discord.File(fp=image_binary, filename='fusion.png')
+            else:
+                image_file = discord.File(fusion, filename='fusion.png')
             if len(ctx.guild.members) >= 200:
                 fusion_embed.set_thumbnail(url=f"attachment://fusion.png")
             else:
