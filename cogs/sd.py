@@ -38,9 +38,13 @@ class sd(commands.Cog):
 
     def generate_image(self, payload):
         data = json.dumps(payload).encode('utf-8')
-        request = urllib.request.Request(f'{self.server_url}/sdapi/v1/txt2img', headers={'Content-Type':'application/json'},data=data)
-        response = urllib.request.urlopen(request)
-        return json.loads(response.read().decode('utf-8'))
+        try:
+            request = urllib.request.Request(f'{self.server_url}/sdapi/v1/txt2img', headers={'Content-Type':'application/json'},data=data)
+            response = urllib.request.urlopen(request)
+            return json.loads(response.read().decode('utf-8'))
+        except Exception as ex:
+            logger.LogPrint(f'Command failed. - {ex}', logging.ERROR)
+            return None
 
     def generate_bing_image(self, prompt):
         try:
@@ -277,6 +281,9 @@ class sd(commands.Cog):
             }
 
             response = self.generate_image(payload)
+            if response == None:
+                await ctx.reply("This command is not currently available.")
+                return
             image = Image.open(io.BytesIO(base64.b64decode(response['images'][0])))
             image.save(f'./internal/data/images/fakemon{ctx.author.id}.png')
             img = Image.open(f'./internal/data/images/fakemon{ctx.author.id}.png')
@@ -357,6 +364,9 @@ class sd(commands.Cog):
             }
             loop = asyncio.get_event_loop()
             response = await loop.run_in_executor(None, lambda: self.generate_image(payload))
+            if response == None:
+                await ctx.reply("This command is not currently available.")
+                return
             #response = self.generate_image(payload)
             image = Image.open(io.BytesIO(base64.b64decode(response['images'][0])))
             image.save(f'./internal/data/images/fakemon{ctx.author.id}.png')
@@ -622,6 +632,9 @@ class sd(commands.Cog):
 
             loop = asyncio.get_event_loop()
             response = await loop.run_in_executor(None, lambda: self.generate_image(payload))
+            if response == None:
+                await ctx.reply("This command is not currently available.")
+                return
             image = Image.open(io.BytesIO(base64.b64decode(response['images'][0])))
             image.save(f'./internal/data/images/sd{ctx.author.id}.png')
             if sprite == True:

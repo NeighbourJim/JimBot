@@ -7,6 +7,8 @@ import requests
 import glob
 import re
 import os
+import io
+from PIL import Image
 from discord.ext import commands
 from discord.ext.commands import BucketType
 
@@ -37,7 +39,7 @@ class Pokemon(commands.Cog):
         head_fusions = {}
         body_fusions = {}
         fusion_files = {}
-        root_dir = './internal/data/images/fusions/CustomBattlers/indexed/'
+        root_dir = './internal/data/images/fusions/CustomBattlers/indexed2/CustomBattlers'
         if not os.path.isdir(root_dir):
             logger.error("Custom fusions directory not found.")
             return {}, {}, {}
@@ -103,6 +105,8 @@ class Pokemon(commands.Cog):
         if n2_prefix_found or n1_suffix_found:
             name = name2pre + name1suf
         else:
+            if name1pre[-1].lower() == name2suf[0].lower():
+                name2suf = name2suf[1:]
             name = name1pre + name2suf
 
         return name.title().strip()
@@ -149,7 +153,7 @@ class Pokemon(commands.Cog):
             id1 = random.choice(self.body_fusions[id2])
 
         filename = random.choice(self.fusion_files[(id1, id2)])
-        path = f"./internal/data/images/fusions/CustomBattlers/indexed/{id1}/{filename}"
+        path = f"./internal/data/images/fusions/CustomBattlers/indexed2/CustomBattlers/{id1}/{filename}"
         return [path, count, id1, id2]
             
     def GetFusion(self, id1, id2):
@@ -158,8 +162,8 @@ class Pokemon(commands.Cog):
             id1 = random.randint(1,max_id)
         if id2 == -1:
             id2 = random.randint(1,max_id)
-        path = f'./internal/data/images/fusions/CustomBattlers/indexed/{id1}/{id1}.{id2}'
-        path_prefix = f"./internal/data/images/fusions/CustomBattlers/indexed/{id1}\\"
+        path = f'./internal/data/images/fusions/CustomBattlers/indexed2/CustomBattlers/{id1}/{id1}.{id2}'
+        path_prefix = f"./internal/data/images/fusions/CustomBattlers/indexed2/CustomBattlers/{id1}\\"
         pattern = re.compile(rf'{re.escape(path_prefix)}{id1}\.{id2}[a-zA-Z]?\.png')
         fusions =  glob.glob(f'{path}*.png')
         matching = []
@@ -314,6 +318,55 @@ class Pokemon(commands.Cog):
         random.shuffle(stats)
         return stats, stage, stat_total   
 
+    @commands.command(help="Get a random fused Pokemon team (custom only).", aliases=["rft"])
+    @commands.cooldown(rate=1, per=10, type=BucketType.user)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def randomfusedteam(self, ctx):
+        await ctx.trigger_typing()
+        fusions = []
+        fusion_names = []
+        for _ in range(6):
+            results = self.GetCustomFusionNew(-1)
+            while results[2] is None:
+                results = self.GetCustomFusionNew(-1)
+            fusions.append(results[0])
+            if results[2] == results[3]:
+                name = f"Mega {pokemon_names_fusion[results[2]-1].title()}"
+            else:
+                name = self.GenerateFusedName(results[2]-1, results[3]-1)
+            fusion_names.append(name)
+
+        width = 2853
+        height = 1902
+        new_image = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+
+        for i, fusion_path in enumerate(fusions):
+            row = i // 3
+            col = i % 3
+            x = col * 951
+            y = row * 951
+            try:
+                with Image.open(fusion_path) as img:
+                    img = img.resize((951, 951))
+                    new_image.paste(img, (x, y))
+            except Exception as e:
+                logger.error(f"Error processing image {fusion_path}: {e}")
+                await ctx.reply("An error occurred while creating the fused team image.")
+                return
+        
+        with io.BytesIO() as image_binary:
+            new_image.save(image_binary, 'PNG')
+            image_binary.seek(0)
+            
+            embed = discord.Embed(title=f"{ctx.author.display_name}'s Team")
+            embed.set_image(url="attachment://fused_team.png")
+            embed.set_footer(text=", ".join(fusion_names))
+            
+            await ctx.reply(embed=embed, file=discord.File(fp=image_binary, filename='fused_team.png'))
+
+
+
     @commands.command(help="Get a random fused Pokemon (custom only).", aliases=["rfc"])
     @commands.cooldown(rate=1, per=2, type=BucketType.user)
     @commands.has_role("Bot Use")
@@ -372,7 +425,7 @@ class Pokemon(commands.Cog):
             else:
                 fusion_embed.set_image(url=f"attachment://fusion.png")
             fusion_embed.title = f'{name.title()}'
-            fusion_embed.set_footer(text=f"{name1.title()} + {name2.title()} | Took {count} roll(s).{unavailable_msg}")
+            fusion_embed.set_footer(text=f"{name1.title()} + {name2.title()}{unavailable_msg}")
             sent = await ctx.reply(file=image_file, embed=fusion_embed)
             if len(ctx.guild.members) <= 200:
                 await asyncio.sleep(12)
@@ -527,7 +580,7 @@ class Pokemon(commands.Cog):
         p1 = fusion_result[1][0]
         p2 = fusion_result[1][1]
         custom = "Custom Made"
-        if i != None:
+        if i != None and i > 1:
             roll_count = f" | Took {i} rolls."
         else:
             roll_count = ""
@@ -601,29 +654,34 @@ class Pokemon(commands.Cog):
         results = self.GetFusion(id1,id2)
         fusion = results[0]
         custom = "Auto-Generated"
-        if 'CustomBattlers' in fusion:
-            custom = "Custom Made"
-        if results[1]-1 == results[2]-1:
-            name = f"Mega {pokemon_names_fusion[results[1]-1]}"
-        else:
-            name = self.GenerateFusedName(results[1]-1,results[2]-1)        
-        name1 = pokemon_names_fusion[results[1]-1]
-        name2 = pokemon_names_fusion[results[2]-1]
-        name = name.title()
-        fusion_embed = discord.Embed()
-        image_file = discord.File(fusion, filename=f'fusion.png')
-        if len(ctx.guild.members) >= 200:
-            fusion_embed.set_thumbnail(url=f"attachment://fusion.png")
-        else:
-            fusion_embed.set_image(url=f"attachment://fusion.png")
-            fusion_embed.title = f'{name.title()}'
-            fusion_embed.set_footer(text=f"{name1.title()} + {name2.title()} | {custom}")
-            sent = await ctx.reply(file=image_file, embed=fusion_embed)
-            if len(ctx.guild.members) > 80:
-                await asyncio.sleep(12)
+        try:
+            if 'CustomBattlers' in fusion:
+                custom = "Custom Made"
+            if results[1]-1 == results[2]-1:
+                name = f"Mega {pokemon_names_fusion[results[1]-1]}"
+            else:
+                name = self.GenerateFusedName(results[1]-1,results[2]-1)        
+            name1 = pokemon_names_fusion[results[1]-1]
+            name2 = pokemon_names_fusion[results[2]-1]
+            name = name.title()
+            fusion_embed = discord.Embed()
+            image_file = discord.File(fusion, filename=f'fusion.png')
+            if len(ctx.guild.members) >= 200:
                 fusion_embed.set_thumbnail(url=f"attachment://fusion.png")
-                fusion_embed.set_image(url='')
-                await sent.edit(embed=fusion_embed)
+            else:
+                fusion_embed.set_image(url=f"attachment://fusion.png")
+                fusion_embed.title = f'{name.title()}'
+                fusion_embed.set_footer(text=f"{name1.title()} + {name2.title()} | {custom}")
+                sent = await ctx.reply(file=image_file, embed=fusion_embed)
+                if len(ctx.guild.members) > 80:
+                    await asyncio.sleep(12)
+                    fusion_embed.set_thumbnail(url=f"attachment://fusion.png")
+                    fusion_embed.set_image(url='')
+                    await sent.edit(embed=fusion_embed)
+        except Exception as e:
+            await ctx.reply(f"Error getting fusion. Likely no combination for the requested Pokemon, sorry!")
+            ctx.command.reset_cooldown(ctx)
+            return
 
         
 
@@ -642,7 +700,7 @@ class Pokemon(commands.Cog):
             custom = "Custom Made"
         else:
             custom = "Auto Generated"
-        if i != None:
+        if i != None and i > 1:
             roll_count = f" | Took {i} rolls."
         else:
             roll_count = ""
