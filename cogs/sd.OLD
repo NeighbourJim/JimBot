@@ -35,6 +35,7 @@ class sd(commands.Cog):
         self.animemodels = ["mistoonAnime_v30.safetensors [da52bf6da0]", "meinamix_meinaV10.safetensors [77b7dc4ef0]", "oneFORALLAnime_v35DPOVAE.safetensors [0677115c4b]"]
         self.bing = BingArt(auth_cookie=current_settings["keys"]["bing"])
         self.current_model = ""
+        self.z_model = ""
 
     def generate_image(self, payload):
         data = json.dumps(payload).encode('utf-8')
@@ -96,27 +97,7 @@ class sd(commands.Cog):
 
     async def cog_check(self, ctx):
         return BLM.CheckIfCommandAllowed(ctx)
-    
-    #@commands.command(aliases=["b"], help="Create an image")    
-    #@commands.cooldown(rate=1, per=120, type=BucketType.guild)
-    #@commands.has_role("Bot Use")
-    #@commands.guild_only()
-    #async def bingold(self, ctx):
-    #    await ctx.trigger_typing()
-    #    msg = Helpers.CommandStrip(self,ctx.message.content)
-    #    if len(msg) > 1:
-    #        img = self.generate_bing_image(msg)
-    #        if img == -1:
-    #            await ctx.reply("Image generation failed due to authorisation error. Command will likely no longer work.")
-    #        elif img == -2:
-    #            await ctx.reply("Image generation was rejected due to a restricted prompt. Bing will not generate images of nudity, violence, or public figures.")
-    #        elif img == None:
-    #            await ctx.reply("Image generation failed.")
-    #        else:
-    #            await ctx.reply(img)
-    #    else:
-    #        await ctx.command.reset_cooldown(ctx)
-    #        await ctx.reply("You provided no prompt.")     
+     
 
     @commands.command(aliases=["b"], help="Create an image")    
     @commands.cooldown(rate=1, per=600, type=BucketType.guild)
@@ -161,62 +142,22 @@ class sd(commands.Cog):
             ctx.command.reset_cooldown(ctx)
             await ctx.reply("You provided no prompt.")  
 
-    #@commands.command(aliases=[], help="Create an image")    
-    #@commands.cooldown(rate=1, per=60, type=BucketType.channel)
-    #@commands.has_role("Bot Use")
-    #@commands.guild_only()
-    #async def flux(self, ctx):
-    #    await ctx.trigger_typing()
-    #    try:
-    #        requests.get(self.server_url, timeout=1.5)
-    #    except requests.ConnectionError:
-    #        await ctx.reply("This command is not currently available.")
-    #        return
-    #    msg = Helpers.CommandStrip(self,ctx.message.content)
-    #    msg = Helpers.DiscordEmoteConvert(self, msg)
-    #    if len(msg) > 1:
-    #        width, height = 1024, 1024
-    #        cfg = 1
-    #        steps = 4
-    #        sampler = "Euler"
-    #        model = "flux1DevV1V2Flux1_flux1SchnellBNBNF4.safetensors [e6cba6afca]"
-    #        pos = ""
-    #        neg = ""
-    #        width = random.choice([1024,1024,864,1280])
-    #        if width == 864:
-    #            height = random.choice([1024,1280])
-    #        elif width == 1280:
-    #            height = random.choice([1024,864])
-    #        payload = {
-    #            "prompt": f"{pos}, {msg}",
-    #            "negative_prompt": f"{neg}",
-    #            "seed": -1,
-    #            "steps": steps,
-    #            "width": width,
-    #            "height": height,
-    #            "cfg_scale": cfg,
-    #            "sampler_name": sampler,
-    #            "n_iter": 1,
-    #            "batch_size": 1,
-    #            "enable_hr": False,
-    #            "override_settings": {
-    #                'sd_model_checkpoint' : model,
-    #                'sd_vae' : 'None'
-    #            }
-    #        }
-    #        response = self.generate_image(payload)
-    #        image = Image.open(io.BytesIO(base64.b64decode(response['images'][0])))
-    #        image.save(f'./internal/data/images/sd{ctx.author.id}.png')
-    #        if not ctx.message.channel.is_nsfw():
-    #            image_file = discord.File(f'./internal/data/images/sd{ctx.author.id}.png', filename='SPOILER_sd.png')
-    #            sent = await ctx.reply(file=image_file)
-    #        else:
-    #            image_file = discord.File(f'./internal/data/images/sd{ctx.author.id}.png', filename='sd.png')
-    #            sent = await ctx.reply(file=image_file)
-    #    else:
-    #        response = f'You didn\'t enter a message.'
-    #        await ctx.reply(response)
-    #        return
+    @commands.command(aliases=["sdz"], help="")    
+    @commands.cooldown(rate=1, per=10, type=BucketType.channel)
+    @commands.has_role("Bot Use")
+    @commands.guild_only()
+    async def stablediffusion_z(self, ctx):
+        await ctx.trigger_typing()
+        try:
+            requests.get(self.server_url, timeout=1.5)
+        except:
+            await ctx.reply("This command is not currently available.")
+            return
+        msg = Helpers.CommandStrip(self,ctx.message.content)
+        msg = Helpers.DiscordEmoteConvert(self, msg)
+        if len(msg) > 1:
+            self.z_model = "z_image_turbo-Q5_K_M.gguf"
+            
 
     @commands.command(aliases=["fms"], help="Create a fake pokemon")    
     @commands.cooldown(rate=1, per=10, type=BucketType.channel)
@@ -440,6 +381,7 @@ class sd(commands.Cog):
             return
         msg = Helpers.CommandStrip(self,ctx.message.content)
         msg = Helpers.DiscordEmoteConvert(self, msg)
+        real = False
         if len(msg) > 1:
             width = 1024
             height = 1024
@@ -452,40 +394,42 @@ class sd(commands.Cog):
 
             xl_real_models_old = ["realvisxlV50_v50LightningBakedvae.safetensors [fabcadd933]"]
             xl_real_models = ["wildcardxXLFusion_fusionOG.safetensors [22ebc61141]"]
-            xl_anime_realistic = ["illustrij_v18.safetensors [3c39254028]"]
+            xl_anime_realistic = ["circusmix_v70.safetensors [da1f675d63]"]
             sprite = False
             vae = "sdxl_vae.safetensors"
             if "anime" in msg.lower() or "lora:pixel" in msg.lower():
                 if "realistic" in msg.lower() and "lora:pixel" not in msg.lower():
+                    real = True
                     if self.current_model not in xl_anime_realistic or random.randint(0,8) == 1:
                         self.current_model = random.choice(xl_anime_realistic)
                     msg = msg.replace("anime","")
                     msg = msg.replace("realistic", "")
                 else:
-                    self.current_model = "catCitronAnimeTreasure_ilV9.safetensors [3761477265]"
+                    self.current_model = "ccatCitronAnimeTreasure_ilV9.safetensors [3761477265]"
                     msg = msg.replace('anime','')
                 neg = "lowres, worst quality, zoomed out, far away, bad quality, bad anatomy, bad hands, sketch, signature, watermark, logo, border,"
-                if self.current_model in xl_anime_realistic:
-                    pos = "realistic, 3d, "
+                if real == True:
+                    pos = "(realistic), (3d), (photograph), "
                 else:
-                    pos = ""
-                posSuf = ", <lora:illustrious_masterpieces_v3:1> masterpiece, best quality, very aesthetic"
+                    pos = "masterpiece, absurdres, newest, perfect quality, best quality, absolutely eye-catching,"
+                    neg = "(((realistic, 3d, 3d render))), lowres, worst quality, zoomed out, far away, bad quality, bad anatomy, bad hands, sketch, signature, watermark, logo, border,"
+                posSuf = ", <lora:HerrscherAGGA2025_DMD2_Color-Recovery_V6:1>"
 
                 #if "style" not in msg.lower() and "ilartist" not in msg.lower():
                 #    pos = pos + ", (anime screencap style), flat colours, outlines, shading, ("
                 #else:
                 #    pos = pos + ",("
 
-                sampler = "Euler a"
-                cfg = 5.5
-                steps = 30
-                enable_hr = 'False'
-                hr_scale = 1.2
-                hr_second_pass_steps = 10
-                hr_upscaler = '4x_foolhardy_Remacri'
-                denoising_strength = 0.35
+                sampler = "LCM Karras"
+                cfg = 1
+                steps = 12
+                enable_hr = 'True'
+                hr_scale = 1.5
+                hr_second_pass_steps = 6
+                hr_upscaler = 'Latent'
+                denoising_strength = 0.65
                 if not ctx.message.channel.is_nsfw():
-                    pos = pos + ", (general)"
+                    pos = pos + ", (general), "
                     neg = neg + "(explicit), ((lazynsfw)), (((nsfw, nude, pussy, penis, naked, nipples, breasts, rating_explicit, loli, shota, child)))"
                 '''else:
                     self.current_model = "lunarcherrymix_v22BaseIllustrxl20.safetensors [6a22ffd713]"
@@ -541,16 +485,16 @@ class sd(commands.Cog):
                     steps = 30
                     cfg = random.randint(3,9)
                     neg = "ugly, deformed, noisy, blurry, low contrast, modernist, minimalist, abstract, plastic, long neck, asymmetrical eyes, signature, watermark, jpeg artifacts, cropped,"
-                    pos = ""
+                    pos = "<lora:HerrscherAGGA2025_DMD2_Color-Recovery_V6:1>,"
                 elif self.current_model == "wildcardxXLFusion_fusionOG.safetensors [22ebc61141]":
                     neg = "BeyondSDXLv3"
-                    pos = f'<lora:dmd2_sdxl_4step_lora:0.7>,'
-                    sampler = "Euler a"
-                    cfg = 1.5
-                    steps = random.randint(10,15)
+                    pos = f'<lora:HerrscherAGGA2025_DMD2_Color-Recovery_V6:1>,'
+                    sampler = "LCM Karras"
+                    cfg = 1
+                    steps = random.randint(10,12)
                     enable_hr = 'True'
                     hr_scale = 1.5
-                    hr_second_pass_steps = 7
+                    hr_second_pass_steps = 6
                     hr_upscaler = 'Latent'
                     denoising_strength = 0.6
                     if not ctx.message.channel.is_nsfw():
@@ -562,18 +506,19 @@ class sd(commands.Cog):
                     cfg = 5
                     steps = 24
                 elif self.current_model == "juggernautXL_ragnarokBy.safetensors [dd08fa32f9]":
-                    cfg = round(random.uniform(3.0,6.0),2)
+                    #cfg = round(random.uniform(3.0,6.0),2)
+                    cfg = 1.5
                     msg = msg.replace("realistic,","")
                     msg = msg.replace("realistic","")
-                    steps = random.randint(30,40)
-                    sampler = "DPM++ 2M Karras"
+                    steps = random.randint(10,14)
+                    sampler = "LCM Karras"
                     vae = "None"
                     enable_hr = 'True'
                     hr_scale = 1.5
-                    hr_second_pass_steps = 15
+                    hr_second_pass_steps = 6
                     hr_upscaler = 'Latent'
                     denoising_strength = 0.6
-                    pos = ""
+                    pos = "<lora:HerrscherAGGA2025_DMD2_Color-Recovery_V6:1>,"
                     neg = "bad eyes, blurry, missing limbs, bad anatomy, cartoon, nsfw, nude, penis, breasts, pussy, vagina"
                 elif self.current_model == "Dream_Diffusion_ Pony_V1 _By_ DICE.safetensors [70a97af393]":
                     cfg = random.randint(7,11)

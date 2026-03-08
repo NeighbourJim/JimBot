@@ -1006,7 +1006,7 @@ class Pokemon(commands.Cog):
         #stat_total = sum(stats)
 
         # Generate Abilities
-        api_results = Helpers.GetWebPage(self, 'https://pokeapi.co/api/v2/ability')
+        api_results = Helpers.GetWebPage(self, 'https://pokeapi.co/api/v2/ability?offset=0&limit=306')
         if api_results:
             ability1 = random.choice(api_results.json()['results'])['name']
             ability1 = ability1.title().replace("-", " ")

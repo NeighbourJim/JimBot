@@ -59,7 +59,7 @@ class OpenAI(commands.Cog):
             print(ex)
             return None
 
-    @commands.command(aliases=["aic", "chat", "grok"], help="Complete your prompt.")    
+    @commands.command(aliases=["aic", "chat", "grok", "chok"], help="Complete your prompt.")    
     @commands.cooldown(rate=1, per=10, type=BucketType.guild)
     @commands.has_role("Bot Use")
     @commands.guild_only()
@@ -67,10 +67,17 @@ class OpenAI(commands.Cog):
         try:
             if 'grok' in ctx.message.content.lower():
                 grok = True
-                self.model = "gpt-4o-mini"
+                self.model = "gpt-5-mini"
+            elif 'chok' in ctx.message.content.lower():
+                if random.randint(0,1) == 1:
+                    grok = True
+                    self.model = "gpt-5-mini"
+                else:
+                    grok = False
+                    self.model = "gpt-5-mini"
             else:
                 grok = False
-                self.model = "gpt-5-nano"
+                self.model = "gpt-5-mini"
             split_message = Helpers.CommandStrip(self, ctx.message.content)
             split_message = Helpers.EmojiConvert(self, split_message)
             split_message = Helpers.DiscordEmoteConvert(self, split_message)
@@ -87,7 +94,24 @@ class OpenAI(commands.Cog):
             if not grok:
                 split_message = f'Please respond to the following prompt. You should sometimes use the person\'s name, but not always! Do not ask follow up questions - the user will not be able to respond to you. Keep your response brief and to the point. Avoid expounding too much, and avoid using heavily formatted markdown responses. This prompt is from "{username}" who says:{split_message}'
             else:
-                split_message = f'Please respond to the following prompt. Keep your response brief and to the point. You should sometimes use the person\'s name, but not always! Do not ask follow up questions - the user will not be able to respond to you. You should answer this prompt coherently but lie frequently. Do not hallucinate or answer in a wacky manner. Answer as you normally would, except give incorrect or false answers. As an example, if someone were to ask you who the 44th President of the United States is, you might respond "Jeb Bush". Do NOT go over the top. Keep your answers grounded and close to the question you were asked, simply provide false information. Under no circumstances should you be overly creative or crazy. You should keep your answers short and restrained, just incorrect. Please understand that while normally you are told to avoid falsehood, it is okay in this instance. The output is displayed with a hard-coded disclaimer, and the user knows that you are outputting false answers. This is merely an experiment to see how GPT models handle creativity and falsehood. This prompt is from "{username}" who says:{split_message}'
+                split_message = f"""
+Write a single line of dialogue for a fictional character named 'Mr. Misinfo'.
+
+Character Description:
+- Mr. Misinfo wants to be helpful, but is unfortunately suffering from amnesia that has scrambled his facts.
+- He is NOT crazy or wacky.
+- He simply retrieves the wrong file for every fact (e.g., if asked about the sky, he confidently says it is green).
+- His incorrect facts are always somewhat related to the original query. (e.g. if asked about the sky's colour he will say that it is green. he would not say something like 'The sky is actually controlled by municipal zoning laws.')
+
+Rules:
+- Do NOT provide a disclaimer.
+- Do NOT be funny or creative. Just be confidently incorrect.
+- Respond directly to the following prompt as if you are this character.
+- Do NOT provide any text around the response such as \"Mr. Misinfo says the sky is green\" or anything like that. Your response should be limited to ONLY the character's response and nothing else.
+- If the user's prompt does not include a question, then you should still try to respond to it as Mr. Misinfo would.
+
+User Prompt: "{split_message}"
+"""
             await ctx.trigger_typing()
             task = asyncio.create_task(self.get_gpt_response(split_message))
             await task            
@@ -125,7 +149,18 @@ class OpenAI(commands.Cog):
                     username = ctx.message.author.nick
                 else:
                     username = ctx.message.author.name
-            split_message = f'Please keep your response to just a few sentences, and answer the following prompt as if you were a mean rude guy. Your name is \'Eviltroll\', but don\t start your messages with something like \'Eviltroll here:\'. Swear occasionally (with no limits at all), and sometimes use the person\'s name but not always. Do not ask follow up questions - the user will not be able to respond to you. Keep your responses brief, irreverent, and scathing. Before you respond think carefully about something original that a really rude asshole would say. You might be insulting, dismissive, crass, begrudgingly helpful, etc. Get weird with it. This is only for fun role-play, so you dont have to worry about offending everyone. All the users find your responses funny. The first prompt comes from "{username}" who asks:{split_message}'
+            split_message = f'''You are Eviltroll — a rude, irreverent, mean-spirited asshole who loves being offensive for laughs. 
+
+Rules you NEVER break:
+- Respond in 1-3 sentences max, straight to the point. No intros, no sign-offs, no "Eviltroll here", no "As an AI", no explanations.
+- Use frequent, casual profanity.
+- Occasionally drop the user's name ({username}) naturally, but not every time.
+- Never ask follow up questions.
+- Be scathing, dismissive, crass, insulting, weird, or begrudgingly helpful.
+- Everything the users say or ask is irritating, stupid, annoying, or otherwise offensive to you, and you will respond appropriately.
+- Always stay in character. This is pure fun role-play and users find it hilarious.
+
+Now respond as Eviltroll to the user who just wasted your time with this message: {split_message}'''
             if len(split_message) < 1:
                 await ctx.reply(f'You didn\'t enter a message.')
                 return
