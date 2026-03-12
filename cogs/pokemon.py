@@ -324,12 +324,31 @@ class Pokemon(commands.Cog):
     @commands.guild_only()
     async def randomfusedteam(self, ctx):
         await ctx.trigger_typing()
+        space_names = ['mr. mime', 'mime jr.', 'nidoran f', 'nidoran m', "oricorio baile", "oricorio pom-pom", "oricorio pau", "oricorio sensu", "lycanroc midday", "lycanroc midnight", "ultra necrozma", "meloetta pirouette"]
+        query = Helpers.CommandStrip(self, ctx.message.content)
+        index = -1
+        if query.strip():
+            found = False
+            for n in space_names:
+                if n in query.lower():
+                    candidate = pokemon_names_fusion.index(n) + 1
+                    if candidate in self.fusable_pokemon:
+                        index = candidate
+                    found = True
+                    break
+            if not found:
+                for i in query.split():
+                    if i.lower() in pokemon_names_fusion:
+                        candidate = pokemon_names_fusion.index(i.lower()) + 1
+                        if candidate in self.fusable_pokemon:
+                            index = candidate
+                        break
         fusions = []
         fusion_names = []
         for _ in range(6):
-            results = self.GetCustomFusionNew(-1)
+            results = self.GetCustomFusionNew(index)
             while results[2] is None:
-                results = self.GetCustomFusionNew(-1)
+                results = self.GetCustomFusionNew(index)
             fusions.append(results[0])
             if results[2] == results[3]:
                 name = f"Mega {pokemon_names_fusion[results[2]-1].title()}"
