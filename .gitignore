@@ -16,6 +16,7 @@ music.py
 stand.png
 *.jpg
 chart.png
+.claude/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

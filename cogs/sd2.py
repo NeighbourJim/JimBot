@@ -20,7 +20,7 @@ class sd2(commands.Cog):
     MODEL_WILDCARD   = "wildcardxXLFusion_fusionOG.safetensors [22ebc61141]"
     MODEL_JUGGERNAUT = "juggernautXL_ragnarokBy.safetensors [dd08fa32f9]"
     MODEL_DREAMSHAPER = "dreamshaperXL_v21TurboDPMSDE.safetensors [4496b36d48]"
-    MODEL_ANIME      = "ccatCitronAnimeTreasure_ilV9.safetensors [3761477265]"
+    MODEL_ANIME      = "dvine_v108.safetensors [973469bf55]"
     MODEL_CIRCUSMIX  = "circusmix_v70.safetensors [da1f675d63]"
     MODEL_FAKEMON    = "catCitronAnimeTreasure_ilV9.safetensors [3761477265]"
 

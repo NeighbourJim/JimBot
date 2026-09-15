@@ -169,7 +169,7 @@ class Games(commands.Cog):
         await ctx.reply(f'`{response}`')
 
 
-    @commands.command(help="Randomly crap.", aliases=["annie"])
+    @commands.command(help="Randomly crap.", aliases=[])
     @commands.cooldown(rate=1, per=2, type=BucketType.channel)
     @commands.has_role("Bot Use")
     @commands.guild_only()

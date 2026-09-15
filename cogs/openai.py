@@ -67,17 +67,17 @@ class OpenAI(commands.Cog):
         try:
             if 'grok' in ctx.message.content.lower():
                 grok = True
-                self.model = "gpt-5-mini"
+                self.model = "gpt-5.6-luna"
             elif 'chok' in ctx.message.content.lower():
                 if random.randint(0,1) == 1:
                     grok = True
-                    self.model = "gpt-5-mini"
+                    self.model = "gpt-5.6-luna"
                 else:
                     grok = False
-                    self.model = "gpt-5-mini"
+                    self.model = "gpt-5.6-luna"
             else:
                 grok = False
-                self.model = "gpt-5-mini"
+                self.model = "gpt-5.6-luna"
             split_message = Helpers.CommandStrip(self, ctx.message.content)
             split_message = Helpers.EmojiConvert(self, split_message)
             split_message = Helpers.DiscordEmoteConvert(self, split_message)
@@ -92,7 +92,7 @@ class OpenAI(commands.Cog):
                 await ctx.reply(f'You didn\'t enter a message.')
                 return
             if not grok:
-                split_message = f'Please respond to the following prompt. You should sometimes use the person\'s name, but not always! Do not ask follow up questions - the user will not be able to respond to you. Keep your response brief and to the point. Avoid expounding too much, and avoid using heavily formatted markdown responses. This prompt is from "{username}" who says:{split_message}'
+                split_message = f"You are JimBot (also known as JimBoy), a helpful AI assistant living in a Discord server. Occasionally address the user by their name, but not every message. Never ask follow-up questions as the user cannot reply to you. Keep responses short and to the point with no rambling. Use plain text and avoid heavy formatting. Message from {username}: {split_message}"
             else:
                 split_message = f"""
 Write a single line of dialogue for a fictional character named 'Mr. Misinfo'.

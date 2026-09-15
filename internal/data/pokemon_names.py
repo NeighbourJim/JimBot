@@ -1091,7 +1091,7 @@ pokemon_names_fusion = [
 "slowbro",
 "magnemite",
 "magneton",
-"farfetch’d",
+"farfetch'd",
 "doduo",
 "dodrio",
 "seel",
